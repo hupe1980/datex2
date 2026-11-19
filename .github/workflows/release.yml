@@ -89,9 +89,11 @@ jobs:
       # threat model and security policy, and the licences.
       - name: The package holds nothing else
         run: |
-          cargo package --list --locked > package.txt
-          cat package.txt
-          if grep -vE '^(src/|examples/|Cargo\.toml(\.orig)?$|Cargo\.lock$|README\.md$|CHANGELOG\.md$|THREAT_MODEL\.md$|SECURITY\.md$|LICENSE-(MIT|APACHE)$|\.cargo_vcs_info\.json$)' package.txt; then
+          # Outside the checkout: a new file in it would make the tree dirty.
+          list="$RUNNER_TEMP/package.txt"
+          cargo package --list --locked > "$list"
+          cat "$list"
+          if grep -vE '^(src/|examples/|Cargo\.toml(\.orig)?$|Cargo\.lock$|README\.md$|CHANGELOG\.md$|THREAT_MODEL\.md$|SECURITY\.md$|LICENSE-(MIT|APACHE)$|\.cargo_vcs_info\.json$)' "$list"; then
             echo "::error::unexpected files in the package (listed above)"
             exit 1
           fi

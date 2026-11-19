@@ -15,7 +15,7 @@ homepage = "https://hupe1980.github.io/datex2/"
 readme = "README.md"
 keywords = ["datex2", "datex", "traffic", "transport", "mobility"]
 categories = ["encoding", "data-structures", "parser-implementations"]
-exclude = ["concepts/", "specs/", ".specify/", ".claude/", "CLAUDE.md", "xtask/", "fuzz/", "tests/", "site/", ".github/", ".cargo/"]
+include = ["/src", "/examples", "/README.md", "/CHANGELOG.md", "/THREAT_MODEL.md", "/SECURITY.md", "/LICENSE-APACHE", "/LICENSE-MIT"]
 
 [dependencies]
 quick-xml = "0.42"
