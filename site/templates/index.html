@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block vars %}
+  {%- set_global page_url = config.base_url ~ "/" -%}
+  {%- set_global page_desc = section.description -%}
+{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">DATEX II v3 · read · stream · write</p>
+        <h1>European road traffic data, as Rust types.</h1>
+        <p class="lead">
+          <strong>datex2</strong> reads, streams and writes
+          <a href="{{ get_url(path='@/docs/datex2.md') | safe }}">DATEX II</a>,
+          the European standard for road traffic and travel information.
+          One call turns a national feed into typed data. The reader tolerates
+          what real feeds send and tells you what it tolerated; the writer
+          produces only documents the official schema accepts.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="{{ get_url(path='@/docs/getting-started.md') | safe }}">Get started</a>
+          <a class="btn btn-ghost" href="{{ config.extra.repo }}">View on GitHub</a>
+        </div>
+
+        <div class="install">
+          <span aria-hidden="true">$</span>
+          <code>cargo add datex2</code>
+        </div>
+      </div>
+
+      <div>
+{{ section.content | safe }}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="stats" aria-label="Project facts">
+  <dl class="wrap">
+    <div class="stat">
+      <dd>{{ config.extra.numbers.namespaces }}</dd>
+      <dt>DATEX II 3.7 namespaces</dt>
+    </div>
+    <div class="stat">
+      <dd>{{ config.extra.numbers.read_speed }}&nbsp;MB/s</dd>
+      <dt>read on one core</dt>
+    </div>
+    <div class="stat">
+      <dd>{{ config.extra.numbers.stream_memory }}&nbsp;MB</dd>
+      <dt>to stream a 189&nbsp;MB feed</dt>
+    </div>
+    <div class="stat">
+      <dd>{{ config.extra.numbers.record_types }}</dd>
+      <dt>streamable record types</dt>
+    </div>
+    <div class="stat">
+      <dd>0</dd>
+      <dt>lines of unsafe</dt>
+    </div>
+  </dl>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="band-head">
+      <h2>Four rules it keeps</h2>
+      <p>
+        Road operators, access points and charging operators across Europe
+        publish DATEX II. The standard is large and real feeds bend it. These
+        rules are what makes the data usable anyway.
+      </p>
+    </div>
+
+    <div class="cards">
+      <article class="card">
+        <span class="num">01</span>
+        <h3>Tolerant in</h3>
+        <p>
+          Namespaces under <code>http://levelC/…</code>, a payload without
+          <code>xsi:type</code>, required elements left out, a decimal comma
+          in a number: the reader accepts the deviations national feeds
+          really have, and reads the rest of the document.
+        </p>
+      </article>
+
+      <article class="card">
+        <span class="num">02</span>
+        <h3>Nothing silent</h3>
+        <p>
+          Every deviation is a warning with its kind, the element path and
+          the byte offset. Unknown elements are reported, extension content is
+          kept as raw XML, and no value is ever made up.
+        </p>
+      </article>
+
+      <article class="card">
+        <span class="num">03</span>
+        <h3>Strict out</h3>
+        <p>
+          The writer checks required content, list sizes and every value
+          rule of the schema. When it succeeds, the official 3.7 schema
+          accepts the document; when it cannot, it names the element and
+          the rule.
+        </p>
+      </article>
+
+      <article class="card">
+        <span class="num">04</span>
+        <h3>Safe on untrusted input</h3>
+        <p>
+          Nesting, attributes and token length are bounded while reading,
+          document type declarations are refused, every text in an error is
+          made safe to log, and the reader is fuzzed. There is no
+          <code>unsafe</code>.
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="band band-elev">
+  <div class="wrap">
+    <div class="band-head">
+      <h2>No setup</h2>
+      <p>
+        You do not state a version, a namespace, a schema or an envelope.
+        The crate works on the bytes you give it and opens no files or sockets
+        of its own.
+      </p>
+    </div>
+
+    <div class="split">
+      <div>
+        <ul class="tick">
+          <li><strong>Any document shape.</strong> A <code>payload</code>, a
+              <code>messageContainer</code> with several payloads, a root named
+              after the publication, and SOAP around any of them.</li>
+          <li><strong>Any 3.x release.</strong> The types are generated from the
+              official 3.7 schemas and read documents of every 3.x release.</li>
+          <li><strong>Names from the standard.</strong>
+              <code>SituationRecord</code> is <code>SituationRecord</code>, so the
+              official documentation applies to the Rust types.</li>
+          <li><strong>Shared fields without matching.</strong>
+              <code>record.validity()</code> works for an accident, roadworks
+              and every other kind of situation record.</li>
+        </ul>
+        <p class="mt0">
+          <a href="{{ get_url(path='@/docs/reading.md') | safe }}">How reading works →</a>
+        </p>
+      </div>
+
+      <div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">You want to</th><th scope="col">Call</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Read a document</td><td><code>v3::read(input)</code></td></tr>
+              <tr><td>Process a large feed record by record</td><td><code>v3::stream::&lt;T&gt;(input)</code></td></tr>
+              <tr><td>Publish a document</td><td><code>v3::write(sink, &amp;publication)</code></td></tr>
+              <tr><td>See what a file contains</td><td><code>cargo run --example inspect</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="band-head">
+      <h2>What is implemented</h2>
+      <p>Every publication of DATEX II 3.7, in XML.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Area</th><th scope="col">State</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Situations</strong> (EN 16157-3)</td>
+              <td>Accidents, roadworks, closures, speed management and every other situation record</td></tr>
+          <tr><td><strong>Traffic data</strong> (EN 16157-5)</td>
+              <td>Measured data, elaborated data, measurement site tables</td></tr>
+          <tr><td><strong>Variable message signs</strong> (EN 16157-4)</td>
+              <td>VMS publications and tables</td></tr>
+          <tr><td><strong>Parking</strong> (CEN/TS 16157-6)</td>
+              <td>Parking tables and status</td></tr>
+          <tr><td><strong>Energy infrastructure</strong> (CEN/TS 16157-10)</td>
+              <td>Charging and refuelling points: the 2022 namespaces and the AFIR namespaces of 3.7</td></tr>
+          <tr><td><strong>Traffic regulations and controlled zones</strong> (CEN/TS 16157-11)</td>
+              <td>Regulation orders, low-emission and access zones</td></tr>
+          <tr><td><strong>Traffic management, facilities, devices and faults</strong></td>
+              <td>Traffic management plans, rerouting, facilities and rates, device and fault publications</td></tr>
+          <tr><td><strong>Location referencing</strong> (EN 16157-2)</td>
+              <td>Coordinates, linear and area locations, Alert-C, TPEG-Loc and OpenLR data, as typed values</td></tr>
+          <tr><td><strong>Reading, streaming, writing</strong></td>
+              <td>Whole documents, one record at a time in bounded memory, and schema-valid output</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><a href="{{ get_url(path='@/docs/_index.md') | safe }}">Read the documentation →</a></p>
+  </div>
+</section>
+
+<section class="band band-elev">
+  <div class="wrap">
+    <div class="band-head">
+      <h2>And what is not</h2>
+      <p>Named, so that you do not have to find out.</p>
+    </div>
+
+    <div class="cards">
+      <article class="card">
+        <h3>JSON and DATEX II version 2</h3>
+        <p>
+          This release handles version 3 XML. The JSON encoding of 3.7 and
+          the version 2 model, which several countries still publish, are not
+          read yet.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Exchange and transport</h3>
+        <p>
+          No HTTP client, no SOAP services, no Exchange 2020 protocol. A
+          <code>messageContainer</code> is unwrapped to reach its payloads and
+          nothing more.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Older shapes of draft namespaces</h3>
+        <p>
+          Parking, controlled-zone and traffic-regulation documents written
+          against releases before 3.6 lose the elements that 3.7 renamed;
+          each is reported.
+        </p>
+      </article>
+    </div>
+
+    <p style="margin-top:1.5rem">
+      <a href="{{ get_url(path='@/docs/feeds.md') | safe }}#known-limits">All limits →</a>
+    </p>
+  </div>
+</section>
+
+{% endblock %}

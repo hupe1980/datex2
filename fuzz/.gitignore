@@ -1,0 +1,6 @@
+# Build output and what the fuzzer generates. Only `seeds/` is kept.
+/target
+/corpus*
+/artifacts
+/coverage
+/Cargo.lock

@@ -1,0 +1,35 @@
+[package]
+name = "datex2-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+datex2 = { path = ".." }
+
+[[bin]]
+name = "read"
+path = "fuzz_targets/read.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+
+[[bin]]
+name = "stream"
+path = "fuzz_targets/stream.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "roundtrip"
+path = "fuzz_targets/roundtrip.rs"
+test = false
+doc = false
+bench = false

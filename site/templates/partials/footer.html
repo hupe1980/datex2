@@ -1,0 +1,51 @@
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <p class="footer-group" id="footer-start">Start</p>
+        <ul aria-labelledby="footer-start">
+          <li><a href="{{ get_url(path='@/docs/getting-started.md') | safe }}">Getting started</a></li>
+          <li><a href="{{ get_url(path='@/docs/datex2.md') | safe }}">DATEX II in ten minutes</a></li>
+          <li><a href="{{ get_url(path='@/docs/faq.md') | safe }}">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-group" id="footer-use">Use</p>
+        <ul aria-labelledby="footer-use">
+          <li><a href="{{ get_url(path='@/docs/reading.md') | safe }}">Reading</a></li>
+          <li><a href="{{ get_url(path='@/docs/streaming.md') | safe }}">Streaming</a></li>
+          <li><a href="{{ get_url(path='@/docs/writing.md') | safe }}">Writing</a></li>
+          <li><a href="{{ get_url(path='@/docs/model.md') | safe }}">The typed model</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-group" id="footer-expect">Expect</p>
+        <ul aria-labelledby="footer-expect">
+          <li><a href="{{ get_url(path='@/docs/tolerance.md') | safe }}">Tolerance and warnings</a></li>
+          <li><a href="{{ get_url(path='@/docs/security.md') | safe }}">Untrusted input</a></li>
+          <li><a href="{{ get_url(path='@/docs/feeds.md') | safe }}">Tested feeds</a></li>
+          <li><a href="{{ get_url(path='@/docs/performance.md') | safe }}">Measurements</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-group" id="footer-project">Project</p>
+        <ul aria-labelledby="footer-project">
+          <li><a href="{{ config.extra.repo }}">Source on GitHub</a></li>
+          <li><a href="{{ config.extra.docsrs }}">API reference</a></li>
+          <li><a href="{{ config.extra.crate }}">crates.io</a></li>
+          <li><a href="{{ get_url(path='@/docs/codegen.md') | safe }}">Code generation</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      <p>Dual-licensed under
+        <a href="{{ config.extra.repo }}/blob/main/LICENSE-MIT">MIT</a> or
+        <a href="{{ config.extra.repo }}/blob/main/LICENSE-APACHE">Apache-2.0</a>.</p>
+      <p>DATEX II is the European standard for road traffic and travel information
+         (EN 16157 and CEN/TS 16157). This is an independent implementation, not
+         affiliated with or endorsed by the DATEX II organisation. The schemas
+         themselves are not redistributed here.</p>
+    </div>
+  </div>
+</footer>

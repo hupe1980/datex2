@@ -1,0 +1,22 @@
+[workspace]
+members = [".", "xtask"]
+
+[package]
+name = "datex2"
+version = "0.1.0"
+authors = ["hupe1980"]
+edition = "2024"
+rust-version = "1.86"
+description = "Unofficial DATEX II implementation in Rust: read, stream and write road traffic and travel information (v3 XML) as typed data."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/hupe1980/datex2"
+documentation = "https://docs.rs/datex2"
+homepage = "https://hupe1980.github.io/datex2/"
+readme = "README.md"
+keywords = ["datex2", "datex", "traffic", "transport", "mobility"]
+categories = ["encoding", "data-structures", "parser-implementations"]
+exclude = ["concepts/", "specs/", ".specify/", ".claude/", "CLAUDE.md", "xtask/", "fuzz/", "tests/", "site/", ".github/", ".cargo/"]
+
+[dependencies]
+quick-xml = "0.42"
+

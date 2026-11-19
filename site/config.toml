@@ -1,0 +1,91 @@
+# Zola configuration for the datex2 documentation site.
+#
+# The site is deployed to GitHub Pages under a repository sub-path, so every
+# internal link goes through `get_url()` instead of being written literally.
+base_url = "https://hupe1980.github.io/datex2"
+
+title = "datex2"
+description = "DATEX II for Rust: read, stream and write European road traffic and travel information (DATEX II v3 XML) as typed data. Tolerant reader, strict writer, tested on national feeds."
+default_language = "en"
+author = "hupe1980"
+
+compile_sass = true
+minify_html = true
+
+# Not a feed: `feed_filenames` is the hook Zola offers for emitting a generated
+# file that is not a page. Ours emits the search index, see
+# templates/search-index.json.
+generate_feeds = true
+feed_filenames = ["search-index.json"]
+build_search_index = false
+
+[markdown]
+smart_punctuation = false
+render_emoji = false
+external_links_target_blank = false
+bottom_footnotes = true
+
+[markdown.highlighting]
+style = "class"
+light_theme = "github-light"
+dark_theme = "github-dark"
+add_color_scheme = true
+error_on_missing_language = true
+
+[link_checker]
+# The crate's own pages and the repository's issue pages exist only once it is
+# published; a site build must not depend on them.
+skip_prefixes = [
+  "https://docs.rs/",
+  "https://crates.io/",
+  "https://github.com/hupe1980/datex2",
+]
+
+[extra]
+repo = "https://github.com/hupe1980/datex2"
+crate = "https://crates.io/crates/datex2"
+docsrs = "https://docs.rs/datex2"
+tagline = "DATEX II road traffic data for Rust"
+keywords = "DATEX II, DATEX2, datex2 rust, road traffic data, traffic information, travel information, National Access Point, NAP, AFIR, charging infrastructure data, EN 16157, CEN/TS 16157, situation publication, Rust, XML, parser"
+
+# The front page's numbers. Each is measured; the Measurements page says how.
+[extra.numbers]
+namespaces = "19"
+record_types = "96"
+read_speed = "158"
+stream_memory = "8"
+
+# The documentation sidebar, in reading order. The same list drives the
+# previous/next links at the foot of a page.
+[[extra.nav]]
+title = "Start here"
+items = [
+  "docs/getting-started.md",
+  "docs/datex2.md",
+]
+
+[[extra.nav]]
+title = "Using the crate"
+items = [
+  "docs/reading.md",
+  "docs/streaming.md",
+  "docs/writing.md",
+  "docs/model.md",
+]
+
+[[extra.nav]]
+title = "What to expect"
+items = [
+  "docs/tolerance.md",
+  "docs/errors.md",
+  "docs/security.md",
+  "docs/feeds.md",
+]
+
+[[extra.nav]]
+title = "Reference"
+items = [
+  "docs/performance.md",
+  "docs/codegen.md",
+  "docs/faq.md",
+]

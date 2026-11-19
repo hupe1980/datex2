@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="datex2">
+  <rect width="32" height="32" rx="7" fill="#0b0f14"/>
+  <path d="M10.6 25 13.9 7M21.4 25 18.1 7" stroke="#e7eef4" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M16 23v-3.4M16 15.6v-2.8" stroke="#7aa8ff" stroke-width="2.4" stroke-linecap="round"/>
+</svg>

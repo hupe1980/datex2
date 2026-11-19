@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0b0f14"/>
+  <g transform="translate(80 84)">
+    <rect width="72" height="72" rx="16" fill="none" stroke="#e7eef4" stroke-width="5"/>
+    <path d="M24 56 31 16M48 56 41 16" stroke="#e7eef4" stroke-width="5" stroke-linecap="round"/>
+    <path d="M36 52v-8M36 34v-6" stroke="#7aa8ff" stroke-width="5.5" stroke-linecap="round"/>
+  </g>
+  <text x="176" y="138" font-family="Helvetica, Arial, sans-serif" font-size="52" font-weight="700" fill="#e7eef4">datex2</text>
+  <text x="80" y="300" font-family="Helvetica, Arial, sans-serif" font-size="76" font-weight="700" fill="#e7eef4">European road traffic data,</text>
+  <text x="80" y="390" font-family="Helvetica, Arial, sans-serif" font-size="76" font-weight="700" fill="#7aa8ff">as Rust types.</text>
+  <text x="80" y="486" font-family="Helvetica, Arial, sans-serif" font-size="34" fill="#9aa7b3">Read, stream and write DATEX II v3.</text>
+  <text x="80" y="536" font-family="Helvetica, Arial, sans-serif" font-size="34" fill="#9aa7b3">Tolerant reader, strict writer, tested on national feeds.</text>
+</svg>

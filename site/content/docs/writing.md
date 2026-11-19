@@ -1,0 +1,103 @@
++++
+title = "Writing"
+description = "Write schema-valid DATEX II v3 XML from Rust with datex2::v3::write: namespaces, xsi:type and element order handled for you, and exact errors for every schema rule."
+weight = 50
+
+[extra]
+seo_title = "Writing valid DATEX II v3 XML in Rust"
++++
+
+## One function
+
+Fill the typed model and write it:
+
+```rust,no_run
+use datex2::v3::{self, Publication, common, situation::SituationPublication};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let publication = Publication::Situation(Box::new(SituationPublication {
+        lang: Some("en".into()),
+        publication_time: Some("2026-11-19T12:00:00Z".parse()?),
+        publication_creator: Some(Box::new(common::InternationalIdentifier {
+            country: Some("NL".into()),
+            national_identifier: Some("EXAMPLE".into()),
+            ..Default::default()
+        })),
+        ..Default::default()
+    }));
+    v3::write(std::io::stdout().lock(), &publication)?;
+    Ok(())
+}
+```
+
+`write` takes any `io::Write`; `to_string` returns the document as a `String`. Every struct of
+the model implements `Default`, so you name only the fields you set.
+
+## What the writer takes care of
+
+- the XML declaration and the `d2:payload` root;
+- namespace declarations, with the standard's usual prefixes;
+- `xsi:type` on the payload and on every polymorphic object;
+- the order of elements, which the schema fixes;
+- attributes with a fixed value: `modelBaseVersion="3"`, and `targetClass` on references;
+- escaping of all text and attribute values.
+
+## The guarantee
+
+**When `write` returns `Ok`, the official DATEX II 3.7 schema accepts the document.** The test
+suite does not take the writer's word for it: `xmllint` validates every document the tests
+write against the official schema.
+
+One exception: the schema's uniqueness constraints (for example, that no two situations in a
+publication share an `id`) are not checked.
+
+## What it refuses
+
+The model lets you leave required fields empty, because real feeds do and the
+[reader is tolerant](@/docs/tolerance.md). The schema does not, and the writer is strict. It
+returns an error naming the element and the rule:
+
+```text
+required content missing: expected required element "sit:probabilityOfOccurrence", found none at payload/situation/situationRecord (byte 1432)
+wrong number of elements: expected at least 1 of element "sit:situationRecord", found 0 at payload/situation (byte 512)
+value not allowed by the schema: expected 0 to 359 in "bearing", found 360 at payload/…/pointByCoordinates (byte 1711)
+```
+
+| Rule | Example |
+|---|---|
+| Required element or attribute absent | A situation record without `probabilityOfOccurrence` |
+| Too few or too many entries in a list | A situation without a record; more than seven days in a weekly pattern |
+| Text too long | More than 1,024 characters in an ordinary text field |
+| Number out of range | A bearing of 360 |
+| Too many digits | A price with three decimal places |
+| Wrong form | A currency that is not three capital letters; a language code such as `english!`; an IP address; a time-zone offset |
+| A character XML cannot carry | A control character in a text |
+| Unsafe extension content | See below |
+
+This makes the writer a practical way to find out what a publication needs: write it, read the
+error, fill the field.
+
+A document that was read with warnings about missing required content will not write back
+unchanged. That is intended: the crate does not turn an invalid feed into a document that claims
+to be valid.
+
+## Round trips
+
+A document that reads without warnings is written back to one that reads as an equal value.
+That includes extended enumeration values, timestamps with any fraction and offset, exact
+decimal amounts, and extension content from national namespaces.
+
+## Extension content
+
+[`Extension`](https://docs.rs/datex2/latest/datex2/struct.Extension.html) holds raw XML. Before
+copying it into the output, the writer parses it and refuses content that is not well-formed,
+that would close the extension element, that holds a document type declaration or a custom
+entity, or that has text directly inside the extension element (the schema allows only
+elements there). The namespace bindings kept with the content are declared on the extension
+element.
+
+## Form of the output
+
+One publication per document, in a `d2:payload` root. Compact: no indentation or line breaks;
+pipe it through `xmllint --format` to read it. Message containers and SOAP envelopes are not
+written.

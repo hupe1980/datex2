@@ -1,0 +1,138 @@
+name: Release
+
+# Publishes to crates.io and creates a GitHub release when a `v*` tag is pushed.
+#
+# A published version can be yanked but never replaced, so the upload is gated
+# behind everything CI runs, plus the two checks CI cannot make: that the tag
+# and the manifest agree, and that the package holds the crate and nothing else.
+#
+# Cutting a release:
+#
+#   1. set `version` in Cargo.toml, run `cargo check` so Cargo.lock agrees
+#   2. date the release's section in CHANGELOG.md, and commit
+#   3. `git tag vX.Y.Z && git push origin vX.Y.Z`
+#
+# Rehearsing: run this workflow by hand from the Actions tab. It verifies and
+# packages as a real release does and then stops; publishing happens only for a
+# tag.
+#
+# One-time setup: crates.io Trusted Publishing for this repository and workflow
+# (crates.io → datex2 → Settings → Trusted Publishing → GitHub:
+# hupe1980/datex2, release.yml, environment `release`), and a GitHub
+# environment named `release`.
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One at a time, and never cancelled: a run interrupted between the crates.io
+# upload and the GitHub release leaves the two disagreeing about what exists.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install --yes libxml2-utils
+
+      - name: Read the version
+        id: meta
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "datex2") | .version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # A tag that disagrees with the manifest would publish a version nobody
+      # asked for.
+      - name: Tag matches the manifest
+        if: github.event_name == 'push'
+        run: |
+          if [ "v${{ steps.meta.outputs.version }}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match Cargo.toml version v${{ steps.meta.outputs.version }}"
+            exit 1
+          fi
+
+      - name: The changelog has a section for this version
+        if: github.event_name == 'push'
+        run: grep -q "^## \[${{ steps.meta.outputs.version }}\]" CHANGELOG.md
+
+      # `--locked` throughout: a release builds from the committed Cargo.lock.
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      # The generated model must be exactly what the pinned official schemas
+      # produce, and `xmllint` validates what the tests write against them.
+      - run: cargo xtask fetch
+      - run: cargo xtask codegen --check
+      - run: cargo test --workspace --locked
+      - run: cargo doc --no-deps --locked
+        env:
+          RUSTDOCFLAGS: -D warnings
+
+      # The package holds the crate, its examples, the README, the changelog, the
+      # threat model and security policy, and the licences.
+      - name: The package holds nothing else
+        run: |
+          cargo package --list --locked > package.txt
+          cat package.txt
+          if grep -vE '^(src/|examples/|Cargo\.toml(\.orig)?$|Cargo\.lock$|README\.md$|CHANGELOG\.md$|THREAT_MODEL\.md$|SECURITY\.md$|LICENSE-(MIT|APACHE)$|\.cargo_vcs_info\.json$)' package.txt; then
+            echo "::error::unexpected files in the package (listed above)"
+            exit 1
+          fi
+      - run: cargo publish --dry-run --locked -p datex2
+
+  publish:
+    name: publish to crates.io
+    if: github.event_name == 'push'
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: crates-io
+    permissions:
+      id-token: write # OIDC token for crates.io Trusted Publishing
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+      - run: cargo publish --locked -p datex2
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+  github-release:
+    name: GitHub release
+    needs: [verify, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      # The release text is this version's section of the changelog.
+      - name: Extract the changelog section
+        run: |
+          awk -v v="${{ needs.verify.outputs.version }}" '
+            /^## \[/ { printing = ($0 ~ "^## \\[" v "\\]") ; next }
+            printing { print }
+          ' CHANGELOG.md > notes.md
+          test -s notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: datex2 ${{ needs.verify.outputs.version }}
+          body_path: notes.md
+          prerelease: ${{ contains(github.ref_name, '-') }}

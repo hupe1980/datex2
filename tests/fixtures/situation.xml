@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d2:payload xmlns:d2="http://datex2.eu/schema/3/d2Payload" xmlns:com="http://datex2.eu/schema/3/common" xmlns:sit="http://datex2.eu/schema/3/situation" xmlns:loc="http://datex2.eu/schema/3/locationReferencing" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="sit:SituationPublication" lang="en" modelBaseVersion="3">
+  <com:publicationTime>2026-11-19T12:00:00Z</com:publicationTime>
+  <com:publicationCreator>
+    <com:country>NL</com:country>
+    <com:nationalIdentifier>EXAMPLE</com:nationalIdentifier>
+  </com:publicationCreator>
+  <sit:situation id="S1">
+    <sit:overallSeverity>high</sit:overallSeverity>
+    <sit:situationVersionTime>2026-11-19T11:58:00Z</sit:situationVersionTime>
+    <sit:headerInformation>
+      <com:confidentiality>noRestriction</com:confidentiality>
+      <com:informationStatus>real</com:informationStatus>
+    </sit:headerInformation>
+    <sit:situationRecord xsi:type="sit:Accident" id="S1-R1" version="2">
+      <sit:situationRecordCreationTime>2026-11-19T11:40:00Z</sit:situationRecordCreationTime>
+      <sit:situationRecordVersionTime>2026-11-19T11:58:00Z</sit:situationRecordVersionTime>
+      <sit:probabilityOfOccurrence>certain</sit:probabilityOfOccurrence>
+      <sit:validity>
+        <com:validityStatus>active</com:validityStatus>
+        <com:validityTimeSpecification>
+          <com:overallStartTime>2026-11-19T11:40:00Z</com:overallStartTime>
+        </com:validityTimeSpecification>
+      </sit:validity>
+      <sit:generalPublicComment>
+        <sit:comment>
+          <com:values>
+            <com:value lang="en">Two cars collided; the right lane is blocked.</com:value>
+            <com:value lang="nl">Twee auto's gebotst; de rechterrijstrook is versperd.</com:value>
+          </com:values>
+        </sit:comment>
+      </sit:generalPublicComment>
+      <sit:locationReference xsi:type="loc:PointLocation">
+        <loc:pointByCoordinates>
+          <loc:pointCoordinates>
+            <loc:latitude>52.0907</loc:latitude>
+            <loc:longitude>5.1214</loc:longitude>
+          </loc:pointCoordinates>
+        </loc:pointByCoordinates>
+      </sit:locationReference>
+      <sit:accidentType>collision</sit:accidentType>
+      <sit:totalNumberOfVehiclesInvolved>2</sit:totalNumberOfVehiclesInvolved>
+    </sit:situationRecord>
+  </sit:situation>
+</d2:payload>
