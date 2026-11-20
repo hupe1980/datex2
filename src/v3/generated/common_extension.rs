@@ -4,9 +4,13 @@
 //! Names follow the standard; see <https://docs.datex2.eu/> for what each one means.
 
 #[allow(unused_imports)]
-use super::{common as com, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst};
+use super::{common as com, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst, message_container as con, exchange_information as ex, information_management as inf, cis_information as cis};
 #[allow(unused_imports)]
-use crate::out::{Out, Pattern};
+use crate::out::{Out, Pattern, Rules};
+#[allow(unused_imports)]
+use crate::json::{JsonReader, JsonWriter};
+#[allow(unused_imports)]
+use crate::{ErrorKind, WarningKind};
 #[allow(unused_imports)]
 use crate::xml::{Enumeration, Xml};
 #[allow(unused_imports)]
@@ -719,6 +723,18 @@ impl Enumeration for EuVehicleCategoryEnum {
     fn extended(value: String) -> Self {
         Self::Extended(value)
     }
+    fn from_alias(literal: &str) -> Option<Self> {
+        match literal {
+            "l" => Some(Self::Extended(literal.to_owned())),
+            "n1ClassI" => Some(Self::Extended(literal.to_owned())),
+            "n1ClassII" => Some(Self::Extended(literal.to_owned())),
+            "n1ClassIII" => Some(Self::Extended(literal.to_owned())),
+            "n1ClassIIIAndN2" => Some(Self::Extended(literal.to_owned())),
+            "other" => Some(Self::Extended(literal.to_owned())),
+            _ => None,
+        }
+    }
+
 }
 
 impl EuVehicleCategoryEnum {
@@ -899,10 +915,10 @@ pub struct AgeCharacteristic {
 }
 
 impl AgeCharacteristic {
-    const FIELDS: &'static [u32] = &[0x4072a, 0x40c80, 0x40c81, 0x40c2f, 0x40407];
+    const FIELDS: &'static [u32] = &[0x50757, 0x50ce2, 0x50ce3, 0x50c8f, 0x50421];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x4001a);
+        r.expect_type(0x5001a);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -912,11 +928,11 @@ impl AgeCharacteristic {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x4072a => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1834); }
-                    0x40c80 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3200); }
-                    0x40c81 => { let v = r.value::<u64>()?; r.set(&mut e2, v, 3201); }
-                    0x40c2f => { let v = Some(NonNegativeIntegerComparison::read(r)?); r.set(&mut e3, v.map(Box::new), 3119); }
-                    0x40407 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1031); }
+                    0x50757 => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1879); }
+                    0x50ce2 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3298); }
+                    0x50ce3 => { let v = r.value::<u64>()?; r.set(&mut e2, v, 3299); }
+                    0x50c8f => { let v = Some(NonNegativeIntegerComparison::read(r)?); r.set(&mut e3, v.map(Box::new), 3215); }
+                    0x50421 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1057); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -925,7 +941,7 @@ impl AgeCharacteristic {
                 break;
             }
         }
-        r.required(&e0, 1834);
+        r.required(&e0, 1879);
         let v = Self {
             comparison_operator: e0,
             year_of_first_registration: e1,
@@ -952,6 +968,82 @@ impl AgeCharacteristic {
         if let Some(v) = &self.vehicle_age { v.write(w, "comx:vehicleAge", "", "")?; }
         if let Some(v) = &self.age_characteristic_extension { w.extension("comx:_ageCharacteristicExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl AgeCharacteristic {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                421 => if r.first(&mut seen[0])? { f0 = r.enumeration::<com::ComparisonOperatorEnum>()?; },
+                2679 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                2680 => if r.first(&mut seen[2])? { f2 = r.number::<u64>()?; },
+                2548 => if r.first(&mut seen[3])? { f3 = NonNegativeIntegerComparison::read_json(r)?.map(Box::new); },
+                429 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 421);
+        Ok(Self {
+            comparison_operator: f0,
+            year_of_first_registration: f1,
+            year_of_last_registration: f2,
+            vehicle_age: f3,
+            age_characteristic_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(250)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.comparison_operator {
+            Some(v) => {
+                w.key(421)?;
+                w.enumeration(157, v.literal())?;
+            }
+            None => w.absent(421, w.missing("comparisonOperator"))?,
+        }
+        if let Some(v) = &self.year_of_first_registration {
+            w.key(2679)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.year_of_last_registration {
+            w.key(2680)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.vehicle_age {
+            w.key(2548)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.age_characteristic_extension {
+            w.key(429)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -987,10 +1079,10 @@ pub struct DangerousGoodsExtended {
 }
 
 impl DangerousGoodsExtended {
-    const FIELDS: &'static [u32] = &[0x30717, 0x30757, 0x30758, 0x30852, 0x30853, 0x30854, 0x30bf7, 0x30c08, 0x30c6a, 0x30c72, 0x304b9, 0x40697, 0x40453];
+    const FIELDS: &'static [u32] = &[0x40740, 0x40787, 0x40788, 0x4088e, 0x4088f, 0x40890, 0x40c56, 0x40c67, 0x40ccc, 0x40cd4, 0x404d9, 0x506c0, 0x5046f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x40067);
+        r.expect_type(0x50069);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1008,19 +1100,19 @@ impl DangerousGoodsExtended {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x30717 => { let v = r.multilingual()?; r.set(&mut e0, v, 1815); }
-                    0x30757 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1879); }
-                    0x30758 => { let v = r.enumeration::<com::DangerousGoodsRegulationsEnum>()?; r.set(&mut e2, v, 1880); }
-                    0x30852 => { let v = r.string()?; r.set(&mut e3, v, 2130); }
-                    0x30853 => { let v = r.value::<u64>()?; r.set(&mut e4, v, 2131); }
-                    0x30854 => { let v = r.string()?; r.set(&mut e5, v, 2132); }
-                    0x30bf7 => { let v = r.string()?; r.set(&mut e6, v, 3063); }
-                    0x30c08 => { let v = r.string()?; r.set(&mut e7, v, 3080); }
-                    0x30c6a => { let v = r.value::<f32>()?; r.set(&mut e8, v, 3178); }
-                    0x30c72 => { let v = r.value::<f32>()?; r.set(&mut e9, v, 3186); }
-                    0x304b9 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1209); }
-                    0x40697 => { let v = r.string()?; e11.extend(v); }
-                    0x40453 => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1107); }
+                    0x40740 => { let v = r.multilingual()?; r.set(&mut e0, v, 1856); }
+                    0x40787 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1927); }
+                    0x40788 => { let v = r.enumeration::<com::DangerousGoodsRegulationsEnum>()?; r.set(&mut e2, v, 1928); }
+                    0x4088e => { let v = r.string()?; r.set(&mut e3, v, 2190); }
+                    0x4088f => { let v = r.value::<u64>()?; r.set(&mut e4, v, 2191); }
+                    0x40890 => { let v = r.string()?; r.set(&mut e5, v, 2192); }
+                    0x40c56 => { let v = r.string()?; r.set(&mut e6, v, 3158); }
+                    0x40c67 => { let v = r.string()?; r.set(&mut e7, v, 3175); }
+                    0x40ccc => { let v = r.value::<f32>()?; r.set(&mut e8, v, 3276); }
+                    0x40cd4 => { let v = r.value::<f32>()?; r.set(&mut e9, v, 3284); }
+                    0x404d9 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1241); }
+                    0x506c0 => { let v = r.string()?; e11.extend(v); }
+                    0x5046f => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1135); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1029,7 +1121,7 @@ impl DangerousGoodsExtended {
                 break;
             }
         }
-        r.required(&e0, 1815);
+        r.required(&e0, 1856);
         let v = Self {
             chemical_name: e0,
             dangerous_goods_flash_point: e1,
@@ -1076,6 +1168,144 @@ impl DangerousGoodsExtended {
     }
 }
 
+impl DangerousGoodsExtended {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                330 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                513 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                514 => if r.first(&mut seen[2])? { f2 = r.enumeration::<com::DangerousGoodsRegulationsEnum>()?; },
+                935 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                936 => if r.first(&mut seen[4])? { f4 = r.number::<u64>()?; },
+                937 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                2383 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                2508 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                2657 => if r.first(&mut seen[8])? { f8 = r.number::<f32>()?; },
+                2665 => if r.first(&mut seen[9])? { f9 = r.number::<f32>()?; },
+                372 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                68 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f11.push(v); } } },
+                431 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 330);
+        Ok(Self {
+            chemical_name: f0,
+            dangerous_goods_flash_point: f1,
+            dangerous_goods_regulations: f2,
+            hazard_code_identification: f3,
+            hazard_code_version_number: f4,
+            hazard_substance_item_page_number: f5,
+            trem_card_number: f6,
+            undg_number: f7,
+            volume_of_dangerous_goods: f8,
+            weight_of_dangerous_goods: f9,
+            hazardous_materials_extension: f10,
+            adr_class_value: f11,
+            dangerous_goods_extended_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(252)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.chemical_name {
+            Some(v) => {
+                w.key(330)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(330, w.missing("chemicalName"))?,
+        }
+        if let Some(v) = &self.dangerous_goods_flash_point {
+            w.key(513)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.dangerous_goods_regulations {
+            w.key(514)?;
+            w.enumeration(160, v.literal())?;
+        }
+        if let Some(v) = &self.hazard_code_identification {
+            w.key(935)?;
+            w.max_len("hazardCodeIdentification", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.hazard_code_version_number {
+            w.key(936)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.hazard_substance_item_page_number {
+            w.key(937)?;
+            w.max_len("hazardSubstanceItemPageNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.trem_card_number {
+            w.key(2383)?;
+            w.max_len("tremCardNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.undg_number {
+            w.key(2508)?;
+            w.max_len("undgNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.volume_of_dangerous_goods {
+            w.key(2657)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.weight_of_dangerous_goods {
+            w.key(2665)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.hazardous_materials_extension {
+            w.key(372)?;
+            w.extension(v)?;
+        }
+        w.count("adrClassValue", self.adr_class_value.len(), 0, 13)?;
+        if !self.adr_class_value.is_empty() {
+            w.key(68)?;
+            w.begin_array()?;
+            for v in &self.adr_class_value {
+                w.item()?;
+                w.max_len("adrClassValue", v, 1024)?; w.pattern("adrClassValue", v, Pattern::AdrClass)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dangerous_goods_extended_extension {
+            w.key(431)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:DayWeekMonthExtended`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DayWeekMonthExtended {
@@ -1084,16 +1314,16 @@ pub struct DayWeekMonthExtended {
 }
 
 impl DayWeekMonthExtended {
-    const FIELDS: &'static [u32] = &[0x406c1];
+    const FIELDS: &'static [u32] = &[0x506ea];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x4006b);
+        r.expect_type(0x5006d);
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x406c1 => { let v = r.enumeration::<ApplicableDaysWithinMonthEnum>()?; r.set(&mut e0, v, 1729); }
+                    0x506ea => { let v = r.enumeration::<ApplicableDaysWithinMonthEnum>()?; r.set(&mut e0, v, 1770); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1102,7 +1332,7 @@ impl DayWeekMonthExtended {
                 break;
             }
         }
-        r.required(&e0, 1729);
+        r.required(&e0, 1770);
         let v = Self {
             applicable_days_within_month: e0,
         };
@@ -1124,6 +1354,54 @@ impl DayWeekMonthExtended {
     }
 }
 
+impl DayWeekMonthExtended {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                245 => if r.first(&mut seen[0])? { f0 = r.enumeration::<ApplicableDaysWithinMonthEnum>()?; },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 245);
+        Ok(Self {
+            applicable_days_within_month: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(253)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.applicable_days_within_month {
+            Some(v) => {
+                w.key(245)?;
+                w.enumeration(251, v.literal())?;
+            }
+            None => w.absent(245, w.missing("applicableDaysWithinMonth"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:EmissionsExtension`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EmissionsExtension {
@@ -1132,16 +1410,16 @@ pub struct EmissionsExtension {
 }
 
 impl EmissionsExtension {
-    const FIELDS: &'static [u32] = &[0x4072a];
+    const FIELDS: &'static [u32] = &[0x50757];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x40098);
+        r.expect_type(0x5009c);
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x4072a => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1834); }
+                    0x50757 => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1879); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1150,7 +1428,7 @@ impl EmissionsExtension {
                 break;
             }
         }
-        r.required(&e0, 1834);
+        r.required(&e0, 1879);
         let v = Self {
             comparison_operator: e0,
         };
@@ -1172,6 +1450,54 @@ impl EmissionsExtension {
     }
 }
 
+impl EmissionsExtension {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                421 => if r.first(&mut seen[0])? { f0 = r.enumeration::<com::ComparisonOperatorEnum>()?; },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 421);
+        Ok(Self {
+            comparison_operator: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(255)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.comparison_operator {
+            Some(v) => {
+                w.key(421)?;
+                w.enumeration(157, v.literal())?;
+            }
+            None => w.absent(421, w.missing("comparisonOperator"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:EnginePowerCharacteristics`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnginePowerCharacteristics {
@@ -1186,10 +1512,10 @@ pub struct EnginePowerCharacteristics {
 }
 
 impl EnginePowerCharacteristics {
-    const FIELDS: &'static [u32] = &[0x4072a, 0x407df, 0x40c09, 0x40490];
+    const FIELDS: &'static [u32] = &[0x50757, 0x50814, 0x50c68, 0x504ae];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x400a6);
+        r.expect_type(0x500aa);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1198,10 +1524,10 @@ impl EnginePowerCharacteristics {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x4072a => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1834); }
-                    0x407df => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2015); }
-                    0x40c09 => { let v = r.enumeration::<PowerUnitOfMeasureEnum>()?; r.set(&mut e2, v, 3081); }
-                    0x40490 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1168); }
+                    0x50757 => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1879); }
+                    0x50814 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2068); }
+                    0x50c68 => { let v = r.enumeration::<PowerUnitOfMeasureEnum>()?; r.set(&mut e2, v, 3176); }
+                    0x504ae => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1198); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1210,9 +1536,9 @@ impl EnginePowerCharacteristics {
                 break;
             }
         }
-        r.required(&e0, 1834);
-        r.required(&e1, 2015);
-        r.required(&e2, 3081);
+        r.required(&e0, 1879);
+        r.required(&e1, 2068);
+        r.required(&e2, 3176);
         let v = Self {
             comparison_operator: e0,
             engine_power: e1,
@@ -1246,6 +1572,83 @@ impl EnginePowerCharacteristics {
     }
 }
 
+impl EnginePowerCharacteristics {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                421 => if r.first(&mut seen[0])? { f0 = r.enumeration::<com::ComparisonOperatorEnum>()?; },
+                687 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                2509 => if r.first(&mut seen[2])? { f2 = r.enumeration::<PowerUnitOfMeasureEnum>()?; },
+                433 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 421);
+        r.required(&f1, 687);
+        r.required(&f2, 2509);
+        Ok(Self {
+            comparison_operator: f0,
+            engine_power: f1,
+            unit_of_measure: f2,
+            engine_power_characteristics_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(256)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.comparison_operator {
+            Some(v) => {
+                w.key(421)?;
+                w.enumeration(157, v.literal())?;
+            }
+            None => w.absent(421, w.missing("comparisonOperator"))?,
+        }
+        match &self.engine_power {
+            Some(v) => {
+                w.key(687)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(687, w.missing("enginePower"))?,
+        }
+        match &self.unit_of_measure {
+            Some(v) => {
+                w.key(2509)?;
+                w.enumeration(271, v.literal())?;
+            }
+            None => w.absent(2509, w.missing("unitOfMeasure"))?,
+        }
+        if let Some(v) = &self.engine_power_characteristics_extension {
+            w.key(433)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:FuzzyPeriod`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct FuzzyPeriod {
@@ -1258,10 +1661,10 @@ pub struct FuzzyPeriod {
 }
 
 impl FuzzyPeriod {
-    const FIELDS: &'static [u32] = &[0x406f3, 0x407c7, 0x404a0];
+    const FIELDS: &'static [u32] = &[0x5071c, 0x507fc, 0x504c0];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x400b6);
+        r.expect_type(0x500bc);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1269,9 +1672,9 @@ impl FuzzyPeriod {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x406f3 => { let v = r.enumeration::<FuzzyTimeEnum>()?; r.set(&mut e0, v, 1779); }
-                    0x407c7 => { let v = r.enumeration::<FuzzyTimeEnum>()?; r.set(&mut e1, v, 1991); }
-                    0x404a0 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1184); }
+                    0x5071c => { let v = r.enumeration::<FuzzyTimeEnum>()?; r.set(&mut e0, v, 1820); }
+                    0x507fc => { let v = r.enumeration::<FuzzyTimeEnum>()?; r.set(&mut e1, v, 2044); }
+                    0x504c0 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1216); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1302,6 +1705,64 @@ impl FuzzyPeriod {
     }
 }
 
+impl FuzzyPeriod {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                295 => if r.first(&mut seen[0])? { f0 = r.enumeration::<FuzzyTimeEnum>()?; },
+                663 => if r.first(&mut seen[1])? { f1 = r.enumeration::<FuzzyTimeEnum>()?; },
+                434 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            begin_or_duration: f0,
+            end_or_duration: f1,
+            fuzzy_period_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(262)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.begin_or_duration {
+            w.key(295)?;
+            w.enumeration(263, v.literal())?;
+        }
+        if let Some(v) = &self.end_or_duration {
+            w.key(663)?;
+            w.enumeration(263, v.literal())?;
+        }
+        if let Some(v) = &self.fuzzy_period_extension {
+            w.key(434)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:GrossTrailerWeightCharacteristics`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GrossTrailerWeightCharacteristics {
@@ -1316,10 +1777,10 @@ pub struct GrossTrailerWeightCharacteristics {
 }
 
 impl GrossTrailerWeightCharacteristics {
-    const FIELDS: &'static [u32] = &[0x4072a, 0x4084a, 0x40c06, 0x404b3];
+    const FIELDS: &'static [u32] = &[0x50757, 0x50886, 0x50c65, 0x504d3];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x400c9);
+        r.expect_type(0x500cf);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1328,10 +1789,10 @@ impl GrossTrailerWeightCharacteristics {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x4072a => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1834); }
-                    0x4084a => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2122); }
-                    0x40c06 => { let v = r.enumeration::<com::WeightTypeEnum>()?; r.set(&mut e2, v, 3078); }
-                    0x404b3 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1203); }
+                    0x50757 => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1879); }
+                    0x50886 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2182); }
+                    0x50c65 => { let v = r.enumeration::<com::WeightTypeEnum>()?; r.set(&mut e2, v, 3173); }
+                    0x504d3 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1235); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1340,9 +1801,9 @@ impl GrossTrailerWeightCharacteristics {
                 break;
             }
         }
-        r.required(&e0, 1834);
-        r.required(&e1, 2122);
-        r.required(&e2, 3078);
+        r.required(&e0, 1879);
+        r.required(&e1, 2182);
+        r.required(&e2, 3173);
         let v = Self {
             comparison_operator: e0,
             gross_trailer_weight: e1,
@@ -1376,6 +1837,83 @@ impl GrossTrailerWeightCharacteristics {
     }
 }
 
+impl GrossTrailerWeightCharacteristics {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                421 => if r.first(&mut seen[0])? { f0 = r.enumeration::<com::ComparisonOperatorEnum>()?; },
+                927 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                2503 => if r.first(&mut seen[2])? { f2 = r.enumeration::<com::WeightTypeEnum>()?; },
+                435 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 421);
+        r.required(&f1, 927);
+        r.required(&f2, 2503);
+        Ok(Self {
+            comparison_operator: f0,
+            gross_trailer_weight: f1,
+            type_of_weight: f2,
+            gross_trailer_weight_characteristics_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(264)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.comparison_operator {
+            Some(v) => {
+                w.key(421)?;
+                w.enumeration(157, v.literal())?;
+            }
+            None => w.absent(421, w.missing("comparisonOperator"))?,
+        }
+        match &self.gross_trailer_weight {
+            Some(v) => {
+                w.key(927)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(927, w.missing("grossTrailerWeight"))?,
+        }
+        match &self.type_of_weight {
+            Some(v) => {
+                w.key(2503)?;
+                w.enumeration(245, v.literal())?;
+            }
+            None => w.absent(2503, w.missing("typeOfWeight"))?,
+        }
+        if let Some(v) = &self.gross_trailer_weight_characteristics_extension {
+            w.key(435)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:NonNegativeIntegerComparison`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NonNegativeIntegerComparison {
@@ -1388,10 +1926,10 @@ pub struct NonNegativeIntegerComparison {
 }
 
 impl NonNegativeIntegerComparison {
-    const FIELDS: &'static [u32] = &[0x4072a, 0x40c2c, 0x404ff];
+    const FIELDS: &'static [u32] = &[0x50757, 0x50c8c, 0x50522];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x4011a);
+        r.expect_type(0x50123);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1399,9 +1937,9 @@ impl NonNegativeIntegerComparison {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x4072a => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1834); }
-                    0x40c2c => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3116); }
-                    0x404ff => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1279); }
+                    0x50757 => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e0, v, 1879); }
+                    0x50c8c => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3212); }
+                    0x50522 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1314); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1410,8 +1948,8 @@ impl NonNegativeIntegerComparison {
                 break;
             }
         }
-        r.required(&e0, 1834);
-        r.required(&e1, 3116);
+        r.required(&e0, 1879);
+        r.required(&e1, 3212);
         let v = Self {
             comparison_operator: e0,
             value: e1,
@@ -1440,6 +1978,72 @@ impl NonNegativeIntegerComparison {
     }
 }
 
+impl NonNegativeIntegerComparison {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                421 => if r.first(&mut seen[0])? { f0 = r.enumeration::<com::ComparisonOperatorEnum>()?; },
+                2545 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                436 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 421);
+        r.required(&f1, 2545);
+        Ok(Self {
+            comparison_operator: f0,
+            value: f1,
+            non_negative_integer_comparison_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(265)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.comparison_operator {
+            Some(v) => {
+                w.key(421)?;
+                w.enumeration(157, v.literal())?;
+            }
+            None => w.absent(421, w.missing("comparisonOperator"))?,
+        }
+        match &self.value {
+            Some(v) => {
+                w.key(2545)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(2545, w.missing("value"))?,
+        }
+        if let Some(v) = &self.non_negative_integer_comparison_extension {
+            w.key(436)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:NumberPlateCharacteristics`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NumberPlateCharacteristics {
@@ -1452,10 +2056,10 @@ pub struct NumberPlateCharacteristics {
 }
 
 impl NumberPlateCharacteristics {
-    const FIELDS: &'static [u32] = &[0x4074a, 0x40b6d, 0x40507];
+    const FIELDS: &'static [u32] = &[0x50779, 0x50bc7, 0x5052a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x40122);
+        r.expect_type(0x5012b);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1463,9 +2067,9 @@ impl NumberPlateCharacteristics {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x4074a => { let v = r.string()?; r.set(&mut e0, v, 1866); }
-                    0x40b6d => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2925); }
-                    0x40507 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1287); }
+                    0x50779 => { let v = r.string()?; r.set(&mut e0, v, 1913); }
+                    0x50bc7 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3015); }
+                    0x5052a => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1322); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1496,6 +2100,64 @@ impl NumberPlateCharacteristics {
     }
 }
 
+impl NumberPlateCharacteristics {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                471 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2180 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                437 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            country_of_registration: f0,
+            start_of_numeric_code: f1,
+            number_plate_characteristics_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(266)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.country_of_registration {
+            w.key(471)?;
+            w.max_len("countryOfRegistration", v, 2)?; w.string(v)?;
+        }
+        if let Some(v) = &self.start_of_numeric_code {
+            w.key(2180)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.number_plate_characteristics_extension {
+            w.key(437)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:NumericalEmissionValues`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NumericalEmissionValues {
@@ -1510,10 +2172,10 @@ pub struct NumericalEmissionValues {
 }
 
 impl NumericalEmissionValues {
-    const FIELDS: &'static [u32] = &[0x407c3, 0x40c2c, 0x4072a, 0x40509];
+    const FIELDS: &'static [u32] = &[0x507f8, 0x50c8c, 0x50757, 0x5052c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x40124);
+        r.expect_type(0x5012d);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1522,10 +2184,10 @@ impl NumericalEmissionValues {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x407c3 => { let v = r.enumeration::<EmissionTypeEnum>()?; r.set(&mut e0, v, 1987); }
-                    0x40c2c => { let v = r.value::<f32>()?; r.set(&mut e1, v, 3116); }
-                    0x4072a => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e2, v, 1834); }
-                    0x40509 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1289); }
+                    0x507f8 => { let v = r.enumeration::<EmissionTypeEnum>()?; r.set(&mut e0, v, 2040); }
+                    0x50c8c => { let v = r.value::<f32>()?; r.set(&mut e1, v, 3212); }
+                    0x50757 => { let v = r.enumeration::<com::ComparisonOperatorEnum>()?; r.set(&mut e2, v, 1879); }
+                    0x5052c => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1324); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1558,6 +2220,71 @@ impl NumericalEmissionValues {
     }
 }
 
+impl NumericalEmissionValues {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                660 => if r.first(&mut seen[0])? { f0 = r.enumeration::<EmissionTypeEnum>()?; },
+                2545 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                421 => if r.first(&mut seen[2])? { f2 = r.enumeration::<com::ComparisonOperatorEnum>()?; },
+                438 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            emission_type: f0,
+            value: f1,
+            comparison_operator: f2,
+            numerical_emission_values_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(267)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.emission_type {
+            w.key(660)?;
+            w.enumeration(254, v.literal())?;
+        }
+        if let Some(v) = &self.value {
+            w.key(2545)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.comparison_operator {
+            w.key(421)?;
+            w.enumeration(157, v.literal())?;
+        }
+        if let Some(v) = &self.numerical_emission_values_extension {
+            w.key(438)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:OwnerCharacteristic`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OwnerCharacteristic {
@@ -1570,10 +2297,10 @@ pub struct OwnerCharacteristic {
 }
 
 impl OwnerCharacteristic {
-    const FIELDS: &'static [u32] = &[0x409fa, 0x408e5, 0x4053d];
+    const FIELDS: &'static [u32] = &[0x50a3f, 0x50923, 0x50560];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x40159);
+        r.expect_type(0x50162);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1581,9 +2308,9 @@ impl OwnerCharacteristic {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x409fa => { let v = r.enumeration::<OwnerTypeEnum>()?; r.set(&mut e0, v, 2554); }
-                    0x408e5 => { let v = loc::LocationReference::read(r)?; r.set(&mut e1, v, 2277); }
-                    0x4053d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1341); }
+                    0x50a3f => { let v = r.enumeration::<OwnerTypeEnum>()?; r.set(&mut e0, v, 2623); }
+                    0x50923 => { let v = loc::LocationReference::read(r)?; r.set(&mut e1, v, 2339); }
+                    0x50560 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1376); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1592,7 +2319,7 @@ impl OwnerCharacteristic {
                 break;
             }
         }
-        r.required(&e0, 2554);
+        r.required(&e0, 2623);
         let v = Self {
             owner_type: e0,
             location_of_residency: e1,
@@ -1618,6 +2345,68 @@ impl OwnerCharacteristic {
     }
 }
 
+impl OwnerCharacteristic {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1522 => if r.first(&mut seen[0])? { f0 = r.enumeration::<OwnerTypeEnum>()?; },
+                1237 => if r.first(&mut seen[1])? { f1 = loc::LocationReference::read_json(r)?; },
+                439 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1522);
+        Ok(Self {
+            owner_type: f0,
+            location_of_residency: f1,
+            owner_characteristic_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(268)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.owner_type {
+            Some(v) => {
+                w.key(1522)?;
+                w.enumeration(269, v.literal())?;
+            }
+            None => w.absent(1522, w.missing("ownerType"))?,
+        }
+        if let Some(v) = &self.location_of_residency {
+            w.key(1237)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner_characteristic_extension {
+            w.key(439)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:PeriodExtended`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PeriodExtended {
@@ -1626,16 +2415,16 @@ pub struct PeriodExtended {
 }
 
 impl PeriodExtended {
-    const FIELDS: &'static [u32] = &[0x40837];
+    const FIELDS: &'static [u32] = &[0x50873];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x4016d);
+        r.expect_type(0x50176);
         r.attrs_done();
         let mut e0 = Vec::new();
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x40837 => { let v = Some(FuzzyPeriod::read(r)?); e0.extend(v); }
+                    0x50873 => { let v = Some(FuzzyPeriod::read(r)?); e0.extend(v); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1662,6 +2451,55 @@ impl PeriodExtended {
     }
 }
 
+impl PeriodExtended {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = Vec::new();
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                908 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = FuzzyPeriod::read_json(r)? { f0.push(v); } } },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            fuzzy_period: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(270)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.fuzzy_period.is_empty() {
+            w.key(908)?;
+            w.begin_array()?;
+            for v in &self.fuzzy_period {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:RegulatedCharacteristics`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RegulatedCharacteristics {
@@ -1684,10 +2522,10 @@ pub struct RegulatedCharacteristics {
 }
 
 impl RegulatedCharacteristics {
-    const FIELDS: &'static [u32] = &[0x407f1, 0x407f0, 0x40953, 0x409a4, 0x40b5b, 0x407ee, 0x407ef, 0x40595];
+    const FIELDS: &'static [u32] = &[0x50826, 0x50825, 0x50995, 0x509e8, 0x50bb5, 0x50823, 0x50824, 0x505b8];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x401b3);
+        r.expect_type(0x501bc);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -1700,14 +2538,14 @@ impl RegulatedCharacteristics {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x407f1 => { let v = r.enumeration::<EuVehicleCategoryEnum>()?; e0.extend(v); }
-                    0x407f0 => { let v = r.enumeration::<EuSpecialPurposeVehicleEnum>()?; r.set(&mut e1, v, 2032); }
-                    0x40953 => { let v = r.multilingual()?; r.set(&mut e2, v, 2387); }
-                    0x409a4 => { let v = r.value::<bool>()?; r.set(&mut e3, v, 2468); }
-                    0x40b5b => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2907); }
-                    0x407ee => { let v = r.enumeration::<EuBodyworkCodeEnum>()?; r.set(&mut e5, v, 2030); }
-                    0x407ef => { let v = r.enumeration::<EuBodyworkSupplementaryDigit>()?; r.set(&mut e6, v, 2031); }
-                    0x40595 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1429); }
+                    0x50826 => { let v = r.enumeration::<EuVehicleCategoryEnum>()?; e0.extend(v); }
+                    0x50825 => { let v = r.enumeration::<EuSpecialPurposeVehicleEnum>()?; r.set(&mut e1, v, 2085); }
+                    0x50995 => { let v = r.multilingual()?; r.set(&mut e2, v, 2453); }
+                    0x509e8 => { let v = r.value::<bool>()?; r.set(&mut e3, v, 2536); }
+                    0x50bb5 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2997); }
+                    0x50823 => { let v = r.enumeration::<EuBodyworkCodeEnum>()?; r.set(&mut e5, v, 2083); }
+                    0x50824 => { let v = r.enumeration::<EuBodyworkSupplementaryDigit>()?; r.set(&mut e6, v, 2084); }
+                    0x505b8 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1464); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1748,6 +2586,104 @@ impl RegulatedCharacteristics {
     }
 }
 
+impl RegulatedCharacteristics {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                705 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<EuVehicleCategoryEnum>()? { f0.push(v); } } },
+                704 => if r.first(&mut seen[1])? { f1 = r.enumeration::<EuSpecialPurposeVehicleEnum>()?; },
+                1354 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                1436 => if r.first(&mut seen[3])? { f3 = r.boolean()?; },
+                2162 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                702 => if r.first(&mut seen[5])? { f5 = r.enumeration::<EuBodyworkCodeEnum>()?; },
+                703 => if r.first(&mut seen[6])? { f6 = r.enumeration::<EuBodyworkSupplementaryDigit>()?; },
+                440 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            eu_vehicle_category: f0,
+            eu_special_purpose_vehicle: f1,
+            national_special_purpose_vehicle: f2,
+            offroad_vehicle: f3,
+            special_purpose_vehicle: f4,
+            eu_bodywork_code: f5,
+            eu_bodywork_supplementary_digit: f6,
+            regulated_characteristics_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(272)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.eu_vehicle_category.is_empty() {
+            w.key(705)?;
+            w.begin_array()?;
+            for v in &self.eu_vehicle_category {
+                w.item()?;
+                w.enumeration(261, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.eu_special_purpose_vehicle {
+            w.key(704)?;
+            w.enumeration(260, v.literal())?;
+        }
+        if let Some(v) = &self.national_special_purpose_vehicle {
+            w.key(1354)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.offroad_vehicle {
+            w.key(1436)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.special_purpose_vehicle {
+            w.key(2162)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.eu_bodywork_code {
+            w.key(702)?;
+            w.enumeration(258, v.literal())?;
+        }
+        if let Some(v) = &self.eu_bodywork_supplementary_digit {
+            w.key(703)?;
+            w.enumeration(259, v.literal())?;
+        }
+        if let Some(v) = &self.regulated_characteristics_extension {
+            w.key(440)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:Speed`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Speed {
@@ -1760,10 +2696,10 @@ pub struct Speed {
 }
 
 impl Speed {
-    const FIELDS: &'static [u32] = &[0x4098f, 0x40c09, 0x405c7];
+    const FIELDS: &'static [u32] = &[0x509d3, 0x50c68, 0x505ef];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x401e7);
+        r.expect_type(0x501f5);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1771,9 +2707,9 @@ impl Speed {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x4098f => { let v = r.value::<Decimal>()?; r.set(&mut e0, v, 2447); }
-                    0x40c09 => { let v = r.enumeration::<tro::UnitOfSpeedEnum>()?; r.set(&mut e1, v, 3081); }
-                    0x405c7 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1479); }
+                    0x509d3 => { let v = r.value::<Decimal>()?; r.set(&mut e0, v, 2515); }
+                    0x50c68 => { let v = r.enumeration::<tro::UnitOfSpeedEnum>()?; r.set(&mut e1, v, 3176); }
+                    0x505ef => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1519); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1782,8 +2718,8 @@ impl Speed {
                 break;
             }
         }
-        r.required(&e0, 2447);
-        r.required(&e1, 3081);
+        r.required(&e0, 2515);
+        r.required(&e1, 3176);
         let v = Self {
             numeric_value: e0,
             unit_of_measure: e1,
@@ -1812,6 +2748,72 @@ impl Speed {
     }
 }
 
+impl Speed {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1415 => if r.first(&mut seen[0])? { f0 = r.number::<Decimal>()?; },
+                2509 => if r.first(&mut seen[1])? { f1 = r.enumeration::<tro::UnitOfSpeedEnum>()?; },
+                441 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1415);
+        r.required(&f1, 2509);
+        Ok(Self {
+            numeric_value: f0,
+            unit_of_measure: f1,
+            speed_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(273)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.numeric_value {
+            Some(v) => {
+                w.key(1415)?;
+                w.decimal(v)?;
+            }
+            None => w.absent(1415, w.missing("numericValue"))?,
+        }
+        match &self.unit_of_measure {
+            Some(v) => {
+                w.key(2509)?;
+                w.enumeration(1037, v.literal())?;
+            }
+            None => w.absent(2509, w.missing("unitOfMeasure"))?,
+        }
+        if let Some(v) = &self.speed_extension {
+            w.key(441)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:TrailerCharacteristics`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TrailerCharacteristics {
@@ -1822,18 +2824,18 @@ pub struct TrailerCharacteristics {
 }
 
 impl TrailerCharacteristics {
-    const FIELDS: &'static [u32] = &[0x4084b, 0x40624];
+    const FIELDS: &'static [u32] = &[0x50887, 0x5064d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x40246);
+        r.expect_type(0x50255);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x4084b => { let v = Some(GrossTrailerWeightCharacteristics::read(r)?); e0.extend(v); }
-                    0x40624 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1572); }
+                    0x50887 => { let v = Some(GrossTrailerWeightCharacteristics::read(r)?); e0.extend(v); }
+                    0x5064d => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1613); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1860,6 +2862,63 @@ impl TrailerCharacteristics {
         for v in &self.gross_trailer_weight_characteristics { v.write(w, "comx:grossTrailerWeightCharacteristics", "", "")?; }
         if let Some(v) = &self.trailer_characteristics_extension { w.extension("comx:_trailerCharacteristicsExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl TrailerCharacteristics {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                928 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = GrossTrailerWeightCharacteristics::read_json(r)? { f0.push(v); } } },
+                442 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            gross_trailer_weight_characteristics: f0,
+            trailer_characteristics_extension: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(274)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        w.count("grossTrailerWeightCharacteristics", self.gross_trailer_weight_characteristics.len(), 0, 2)?;
+        if !self.gross_trailer_weight_characteristics.is_empty() {
+            w.key(928)?;
+            w.begin_array()?;
+            for v in &self.gross_trailer_weight_characteristics {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.trailer_characteristics_extension {
+            w.key(442)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -1891,10 +2950,10 @@ pub struct VehicleCharacteristicsExtended {
 }
 
 impl VehicleCharacteristicsExtended {
-    const FIELDS: &'static [u32] = &[0x407e1, 0x4069a, 0x40909, 0x40bec, 0x40856, 0x409f9, 0x4098e, 0x407e0, 0x40990, 0x40c44, 0x40acd];
+    const FIELDS: &'static [u32] = &[0x50816, 0x506c3, 0x50948, 0x50c4b, 0x50892, 0x50a3e, 0x509d2, 0x50815, 0x509d4, 0x50ca4, 0x50b16];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x4025d);
+        r.expect_type(0x5026c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -1910,17 +2969,17 @@ impl VehicleCharacteristicsExtended {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x407e1 => { let v = r.enumeration::<EngineTypeEnum>()?; r.set(&mut e0, v, 2017); }
-                    0x4069a => { let v = Some(AgeCharacteristic::read(r)?); e1.extend(v); }
-                    0x40909 => { let v = Some(Speed::read(r)?); r.set(&mut e2, v.map(Box::new), 2313); }
-                    0x40bec => { let v = Some(TrailerCharacteristics::read(r)?); r.set(&mut e3, v.map(Box::new), 3052); }
-                    0x40856 => { let v = com::AnyHazardousMaterials::read(r)?; r.set(&mut e4, v, 2134); }
-                    0x409f9 => { let v = Some(OwnerCharacteristic::read(r)?); r.set(&mut e5, v.map(Box::new), 2553); }
-                    0x4098e => { let v = Some(NumberPlateCharacteristics::read(r)?); r.set(&mut e6, v.map(Box::new), 2446); }
-                    0x407e0 => { let v = Some(EnginePowerCharacteristics::read(r)?); e7.extend(v); }
-                    0x40990 => { let v = Some(NumericalEmissionValues::read(r)?); e8.extend(v); }
-                    0x40c44 => { let v = Some(VehicleRegistrationCharacteristics::read(r)?); r.set(&mut e9, v.map(Box::new), 3140); }
-                    0x40acd => { let v = Some(RegulatedCharacteristics::read(r)?); e10.extend(v); }
+                    0x50816 => { let v = r.enumeration::<EngineTypeEnum>()?; r.set(&mut e0, v, 2070); }
+                    0x506c3 => { let v = Some(AgeCharacteristic::read(r)?); e1.extend(v); }
+                    0x50948 => { let v = Some(Speed::read(r)?); r.set(&mut e2, v.map(Box::new), 2376); }
+                    0x50c4b => { let v = Some(TrailerCharacteristics::read(r)?); r.set(&mut e3, v.map(Box::new), 3147); }
+                    0x50892 => { let v = com::AnyHazardousMaterials::read(r)?; r.set(&mut e4, v, 2194); }
+                    0x50a3e => { let v = Some(OwnerCharacteristic::read(r)?); r.set(&mut e5, v.map(Box::new), 2622); }
+                    0x509d2 => { let v = Some(NumberPlateCharacteristics::read(r)?); r.set(&mut e6, v.map(Box::new), 2514); }
+                    0x50815 => { let v = Some(EnginePowerCharacteristics::read(r)?); e7.extend(v); }
+                    0x509d4 => { let v = Some(NumericalEmissionValues::read(r)?); e8.extend(v); }
+                    0x50ca4 => { let v = Some(VehicleRegistrationCharacteristics::read(r)?); r.set(&mut e9, v.map(Box::new), 3236); }
+                    0x50b16 => { let v = Some(RegulatedCharacteristics::read(r)?); e10.extend(v); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1970,6 +3029,159 @@ impl VehicleCharacteristicsExtended {
     }
 }
 
+impl VehicleCharacteristicsExtended {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut lifted = [false; 1];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                689 => if r.first(&mut seen[0])? { f0 = r.enumeration::<EngineTypeEnum>()?; },
+                206 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AgeCharacteristic::read_json(r)? { f1.push(v); } } },
+                1277 => if r.first(&mut seen[2])? { f2 = Speed::read_json(r)?.map(Box::new); },
+                2372 => if r.first(&mut seen[3])? { f3 = TrailerCharacteristics::read_json(r)?.map(Box::new); },
+                939 => if r.first(&mut seen[4])? { f4 = com::AnyHazardousMaterials::read_json(r)?; },
+                1521 => if r.first(&mut seen[5])? { f5 = OwnerCharacteristic::read_json(r)?.map(Box::new); },
+                1414 => if r.first(&mut seen[6])? { f6 = NumberPlateCharacteristics::read_json(r)?.map(Box::new); },
+                688 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnginePowerCharacteristics::read_json(r)? { f7.push(v); } } },
+                1416 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = NumericalEmissionValues::read_json(r)? { f8.push(v); } } },
+                2568 => if r.first(&mut seen[9])? { f9 = VehicleRegistrationCharacteristics::read_json(r)?.map(Box::new); },
+                1838 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = RegulatedCharacteristics::read_json(r)? { f10.push(v); } } },
+                705 => if r.first(&mut lifted[0])? { let mut entry = RegulatedCharacteristics::default(); let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<EuVehicleCategoryEnum>()? { entry.eu_vehicle_category.push(v); } } f10.insert(0, entry); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            engine_type: f0,
+            age_characteristic: f1,
+            maximum_design_speed: f2,
+            trailer_characteristics: f3,
+            hazardous_materials: f4,
+            owner_characteristic: f5,
+            number_plate_characteristics: f6,
+            engine_power_characteristics: f7,
+            numerical_emission_values: f8,
+            vehicle_registration_characteristics: f9,
+            regulated_characteristics: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(275)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.engine_type {
+            w.key(689)?;
+            w.enumeration(257, v.literal())?;
+        }
+        w.count("ageCharacteristic", self.age_characteristic.len(), 0, 2)?;
+        if !self.age_characteristic.is_empty() {
+            w.key(206)?;
+            w.begin_array()?;
+            for v in &self.age_characteristic {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.maximum_design_speed {
+            w.key(1277)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.trailer_characteristics {
+            w.key(2372)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.hazardous_materials {
+            w.key(939)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner_characteristic {
+            w.key(1521)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.number_plate_characteristics {
+            w.key(1414)?;
+            v.write_json(w, None)?;
+        }
+        w.count("enginePowerCharacteristics", self.engine_power_characteristics.len(), 0, 2)?;
+        if !self.engine_power_characteristics.is_empty() {
+            w.key(688)?;
+            w.begin_array()?;
+            for v in &self.engine_power_characteristics {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        w.count("numericalEmissionValues", self.numerical_emission_values.len(), 0, 2)?;
+        if !self.numerical_emission_values.is_empty() {
+            w.key(1416)?;
+            w.begin_array()?;
+            for v in &self.numerical_emission_values {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.vehicle_registration_characteristics {
+            w.key(2568)?;
+            v.write_json(w, None)?;
+        }
+        if w.profile_active() {
+            match self.regulated_characteristics.as_slice() {
+                [] => {}
+                [one] if *one == RegulatedCharacteristics { eu_vehicle_category: one.eu_vehicle_category.clone(), ..Default::default() } => {
+                    w.key(705)?;
+                    w.begin_array()?;
+                    for v in &one.eu_vehicle_category {
+                        w.item()?;
+                        w.enumeration(261, v.literal())?;
+                    }
+                    w.end_array()?;
+                }
+                _ => return Err(w.lift_refused("regulatedCharacteristics", "euVehicleCategory")),
+            }
+        } else if !self.regulated_characteristics.is_empty() {
+            w.key(1838)?;
+            w.begin_array()?;
+            for v in &self.regulated_characteristics {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `comx:VehicleRegistrationCharacteristics`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VehicleRegistrationCharacteristics {
@@ -1980,18 +3192,18 @@ pub struct VehicleRegistrationCharacteristics {
 }
 
 impl VehicleRegistrationCharacteristics {
-    const FIELDS: &'static [u32] = &[0x40ac9, 0x40642];
+    const FIELDS: &'static [u32] = &[0x50b12, 0x5066b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x40265);
+        r.expect_type(0x50274);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x40ac9 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2761); }
-                    0x40642 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1602); }
+                    0x50b12 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2834); }
+                    0x5066b => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1643); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2017,6 +3229,57 @@ impl VehicleRegistrationCharacteristics {
         if let Some(v) = &self.registered_historic_vehicle { w.leaf("comx:registeredHistoricVehicle", v)?; }
         if let Some(v) = &self.vehicle_registration_characteristics_extension { w.extension("comx:_vehicleRegistrationCharacteristicsExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl VehicleRegistrationCharacteristics {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1834 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                443 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            registered_historic_vehicle: f0,
+            vehicle_registration_characteristics_extension: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(276)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.registered_historic_vehicle {
+            w.key(1834)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.vehicle_registration_characteristics_extension {
+            w.key(443)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 

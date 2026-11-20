@@ -142,7 +142,7 @@ fn q08_message_container_with_payload_first_and_several_payloads() {
         publication_body(&accident(""))
     );
     let xml = format!(
-        r#"<mc:messageContainer xmlns:mc="http://datex2.eu/schema/3/messageContainer" xmlns:ex="http://datex2.eu/schema/3/exchangeInformation" {NAMESPACES}>{payload}<mc:exchangeInformation><ex:dynamicInformation/></mc:exchangeInformation>{payload}</mc:messageContainer>"#
+        r#"<mc:messageContainer xmlns:mc="http://datex2.eu/schema/3/messageContainer" xmlns:ex="http://datex2.eu/schema/3/exchangeInformation" {NAMESPACES}>{payload}<mc:exchangeInformation><ex:exchangeContext><ex:codedExchangeProtocol>snapshotPush</ex:codedExchangeProtocol><ex:exchangeSpecificationVersion>3.0</ex:exchangeSpecificationVersion><ex:supplierOrCisRequester/></ex:exchangeContext><ex:dynamicInformation><ex:exchangeStatus>online</ex:exchangeStatus><ex:messageGenerationTimestamp>2026-11-19T12:00:00Z</ex:messageGenerationTimestamp></ex:dynamicInformation></mc:exchangeInformation>{payload}</mc:messageContainer>"#
     );
     let doc = read(&xml);
     assert_eq!(doc.publications.len(), 2);

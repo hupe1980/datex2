@@ -8,36 +8,36 @@ use crate::xml::Xml;
 impl Sealed for super::common::PayloadPublication {
     const NAME: &'static str = "Publication";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x1009e, &[]),
-        (0x100a0, &[]),
-        (0x20146, &[]),
-        (0x20154, &[]),
-        (0x201ab, &[]),
-        (0x300c2, &[]),
-        (0x50063, &[]),
-        (0x5008b, &[]),
-        (0x7009e, &[]),
-        (0x700a0, &[]),
-        (0x80146, &[]),
-        (0x80154, &[]),
-        (0x801ab, &[]),
-        (0x90078, &[]),
-        (0x900b1, &[]),
-        (0x901f2, &[]),
-        (0xb0192, &[]),
-        (0xc015f, &[]),
-        (0xc0161, &[]),
-        (0xe008f, &[]),
-        (0xe0105, &[]),
-        (0xe010a, &[]),
-        (0xf01dd, &[]),
-        (0x10021c, &[]),
-        (0x10021e, &[]),
-        (0x11018d, &[]),
-        (0x11023b, &[]),
-        (0x11027b, &[]),
-        (0x130274, &[]),
-        (0x130276, &[]),
+        (0x100a2, &[]),
+        (0x100a4, &[]),
+        (0x2014f, &[]),
+        (0x2015d, &[]),
+        (0x201b4, &[]),
+        (0x400c8, &[]),
+        (0x60065, &[]),
+        (0x6008d, &[]),
+        (0x800a2, &[]),
+        (0x800a4, &[]),
+        (0xa014f, &[]),
+        (0xa015d, &[]),
+        (0xa01b4, &[]),
+        (0xb007a, &[]),
+        (0xb00b7, &[]),
+        (0xb0200, &[]),
+        (0xe019b, &[]),
+        (0x100168, &[]),
+        (0x10016a, &[]),
+        (0x120092, &[]),
+        (0x12010d, &[]),
+        (0x120112, &[]),
+        (0x1301eb, &[]),
+        (0x14022b, &[]),
+        (0x14022d, &[]),
+        (0x150196, &[]),
+        (0x15024a, &[]),
+        (0x15028a, &[]),
+        (0x170283, &[]),
+        (0x170285, &[]),
     ];
 
     fn read_record(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -49,7 +49,7 @@ impl Record for super::common::PayloadPublication {}
 impl Sealed for super::afir_energy_infrastructure::DedicatedParkingSpaces {
     const NAME: &'static str = "DedicatedParkingSpaces";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x20764]),
+        (0x100a4, &[0x10806, 0x10802, 0x20794]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -61,7 +61,7 @@ impl Record for super::afir_energy_infrastructure::DedicatedParkingSpaces {}
 impl Sealed for super::afir_energy_infrastructure::EnergyInfrastructureSite {
     const NAME: &'static str = "EnergyInfrastructureSite";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd]),
+        (0x100a4, &[0x10806, 0x10802]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -73,7 +73,7 @@ impl Record for super::afir_energy_infrastructure::EnergyInfrastructureSite {}
 impl Sealed for super::afir_energy_infrastructure::EnergyInfrastructureSiteStatus {
     const NAME: &'static str = "EnergyInfrastructureSiteStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x1009e, &[0x107ce]),
+        (0x100a2, &[0x10803]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -85,7 +85,7 @@ impl Record for super::afir_energy_infrastructure::EnergyInfrastructureSiteStatu
 impl Sealed for super::afir_energy_infrastructure::EnergyInfrastructureStation {
     const NAME: &'static str = "EnergyInfrastructureStation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x107cf]),
+        (0x100a4, &[0x10806, 0x10802, 0x10804]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -97,7 +97,7 @@ impl Record for super::afir_energy_infrastructure::EnergyInfrastructureStation {
 impl Sealed for super::afir_energy_infrastructure::EnergyInfrastructureStationStatus {
     const NAME: &'static str = "EnergyInfrastructureStationStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x1009e, &[0x107ce, 0x107d0]),
+        (0x100a2, &[0x10803, 0x10805]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -109,7 +109,7 @@ impl Record for super::afir_energy_infrastructure::EnergyInfrastructureStationSt
 impl Sealed for super::afir_energy_infrastructure::EnergyInfrastructureTable {
     const NAME: &'static str = "EnergyInfrastructureTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1]),
+        (0x100a4, &[0x10806]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -121,7 +121,7 @@ impl Record for super::afir_energy_infrastructure::EnergyInfrastructureTable {}
 impl Sealed for super::afir_energy_infrastructure::EnergyRateUpdate {
     const NAME: &'static str = "EnergyRateUpdate";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x1009e, &[0x107ce, 0x107d0, 0x107dc]),
+        (0x100a2, &[0x10803, 0x10805, 0x10811]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -133,9 +133,9 @@ impl Record for super::afir_energy_infrastructure::EnergyRateUpdate {}
 impl Sealed for super::afir_energy_infrastructure::ServiceType {
     const NAME: &'static str = "ServiceType";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x1009e, &[0x107ce, 0x107d0, 0x10b34]),
-        (0x1009e, &[0x107ce, 0x10b34]),
-        (0x100a0, &[0x107d1, 0x107cd, 0x10b34]),
+        (0x100a2, &[0x10803, 0x10805, 0x10b89]),
+        (0x100a2, &[0x10803, 0x10b89]),
+        (0x100a4, &[0x10806, 0x10802, 0x10b89]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -147,7 +147,7 @@ impl Record for super::afir_energy_infrastructure::ServiceType {}
 impl Sealed for super::afir_facilities::ExternalIdentifier {
     const NAME: &'static str = "ExternalIdentifier";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x20805]),
+        (0x100a4, &[0x10806, 0x10802, 0x20840]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -159,7 +159,7 @@ impl Record for super::afir_facilities::ExternalIdentifier {}
 impl Sealed for super::afir_facilities::Image {
     const NAME: &'static str = "Image";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x20a2c]),
+        (0x100a4, &[0x10806, 0x10802, 0x20a72]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -171,7 +171,7 @@ impl Record for super::afir_facilities::Image {}
 impl Sealed for super::afir_facilities::OperatingHoursSpecification {
     const NAME: &'static str = "OperatingHoursSpecification";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x20146, &[0x209c8, 0x209c7]),
+        (0x2014f, &[0x20a0c, 0x20a0b]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -183,7 +183,7 @@ impl Record for super::afir_facilities::OperatingHoursSpecification {}
 impl Sealed for super::afir_facilities::OperatingHoursTable {
     const NAME: &'static str = "OperatingHoursTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x20146, &[0x209c8]),
+        (0x2014f, &[0x20a0c]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -195,7 +195,7 @@ impl Record for super::afir_facilities::OperatingHoursTable {}
 impl Sealed for super::afir_facilities::OrganisationTable {
     const NAME: &'static str = "OrganisationTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x20154, &[0x209de]),
+        (0x2015d, &[0x20a23]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -207,7 +207,7 @@ impl Record for super::afir_facilities::OrganisationTable {}
 impl Sealed for super::afir_facilities::RateMatrix {
     const NAME: &'static str = "RateMatrix";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x201ab, &[0x20aa4]),
+        (0x201b4, &[0x20aeb]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -219,7 +219,7 @@ impl Record for super::afir_facilities::RateMatrix {}
 impl Sealed for super::afir_facilities::RateTable {
     const NAME: &'static str = "RateTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x201ab, &[0x20aa4, 0x20aab]),
+        (0x201b4, &[0x20aeb, 0x20af2]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -231,8 +231,8 @@ impl Record for super::afir_facilities::RateTable {}
 impl Sealed for super::afir_facilities::SupplementalFacilityStatus {
     const NAME: &'static str = "SupplementalFacilityStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x1009e, &[0x107ce, 0x107d0, 0x20b91]),
-        (0x1009e, &[0x107ce, 0x20b91]),
+        (0x100a2, &[0x10803, 0x10805, 0x20bef]),
+        (0x100a2, &[0x10803, 0x20bef]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -244,8 +244,8 @@ impl Record for super::afir_facilities::SupplementalFacilityStatus {}
 impl Sealed for super::common::Period {
     const NAME: &'static str = "Period";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x201ab, &[0x20aa4, 0x209f1, 0x307f3]),
-        (0x201ab, &[0x20aa4, 0x209f1, 0x30c23]),
+        (0x201b4, &[0x20aeb, 0x20a36, 0x40828]),
+        (0x201b4, &[0x20aeb, 0x20a36, 0x40c83]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -257,10 +257,10 @@ impl Record for super::common::Period {}
 impl Sealed for super::common::UrlLink {
     const NAME: &'static str = "UrlLink";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x20887]),
-        (0x100a0, &[0x107d1, 0x107cd, 0x20a2d]),
-        (0x700a0, &[0x707d1, 0x707cd, 0x80887]),
-        (0x700a0, &[0x707d1, 0x707cd, 0x80a2d]),
+        (0x100a4, &[0x10806, 0x10802, 0x208c5]),
+        (0x100a4, &[0x10806, 0x10802, 0x20a73]),
+        (0x800a4, &[0x80806, 0x80802, 0xa08c5]),
+        (0x800a4, &[0x80806, 0x80802, 0xa0a73]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -272,8 +272,8 @@ impl Record for super::common::UrlLink {}
 impl Sealed for super::common::VehicleCharacteristics {
     const NAME: &'static str = "VehicleCharacteristics";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x206c6]),
-        (0x700a0, &[0x707d1, 0x707cd, 0x806c6]),
+        (0x100a4, &[0x10806, 0x10802, 0x206ef]),
+        (0x800a4, &[0x80806, 0x80802, 0xa06ef]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -285,15 +285,15 @@ impl Record for super::common::VehicleCharacteristics {}
 impl Sealed for super::common::VersionedReference {
     const NAME: &'static str = "VersionedReference";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x1009e, &[0x10b9b]),
-        (0x50063, &[0x50a5f]),
-        (0x5008b, &[0x50a5f]),
-        (0x7009e, &[0x70b9b]),
-        (0x901f2, &[0x90b73, 0x90ad0]),
-        (0x901f2, &[0x90b78, 0x90b73, 0x90ad0]),
-        (0xc015f, &[0xc0a0d]),
-        (0xe0105, &[0xe0925]),
-        (0x11023b, &[0x110a5f]),
+        (0x100a2, &[0x10bfa]),
+        (0x60065, &[0x60aa5]),
+        (0x6008d, &[0x60aa5]),
+        (0x800a2, &[0x80bfa]),
+        (0xb0200, &[0xb0bce, 0xb0b19]),
+        (0xb0200, &[0xb0bd3, 0xb0bce, 0xb0b19]),
+        (0x100168, &[0x100a52]),
+        (0x12010d, &[0x120964]),
+        (0x15024a, &[0x150aa5]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -305,8 +305,8 @@ impl Record for super::common::VersionedReference {}
 impl Sealed for super::controlled_zone::AlternativeMobilityOptions {
     const NAME: &'static str = "AlternativeMobilityOptions";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x50063, &[0x50740, 0x5073c, 0x506b1]),
-        (0x50063, &[0x50740, 0x50c20, 0x506b1]),
+        (0x60065, &[0x6076f, 0x6076b, 0x606da]),
+        (0x60065, &[0x6076f, 0x60c80, 0x606da]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -318,8 +318,8 @@ impl Record for super::controlled_zone::AlternativeMobilityOptions {}
 impl Sealed for super::controlled_zone::ControlledZone {
     const NAME: &'static str = "ControlledZone";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x50063, &[0x50740, 0x5073c]),
-        (0x50063, &[0x50740, 0x50c20]),
+        (0x60065, &[0x6076f, 0x6076b]),
+        (0x60065, &[0x6076f, 0x60c80]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -331,8 +331,8 @@ impl Record for super::controlled_zone::ControlledZone {}
 impl Sealed for super::controlled_zone::ControlledZoneRegulation {
     const NAME: &'static str = "ControlledZoneRegulation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x50063, &[0x50740, 0x5073c, 0x5073e]),
-        (0x50063, &[0x50740, 0x50c20, 0x5073e]),
+        (0x60065, &[0x6076f, 0x6076b, 0x6076d]),
+        (0x60065, &[0x6076f, 0x60c80, 0x6076d]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -344,7 +344,7 @@ impl Record for super::controlled_zone::ControlledZoneRegulation {}
 impl Sealed for super::controlled_zone::ControlledZoneTable {
     const NAME: &'static str = "ControlledZoneTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x50063, &[0x50740]),
+        (0x60065, &[0x6076f]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -356,7 +356,7 @@ impl Record for super::controlled_zone::ControlledZoneTable {}
 impl Sealed for super::energy_infrastructure::EnergyInfrastructureSite {
     const NAME: &'static str = "EnergyInfrastructureSite";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x700a0, &[0x707d1, 0x707cd]),
+        (0x800a4, &[0x80806, 0x80802]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -368,7 +368,7 @@ impl Record for super::energy_infrastructure::EnergyInfrastructureSite {}
 impl Sealed for super::energy_infrastructure::EnergyInfrastructureSiteStatus {
     const NAME: &'static str = "EnergyInfrastructureSiteStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x7009e, &[0x707ce]),
+        (0x800a2, &[0x80803]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -380,7 +380,7 @@ impl Record for super::energy_infrastructure::EnergyInfrastructureSiteStatus {}
 impl Sealed for super::energy_infrastructure::EnergyInfrastructureStation {
     const NAME: &'static str = "EnergyInfrastructureStation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x700a0, &[0x707d1, 0x707cd, 0x707cf]),
+        (0x800a4, &[0x80806, 0x80802, 0x80804]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -392,7 +392,7 @@ impl Record for super::energy_infrastructure::EnergyInfrastructureStation {}
 impl Sealed for super::energy_infrastructure::EnergyInfrastructureStationStatus {
     const NAME: &'static str = "EnergyInfrastructureStationStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x7009e, &[0x707ce, 0x707d0]),
+        (0x800a2, &[0x80803, 0x80805]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -404,7 +404,7 @@ impl Record for super::energy_infrastructure::EnergyInfrastructureStationStatus 
 impl Sealed for super::energy_infrastructure::EnergyInfrastructureTable {
     const NAME: &'static str = "EnergyInfrastructureTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x700a0, &[0x707d1]),
+        (0x800a4, &[0x80806]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -416,7 +416,7 @@ impl Record for super::energy_infrastructure::EnergyInfrastructureTable {}
 impl Sealed for super::facilities::Image {
     const NAME: &'static str = "Image";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x700a0, &[0x707d1, 0x707cd, 0x80a2c]),
+        (0x800a4, &[0x80806, 0x80802, 0xa0a72]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -428,7 +428,7 @@ impl Record for super::facilities::Image {}
 impl Sealed for super::facilities::OperatingHoursSpecification {
     const NAME: &'static str = "OperatingHoursSpecification";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x80146, &[0x809c8, 0x809c7]),
+        (0xa014f, &[0xa0a0c, 0xa0a0b]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -440,7 +440,7 @@ impl Record for super::facilities::OperatingHoursSpecification {}
 impl Sealed for super::facilities::OperatingHoursTable {
     const NAME: &'static str = "OperatingHoursTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x80146, &[0x809c8]),
+        (0xa014f, &[0xa0a0c]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -452,7 +452,7 @@ impl Record for super::facilities::OperatingHoursTable {}
 impl Sealed for super::facilities::OrganisationSpecification {
     const NAME: &'static str = "OrganisationSpecification";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x80154, &[0x809de, 0x809dd]),
+        (0xa015d, &[0xa0a23, 0xa0a22]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -464,7 +464,7 @@ impl Record for super::facilities::OrganisationSpecification {}
 impl Sealed for super::facilities::OrganisationTable {
     const NAME: &'static str = "OrganisationTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x80154, &[0x809de]),
+        (0xa015d, &[0xa0a23]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -476,7 +476,7 @@ impl Record for super::facilities::OrganisationTable {}
 impl Sealed for super::facilities::OrganisationUnit {
     const NAME: &'static str = "OrganisationUnit";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x80154, &[0x809de, 0x809dd, 0x809e0]),
+        (0xa015d, &[0xa0a23, 0xa0a22, 0xa0a25]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -488,7 +488,7 @@ impl Record for super::facilities::OrganisationUnit {}
 impl Sealed for super::facilities::RateMatrix {
     const NAME: &'static str = "RateMatrix";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x801ab, &[0x80aa4]),
+        (0xa01b4, &[0xa0aeb]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -500,7 +500,7 @@ impl Record for super::facilities::RateMatrix {}
 impl Sealed for super::facilities::RateTable {
     const NAME: &'static str = "RateTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x801ab, &[0x80aa4, 0x80aab]),
+        (0xa01b4, &[0xa0aeb, 0xa0af2]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -512,8 +512,8 @@ impl Record for super::facilities::RateTable {}
 impl Sealed for super::facilities::SupplementalFacilityStatus {
     const NAME: &'static str = "SupplementalFacilityStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x7009e, &[0x707ce, 0x707d0, 0x80b91]),
-        (0x7009e, &[0x707ce, 0x80b91]),
+        (0x800a2, &[0x80803, 0x80805, 0xa0bef]),
+        (0x800a2, &[0x80803, 0xa0bef]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -525,8 +525,8 @@ impl Record for super::facilities::SupplementalFacilityStatus {}
 impl Sealed for super::fault_and_status::AllFaultsOfSingleDevice {
     const NAME: &'static str = "AllFaultsOfSingleDevice";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x900b1, &[0x906af]),
-        (0x900b1, &[0x9081a, 0x906af]),
+        (0xb00b7, &[0xb06d8]),
+        (0xb00b7, &[0xb0856, 0xb06d8]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -538,8 +538,8 @@ impl Record for super::fault_and_status::AllFaultsOfSingleDevice {}
 impl Sealed for super::fault_and_status::DeviceFault {
     const NAME: &'static str = "DeviceFault";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x900b1, &[0x906af, 0x9077d]),
-        (0x900b1, &[0x9081a, 0x906af, 0x9077d]),
+        (0xb00b7, &[0xb06d8, 0xb07ae]),
+        (0xb00b7, &[0xb0856, 0xb06d8, 0xb07ae]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -551,8 +551,8 @@ impl Record for super::fault_and_status::DeviceFault {}
 impl Sealed for super::fault_and_status::DevicePower {
     const NAME: &'static str = "DevicePower";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x901f2, &[0x90b73, 0x9077e]),
-        (0x901f2, &[0x90b78, 0x90b73, 0x9077e]),
+        (0xb0200, &[0xb0bce, 0xb07af]),
+        (0xb0200, &[0xb0bd3, 0xb0bce, 0xb07af]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -564,7 +564,7 @@ impl Record for super::fault_and_status::DevicePower {}
 impl Sealed for super::fault_and_status::DeviceTable {
     const NAME: &'static str = "DeviceTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x90078, &[0x90780]),
+        (0xb007a, &[0xb07b1]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -576,7 +576,7 @@ impl Record for super::fault_and_status::DeviceTable {}
 impl Sealed for super::fault_and_status::FaultsOfAllDevicesFromTable {
     const NAME: &'static str = "FaultsOfAllDevicesFromTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x900b1, &[0x9081a]),
+        (0xb00b7, &[0xb0856]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -588,8 +588,8 @@ impl Record for super::fault_and_status::FaultsOfAllDevicesFromTable {}
 impl Sealed for super::fault_and_status::Status {
     const NAME: &'static str = "Status";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x901f2, &[0x90b73]),
-        (0x901f2, &[0x90b78, 0x90b73]),
+        (0xb0200, &[0xb0bce]),
+        (0xb0200, &[0xb0bd3, 0xb0bce]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -601,7 +601,7 @@ impl Record for super::fault_and_status::Status {}
 impl Sealed for super::fault_and_status::StatusOfAllDevicesFromTable {
     const NAME: &'static str = "StatusOfAllDevicesFromTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x901f2, &[0x90b78]),
+        (0xb0200, &[0xb0bd3]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -613,7 +613,7 @@ impl Record for super::fault_and_status::StatusOfAllDevicesFromTable {}
 impl Sealed for super::parking::ParkingTable {
     const NAME: &'static str = "ParkingTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xc0161, &[0xc0a0c]),
+        (0x10016a, &[0x100a51]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -625,7 +625,7 @@ impl Record for super::parking::ParkingTable {}
 impl Sealed for super::road_traffic_data::MeasurementSite {
     const NAME: &'static str = "MeasurementSite";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xe010a, &[0xe0923, 0xe091c]),
+        (0x120112, &[0x120962, 0x12095b]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -637,7 +637,7 @@ impl Record for super::road_traffic_data::MeasurementSite {}
 impl Sealed for super::road_traffic_data::MeasurementSiteTable {
     const NAME: &'static str = "MeasurementSiteTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xe010a, &[0xe0923]),
+        (0x120112, &[0x120962]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -649,7 +649,7 @@ impl Record for super::road_traffic_data::MeasurementSiteTable {}
 impl Sealed for super::road_traffic_data::SiteMeasurements {
     const NAME: &'static str = "SiteMeasurements";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xe0105, &[0xe0b3d]),
+        (0x12010d, &[0x120b97]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -661,7 +661,7 @@ impl Record for super::road_traffic_data::SiteMeasurements {}
 impl Sealed for super::road_traffic_data::MeasurementSiteIndexMeasurementSpecificCharacteristics {
     const NAME: &'static str = "MeasurementSiteIndexMeasurementSpecificCharacteristics";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xe010a, &[0xe0923, 0xe091c, 0xe0926]),
+        (0x120112, &[0x120962, 0x12095b, 0x120965]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -673,7 +673,7 @@ impl Record for super::road_traffic_data::MeasurementSiteIndexMeasurementSpecifi
 impl Sealed for super::road_traffic_data::SiteMeasurementsIndexPhysicalQuantity {
     const NAME: &'static str = "SiteMeasurementsIndexPhysicalQuantity";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xe0105, &[0xe0b3d, 0xe0a2f]),
+        (0x12010d, &[0x120b97, 0x120a75]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -685,7 +685,7 @@ impl Record for super::road_traffic_data::SiteMeasurementsIndexPhysicalQuantity 
 impl Sealed for super::situation::DetailedCauseType {
     const NAME: &'static str = "DetailedCauseType";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x10021e, &[0x100bc2, 0x100b1b, 0x100b48]),
+        (0x14022d, &[0x140c21, 0x140b68, 0x140ba2]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -697,7 +697,7 @@ impl Record for super::situation::DetailedCauseType {}
 impl Sealed for super::situation::Situation {
     const NAME: &'static str = "Situation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xf01dd, &[0xf0b3e]),
+        (0x1301eb, &[0x130b98]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -709,7 +709,7 @@ impl Record for super::situation::Situation {}
 impl Sealed for super::situation::SituationReference {
     const NAME: &'static str = "SituationReference";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xf01dd, &[0xf0b3e, 0xf0ad3]),
+        (0x1301eb, &[0x130b98, 0x130b1c]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -721,7 +721,7 @@ impl Record for super::situation::SituationReference {}
 impl Sealed for super::traffic_management_plan::Scenario {
     const NAME: &'static str = "Scenario";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x10021e, &[0x100bc2, 0x100b1b]),
+        (0x14022d, &[0x140c21, 0x140b68]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -733,7 +733,7 @@ impl Record for super::traffic_management_plan::Scenario {}
 impl Sealed for super::traffic_management_plan::TmplanTable {
     const NAME: &'static str = "TmplanTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x10021e, &[0x100bc2]),
+        (0x14022d, &[0x140c21]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -745,7 +745,7 @@ impl Record for super::traffic_management_plan::TmplanTable {}
 impl Sealed for super::traffic_regulation::ActivatedRegulation {
     const NAME: &'static str = "ActivatedRegulation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x11023b, &[0x110be3, 0x11067a]),
+        (0x15024a, &[0x150c42, 0x1506a3]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -757,7 +757,7 @@ impl Record for super::traffic_regulation::ActivatedRegulation {}
 impl Sealed for super::traffic_regulation::AdHocTrafficRegulation {
     const NAME: &'static str = "AdHocTrafficRegulation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x11023b, &[0x11068b, 0x11068a]),
+        (0x15024a, &[0x1506b4, 0x1506b3]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -769,7 +769,7 @@ impl Record for super::traffic_regulation::AdHocTrafficRegulation {}
 impl Sealed for super::traffic_regulation::PredefinedCondition {
     const NAME: &'static str = "PredefinedCondition";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x11018d, &[0x110a5e]),
+        (0x150196, &[0x150aa4]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -781,7 +781,7 @@ impl Record for super::traffic_regulation::PredefinedCondition {}
 impl Sealed for super::traffic_regulation::WarningWithoutRegulation {
     const NAME: &'static str = "WarningWithoutRegulation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x11027b, &[0x110c6c]),
+        (0x15028a, &[0x150cce]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -793,7 +793,7 @@ impl Record for super::traffic_regulation::WarningWithoutRegulation {}
 impl Sealed for super::vms::VmsController {
     const NAME: &'static str = "VmsController";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x130276, &[0x130c59, 0x130c55]),
+        (0x170285, &[0x170cbb, 0x170cb7]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -805,7 +805,7 @@ impl Record for super::vms::VmsController {}
 impl Sealed for super::vms::VmsControllerFault {
     const NAME: &'static str = "VmsControllerFault";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x130274, &[0x130c58, 0x130c56]),
+        (0x170283, &[0x170cba, 0x170cb8]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -817,7 +817,7 @@ impl Record for super::vms::VmsControllerFault {}
 impl Sealed for super::vms::VmsControllerStatus {
     const NAME: &'static str = "VmsControllerStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x130274, &[0x130c58]),
+        (0x170283, &[0x170cba]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -829,7 +829,7 @@ impl Record for super::vms::VmsControllerStatus {}
 impl Sealed for super::vms::VmsControllerTable {
     const NAME: &'static str = "VmsControllerTable";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x130276, &[0x130c59]),
+        (0x170285, &[0x170cbb]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -841,7 +841,7 @@ impl Record for super::vms::VmsControllerTable {}
 impl Sealed for super::vms::VmsControllerStatusVmsIndexVmsStatus {
     const NAME: &'static str = "VmsControllerStatusVmsIndexVmsStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x130274, &[0x130c58, 0x130c63]),
+        (0x170283, &[0x170cba, 0x170cc5]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -853,7 +853,7 @@ impl Record for super::vms::VmsControllerStatusVmsIndexVmsStatus {}
 impl Sealed for super::vms::VmsControllerVmsIndexVms {
     const NAME: &'static str = "VmsControllerVmsIndexVms";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x130276, &[0x130c59, 0x130c55, 0x130c53]),
+        (0x170285, &[0x170cbb, 0x170cb7, 0x170cb5]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -865,7 +865,7 @@ impl Record for super::vms::VmsControllerVmsIndexVms {}
 impl Sealed for super::afir_energy_infrastructure::AnyRefillPointStatus {
     const NAME: &'static str = "AnyRefillPointStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x1009e, &[0x107ce, 0x107d0, 0x10ac5]),
+        (0x100a2, &[0x10803, 0x10805, 0x10b0e]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -877,7 +877,7 @@ impl Record for super::afir_energy_infrastructure::AnyRefillPointStatus {}
 impl Sealed for super::afir_facilities::AnyAnOrganisation {
     const NAME: &'static str = "AnyAnOrganisation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x20154, &[0x209de, 0x206ba]),
+        (0x2015d, &[0x20a23, 0x206e3]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -889,7 +889,7 @@ impl Record for super::afir_facilities::AnyAnOrganisation {}
 impl Sealed for super::afir_facilities::AnyAssociatedFacility {
     const NAME: &'static str = "AnyAssociatedFacility";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x206d3]),
+        (0x100a4, &[0x10806, 0x10802, 0x206fc]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -901,8 +901,8 @@ impl Record for super::afir_facilities::AnyAssociatedFacility {}
 impl Sealed for super::afir_facilities::Organisation {
     const NAME: &'static str = "Organisation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x10942]),
-        (0x100a0, &[0x107d1, 0x107cd, 0x10b09]),
+        (0x100a4, &[0x10806, 0x10802, 0x10984]),
+        (0x100a4, &[0x10806, 0x10802, 0x10b56]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -914,7 +914,7 @@ impl Record for super::afir_facilities::Organisation {}
 impl Sealed for super::afir_facilities::AnyRateLineCollection {
     const NAME: &'static str = "AnyRateLineCollection";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x201ab, &[0x20aa4, 0x20aab, 0x20aa1]),
+        (0x201b4, &[0x20aeb, 0x20af2, 0x20ae8]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -926,7 +926,7 @@ impl Record for super::afir_facilities::AnyRateLineCollection {}
 impl Sealed for super::afir_facilities::SupplementalFacility {
     const NAME: &'static str = "SupplementalFacility";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x20b90]),
+        (0x100a4, &[0x10806, 0x10802, 0x20bee]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -938,7 +938,7 @@ impl Record for super::afir_facilities::SupplementalFacility {}
 impl Sealed for super::controlled_zone::ActivationStatus {
     const NAME: &'static str = "ActivationStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x5008b, &[0x5067e]),
+        (0x6008d, &[0x606a7]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -950,7 +950,7 @@ impl Record for super::controlled_zone::ActivationStatus {}
 impl Sealed for super::energy_infrastructure::AnyRefillPointStatus {
     const NAME: &'static str = "AnyRefillPointStatus";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x7009e, &[0x707ce, 0x707d0, 0x70ac5]),
+        (0x800a2, &[0x80803, 0x80805, 0x80b0e]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -962,7 +962,7 @@ impl Record for super::energy_infrastructure::AnyRefillPointStatus {}
 impl Sealed for super::facilities::AnyAssociatedFacility {
     const NAME: &'static str = "AnyAssociatedFacility";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x700a0, &[0x707d1, 0x707cd, 0x806d3]),
+        (0x800a4, &[0x80806, 0x80802, 0xa06fc]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -974,7 +974,7 @@ impl Record for super::facilities::AnyAssociatedFacility {}
 impl Sealed for super::facilities::Organisation {
     const NAME: &'static str = "Organisation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x80154, &[0x809de, 0x809dd, 0x80b89]),
+        (0xa015d, &[0xa0a23, 0xa0a22, 0xa0be4]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -986,7 +986,7 @@ impl Record for super::facilities::Organisation {}
 impl Sealed for super::facilities::AnyRateLineCollection {
     const NAME: &'static str = "AnyRateLineCollection";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x801ab, &[0x80aa4, 0x80aab, 0x80aa1]),
+        (0xa01b4, &[0xa0aeb, 0xa0af2, 0xa0ae8]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -998,8 +998,8 @@ impl Record for super::facilities::AnyRateLineCollection {}
 impl Sealed for super::facilities::Rates {
     const NAME: &'static str = "Rates";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x50063, &[0x50740, 0x5073c, 0x50b9f]),
-        (0x50063, &[0x50740, 0x50c20, 0x50b9f]),
+        (0x60065, &[0x6076f, 0x6076b, 0x60bfe]),
+        (0x60065, &[0x6076f, 0x60c80, 0x60bfe]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1011,7 +1011,7 @@ impl Record for super::facilities::Rates {}
 impl Sealed for super::facilities::SupplementalFacility {
     const NAME: &'static str = "SupplementalFacility";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x700a0, &[0x707d1, 0x707cd, 0x80b90]),
+        (0x800a4, &[0x80806, 0x80802, 0xa0bee]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1023,8 +1023,8 @@ impl Record for super::facilities::SupplementalFacility {}
 impl Sealed for super::fault_and_status::AnyDevice {
     const NAME: &'static str = "AnyDevice";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x90078, &[0x9077c]),
-        (0x90078, &[0x90780, 0x9077c]),
+        (0xb007a, &[0xb07ad]),
+        (0xb007a, &[0xb07b1, 0xb07ad]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1036,10 +1036,10 @@ impl Record for super::fault_and_status::AnyDevice {}
 impl Sealed for super::location_referencing::Location {
     const NAME: &'static str = "Location";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x100a0, &[0x107d1, 0x107cd, 0x107e2]),
-        (0x100a0, &[0x107d1, 0x107cd, 0x107f7]),
-        (0x700a0, &[0x707d1, 0x707cd, 0x707e2]),
-        (0x700a0, &[0x707d1, 0x707cd, 0x707f7]),
+        (0x100a4, &[0x10806, 0x10802, 0x10817]),
+        (0x100a4, &[0x10806, 0x10802, 0x10831]),
+        (0x800a4, &[0x80806, 0x80802, 0x80817]),
+        (0x800a4, &[0x80806, 0x80802, 0x80831]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1051,7 +1051,7 @@ impl Record for super::location_referencing::Location {}
 impl Sealed for super::location_referencing::PredefinedLocationReference {
     const NAME: &'static str = "PredefinedLocationReference";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xb0192, &[0xb0a67]),
+        (0xe019b, &[0xe0aad]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1063,7 +1063,7 @@ impl Record for super::location_referencing::PredefinedLocationReference {}
 impl Sealed for super::parking::HierarchyElementGeneral {
     const NAME: &'static str = "HierarchyElementGeneral";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xc0161, &[0xc0a0c, 0xc0865]),
+        (0x10016a, &[0x100a51, 0x1008a1]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1075,7 +1075,7 @@ impl Record for super::parking::HierarchyElementGeneral {}
 impl Sealed for super::parking::AnyParkingStatusInformation {
     const NAME: &'static str = "AnyParkingStatusInformation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xc015f, &[0xc0a0b]),
+        (0x100168, &[0x100a50]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1087,7 +1087,7 @@ impl Record for super::parking::AnyParkingStatusInformation {}
 impl Sealed for super::road_traffic_data::PhysicalQuantity {
     const NAME: &'static str = "PhysicalQuantity";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xe008f, &[0xe0a2f]),
+        (0x120092, &[0x120a75]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1099,7 +1099,7 @@ impl Record for super::road_traffic_data::PhysicalQuantity {}
 impl Sealed for super::situation::SituationRecord {
     const NAME: &'static str = "SituationRecord";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0xf01dd, &[0xf0b3e, 0xf0b40]),
+        (0x1301eb, &[0x130b98, 0x130b9a]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1111,7 +1111,7 @@ impl Record for super::situation::SituationRecord {}
 impl Sealed for super::traffic_management_plan::Action {
     const NAME: &'static str = "Action";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x10021e, &[0x100bc2, 0x100674]),
+        (0x14022d, &[0x140c21, 0x14069d]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1123,7 +1123,7 @@ impl Record for super::traffic_management_plan::Action {}
 impl Sealed for super::traffic_management_plan::Measure {
     const NAME: &'static str = "Measure";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x10021e, &[0x100bc2, 0x100913]),
+        (0x14022d, &[0x140c21, 0x140952]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1135,7 +1135,7 @@ impl Record for super::traffic_management_plan::Measure {}
 impl Sealed for super::traffic_management_plan::Strategy {
     const NAME: &'static str = "Strategy";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x10021e, &[0x100bc2, 0x100b1b, 0x100b80]),
+        (0x14022d, &[0x140c21, 0x140b68, 0x140bdb]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1147,7 +1147,7 @@ impl Record for super::traffic_management_plan::Strategy {}
 impl Sealed for super::traffic_management_plan::TmplanOperation {
     const NAME: &'static str = "TmplanOperation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x10021c, &[0x100bc1]),
+        (0x14022b, &[0x140c20]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1159,7 +1159,7 @@ impl Record for super::traffic_management_plan::TmplanOperation {}
 impl Sealed for super::traffic_regulation::DynamicTrafficRegulation {
     const NAME: &'static str = "DynamicTrafficRegulation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x11023b, &[0x1107b0, 0x1107af]),
+        (0x15024a, &[0x1507e2, 0x1507e1]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1171,7 +1171,7 @@ impl Record for super::traffic_regulation::DynamicTrafficRegulation {}
 impl Sealed for super::traffic_regulation::RoadSign {
     const NAME: &'static str = "RoadSign";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x11027b, &[0x110c6c, 0x110aff]),
+        (0x15028a, &[0x150cce, 0x150b4c]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1183,9 +1183,9 @@ impl Record for super::traffic_regulation::RoadSign {}
 impl Sealed for super::traffic_regulation::AnyTrafficRegulation {
     const NAME: &'static str = "AnyTrafficRegulation";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x11023b, &[0x11068b, 0x11068a, 0x110be0]),
-        (0x11023b, &[0x110be3, 0x11067a, 0x110be0]),
-        (0x11023b, &[0x110be5, 0x110be0]),
+        (0x15024a, &[0x1506b4, 0x1506b3, 0x150c3f]),
+        (0x15024a, &[0x150c42, 0x1506a3, 0x150c3f]),
+        (0x15024a, &[0x150c44, 0x150c3f]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1197,9 +1197,9 @@ impl Record for super::traffic_regulation::AnyTrafficRegulation {}
 impl Sealed for super::traffic_regulation::AnyTrafficRegulationOrder {
     const NAME: &'static str = "AnyTrafficRegulationOrder";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x50063, &[0x50740, 0x5073c, 0x50be1]),
-        (0x50063, &[0x50740, 0x50c20, 0x50be1]),
-        (0x11023b, &[0x110be4, 0x110be1]),
+        (0x60065, &[0x6076f, 0x6076b, 0x60c40]),
+        (0x60065, &[0x6076f, 0x60c80, 0x60c40]),
+        (0x15024a, &[0x150c43, 0x150c40]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {
@@ -1211,7 +1211,7 @@ impl Record for super::traffic_regulation::AnyTrafficRegulationOrder {}
 impl Sealed for super::traffic_regulation::Warning {
     const NAME: &'static str = "Warning";
     const ROUTES: &'static [(u32, &'static [u32])] = &[
-        (0x11027b, &[0x110c6c, 0x110c05]),
+        (0x15028a, &[0x150cce, 0x150c64]),
     ];
 
     fn read_record(r: &mut Xml<'_>, _kind: Option<u32>) -> Result<Option<Self>, Error> {

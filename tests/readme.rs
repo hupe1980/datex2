@@ -16,6 +16,13 @@ fn run_example(example: &str, file: &str) -> std::process::Output {
     let dir = std::env::temp_dir().join(format!("datex2-readme-{example}-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join(file), include_str!("fixtures/situation.xml")).unwrap();
+    let out = run_in(example, &dir);
+    let _ = std::fs::remove_dir_all(&dir);
+    out
+}
+
+/// Runs an example with `dir` as the working directory.
+fn run_in(example: &str, dir: &std::path::Path) -> std::process::Output {
     let manifest = concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml");
     let out = Command::new(env!("CARGO"))
         .args([
@@ -26,10 +33,9 @@ fn run_example(example: &str, file: &str) -> std::process::Output {
             "--manifest-path",
             manifest,
         ])
-        .current_dir(&dir)
+        .current_dir(dir)
         .output()
         .expect("cargo runs");
-    let _ = std::fs::remove_dir_all(&dir);
     assert!(
         out.status.success(),
         "{}",
@@ -81,4 +87,26 @@ fn readme_write_example_runs_and_its_output_is_valid() {
     assert!(xml.contains("<com:country>NL</com:country>"), "{xml}");
     common::assert_valid(&xml);
     assert_eq!(datex2::v3::read(xml.as_bytes()).unwrap().warnings, []);
+}
+
+#[test]
+fn mobilithek_example_writes_what_the_profile_schemas_accept() {
+    use common::{JsonSchema, assert_json_valid};
+    let dir = std::env::temp_dir().join(format!("datex2-readme-mobilithek-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let out = run_in("mobilithek", &dir);
+    assert_eq!(
+        String::from_utf8_lossy(&out.stdout),
+        "wrote table.json and status.json\n"
+    );
+    for (file, schema) in [
+        ("table.json", JsonSchema::MobilithekTable),
+        ("status.json", JsonSchema::MobilithekStatus),
+    ] {
+        let text = std::fs::read_to_string(dir.join(file)).unwrap();
+        assert_json_valid(&text, schema);
+        let doc = datex2::v3::json::read(text.as_bytes()).unwrap();
+        assert_eq!(doc.warnings, [], "{file}");
+    }
+    let _ = std::fs::remove_dir_all(&dir);
 }

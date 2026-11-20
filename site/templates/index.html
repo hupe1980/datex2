@@ -11,15 +11,16 @@
   <div class="wrap">
     <div class="hero-grid">
       <div>
-        <p class="eyebrow">DATEX II v3 · read · stream · write</p>
+        <p class="eyebrow">DATEX II v3 · XML and JSON · read · stream · write</p>
         <h1>European road traffic data, as Rust types.</h1>
         <p class="lead">
           <strong>datex2</strong> reads, streams and writes
           <a href="{{ get_url(path='@/docs/datex2.md') | safe }}">DATEX II</a>,
           the European standard for road traffic and travel information.
-          One call turns a national feed into typed data. The reader tolerates
-          what real feeds send and tells you what it tolerated; the writer
-          produces only documents the official schema accepts.
+          One call turns a national feed, XML or JSON, into typed data. The
+          reader tolerates what real feeds send and tells you what it
+          tolerated; the writer produces only documents the official schemas
+          accept, including AFIR charging data for Germany's Mobilithek.
         </p>
 
         <div class="hero-actions">
@@ -94,7 +95,7 @@
         <p>
           Every deviation is a warning with its kind, the element path and
           the byte offset. Unknown elements are reported, extension content is
-          kept as raw XML, and no value is ever made up.
+          kept as it was written, and no value is ever made up.
         </p>
       </article>
 
@@ -103,9 +104,9 @@
         <h3>Strict out</h3>
         <p>
           The writer checks required content, list sizes and every value
-          rule of the schema. When it succeeds, the official 3.7 schema
-          accepts the document; when it cannot, it names the element and
-          the rule.
+          rule of the schema. When it succeeds, the official 3.7 schemas, or
+          the Mobilithek profile's, accept the document; when it cannot, it
+          names the place and the rule.
         </p>
       </article>
 
@@ -164,6 +165,8 @@
               <tr><td>Read a document</td><td><code>v3::read(input)</code></td></tr>
               <tr><td>Process a large feed record by record</td><td><code>v3::stream::&lt;T&gt;(input)</code></td></tr>
               <tr><td>Publish a document</td><td><code>v3::write(sink, &amp;publication)</code></td></tr>
+              <tr><td>Read or write JSON</td><td><code>v3::json::read(input)</code>, <code>v3::json::write(…)</code></td></tr>
+              <tr><td>Publish charging data for the Mobilithek</td><td><code>v3::json::mobilithek::write(…)</code></td></tr>
               <tr><td>See what a file contains</td><td><code>cargo run --example inspect</code></td></tr>
             </tbody>
           </table>
@@ -177,7 +180,7 @@
   <div class="wrap">
     <div class="band-head">
       <h2>What is implemented</h2>
-      <p>Every publication of DATEX II 3.7, in XML.</p>
+      <p>Every publication of DATEX II 3.7, in XML and JSON.</p>
     </div>
 
     <div class="table-wrap">
@@ -202,6 +205,8 @@
               <td>Traffic management plans, rerouting, facilities and rates, device and fault publications</td></tr>
           <tr><td><strong>Location referencing</strong> (EN 16157-2)</td>
               <td>Coordinates, linear and area locations, Alert-C, TPEG-Loc and OpenLR data, as typed values</td></tr>
+          <tr><td><strong>JSON</strong></td>
+              <td>The official 3.7 mapping, and the AFIR Recharging profile the Mobilithek requires, read and written with exact numbers</td></tr>
           <tr><td><strong>Reading, streaming, writing</strong></td>
               <td>Whole documents, one record at a time in bounded memory, and schema-valid output</td></tr>
         </tbody>
@@ -221,19 +226,18 @@
 
     <div class="cards">
       <article class="card">
-        <h3>JSON and DATEX II version 2</h3>
+        <h3>DATEX II version 2</h3>
         <p>
-          This release handles version 3 XML. The JSON encoding of 3.7 and
-          the version 2 model, which several countries still publish, are not
-          read yet.
+          This release handles version 3. The version 2 model, which several
+          countries still publish, is not read yet.
         </p>
       </article>
       <article class="card">
         <h3>Exchange and transport</h3>
         <p>
           No HTTP client, no SOAP services, no Exchange 2020 protocol. A
-          <code>messageContainer</code> is unwrapped to reach its payloads and
-          nothing more.
+          <code>messageContainer</code> yields its payloads and its exchange
+          information, such as snapshot or delta, and nothing more.
         </p>
       </article>
       <article class="card">

@@ -5,7 +5,7 @@
 base_url = "https://hupe1980.github.io/datex2"
 
 title = "datex2"
-description = "DATEX II for Rust: read, stream and write European road traffic and travel information (DATEX II v3 XML) as typed data. Tolerant reader, strict writer, tested on national feeds."
+description = "DATEX II for Rust: read, stream and write European road traffic and travel information (DATEX II v3, XML and JSON) as typed data, including AFIR charging data for the Mobilithek. Tolerant reader, strict writer, tested on national feeds."
 default_language = "en"
 author = "hupe1980"
 
@@ -46,7 +46,7 @@ repo = "https://github.com/hupe1980/datex2"
 crate = "https://crates.io/crates/datex2"
 docsrs = "https://docs.rs/datex2"
 tagline = "DATEX II road traffic data for Rust"
-keywords = "DATEX II, DATEX2, datex2 rust, road traffic data, traffic information, travel information, National Access Point, NAP, AFIR, charging infrastructure data, EN 16157, CEN/TS 16157, situation publication, Rust, XML, parser"
+keywords = "DATEX II, DATEX2, datex2 rust, road traffic data, traffic information, travel information, National Access Point, NAP, AFIR, charging infrastructure data, Mobilithek, AFIR Recharging profile, DATEX II JSON, EN 16157, CEN/TS 16157, situation publication, Rust, XML, JSON, parser"
 
 # The front page's numbers. Each is measured; the Measurements page says how.
 [extra.numbers]
@@ -70,6 +70,7 @@ items = [
   "docs/reading.md",
   "docs/streaming.md",
   "docs/writing.md",
+  "docs/json.md",
   "docs/model.md",
 ]
 

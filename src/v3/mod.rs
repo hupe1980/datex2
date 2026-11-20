@@ -3,7 +3,7 @@
 //! [`read`] takes any DATEX II v3 XML document and returns a [`Document`]. The types are generated
 //! from the official 3.7 schemas, one module per namespace; they read documents of every 3.x
 //! release, because a document does not say which minor release it follows and stable namespaces
-//! only grow.
+//! only grow. [`json`] reads and writes the same types as JSON.
 
 use std::io::BufRead;
 
@@ -12,6 +12,7 @@ use crate::xml::Limits;
 
 #[rustfmt::skip]
 mod generated;
+pub mod json;
 mod record;
 mod stream;
 
@@ -48,6 +49,9 @@ pub struct Document {
     pub warnings: Vec<Warning>,
     /// How many further warnings were not kept.
     pub suppressed_warnings: usize,
+    /// The exchange information of a message container: among other things, whether the
+    /// delivery is a complete snapshot or a delta (`exchange_context.coded_exchange_protocol`).
+    pub exchange_information: Option<Box<exchange_information::ExchangeInformation>>,
 }
 
 /// Reads a DATEX II v3 XML document.
@@ -102,6 +106,7 @@ pub fn read_with(input: impl BufRead, limits: &Limits) -> Result<Document, Error
         soap: stream.soap,
         warnings: stream.take_warnings(),
         suppressed_warnings: stream.suppressed_warnings(),
+        exchange_information: stream.take_exchange_information(),
     })
 }
 

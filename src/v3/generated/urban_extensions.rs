@@ -4,9 +4,13 @@
 //! Names follow the standard; see <https://docs.datex2.eu/> for what each one means.
 
 #[allow(unused_imports)]
-use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, fault_and_status as fst};
+use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, fault_and_status as fst, message_container as con, exchange_information as ex, information_management as inf, cis_information as cis};
 #[allow(unused_imports)]
-use crate::out::{Out, Pattern};
+use crate::out::{Out, Pattern, Rules};
+#[allow(unused_imports)]
+use crate::json::{JsonReader, JsonWriter};
+#[allow(unused_imports)]
+use crate::{ErrorKind, WarningKind};
 #[allow(unused_imports)]
 use crate::xml::{Enumeration, Xml};
 #[allow(unused_imports)]
@@ -126,16 +130,16 @@ pub struct AccidentExtendedUrban {
 }
 
 impl AccidentExtendedUrban {
-    const FIELDS: &'static [u32] = &[0x12084e];
+    const FIELDS: &'static [u32] = &[0x16088a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x12000a);
+        r.expect_type(0x16000a);
         r.attrs_done();
         let mut e0 = Vec::new();
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x12084e => { let v = Some(GroupOfNonVehicularRoadUsersInvolved::read(r)?); e0.extend(v); }
+                    0x16088a => { let v = Some(GroupOfNonVehicularRoadUsersInvolved::read(r)?); e0.extend(v); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -162,6 +166,55 @@ impl AccidentExtendedUrban {
     }
 }
 
+impl AccidentExtendedUrban {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = Vec::new();
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                931 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = GroupOfNonVehicularRoadUsersInvolved::read_json(r)? { f0.push(v); } } },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            group_of_non_vehicular_road_users_involved: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1044)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.group_of_non_vehicular_road_users_involved.is_empty() {
+            w.key(931)?;
+            w.begin_array()?;
+            for v in &self.group_of_non_vehicular_road_users_involved {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `ubx:ClassifiedDelay`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ClassifiedDelay {
@@ -174,10 +227,10 @@ pub struct ClassifiedDelay {
 }
 
 impl ClassifiedDelay {
-    const FIELDS: &'static [u32] = &[0x12076b, 0x120c30, 0x12043a];
+    const FIELDS: &'static [u32] = &[0x16079b, 0x160c90, 0x160456];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x12004e);
+        r.expect_type(0x160050);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -185,9 +238,9 @@ impl ClassifiedDelay {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x12076b => { let v = Some(sit::Delays::read(r)?); r.set(&mut e0, v.map(Box::new), 1899); }
-                    0x120c30 => { let v = Some(com::VehicleCharacteristics::read(r)?); r.set(&mut e1, v.map(Box::new), 3120); }
-                    0x12043a => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1082); }
+                    0x16079b => { let v = Some(sit::Delays::read(r)?); r.set(&mut e0, v.map(Box::new), 1947); }
+                    0x160c90 => { let v = Some(com::VehicleCharacteristics::read(r)?); r.set(&mut e1, v.map(Box::new), 3216); }
+                    0x160456 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1110); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -196,8 +249,8 @@ impl ClassifiedDelay {
                 break;
             }
         }
-        r.required(&e0, 1899);
-        r.required(&e1, 3120);
+        r.required(&e0, 1947);
+        r.required(&e1, 3216);
         let v = Self {
             delays: e0,
             vehicle_characteristics: e1,
@@ -226,6 +279,72 @@ impl ClassifiedDelay {
     }
 }
 
+impl ClassifiedDelay {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                532 => if r.first(&mut seen[0])? { f0 = sit::Delays::read_json(r)?.map(Box::new); },
+                2549 => if r.first(&mut seen[1])? { f1 = com::VehicleCharacteristics::read_json(r)?.map(Box::new); },
+                2504 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 532);
+        r.required(&f1, 2549);
+        Ok(Self {
+            delays: f0,
+            vehicle_characteristics: f1,
+            classified_delay_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1045)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.delays {
+            Some(v) => {
+                w.key(532)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(532, w.missing("delays"))?,
+        }
+        match &self.vehicle_characteristics {
+            Some(v) => {
+                w.key(2549)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2549, w.missing("vehicleCharacteristics"))?,
+        }
+        if let Some(v) = &self.classified_delay_extension {
+            w.key(2504)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `ubx:GroupOfNonVehicularRoadUsersInvolved`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GroupOfNonVehicularRoadUsersInvolved {
@@ -240,10 +359,10 @@ pub struct GroupOfNonVehicularRoadUsersInvolved {
 }
 
 impl GroupOfNonVehicularRoadUsersInvolved {
-    const FIELDS: &'static [u32] = &[0x120979, 0x12088a, 0x120968, 0x1204b5];
+    const FIELDS: &'static [u32] = &[0x1609bd, 0x1608c8, 0x1609ab, 0x1604d5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1200cb);
+        r.expect_type(0x1600d1);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -252,10 +371,10 @@ impl GroupOfNonVehicularRoadUsersInvolved {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x120979 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2425); }
-                    0x12088a => { let v = r.enumeration::<sit::InjuryStatusTypeEnum>()?; r.set(&mut e1, v, 2186); }
-                    0x120968 => { let v = Some(NonVehicularRoadUsers::read(r)?); r.set(&mut e2, v.map(Box::new), 2408); }
-                    0x1204b5 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1205); }
+                    0x1609bd => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2493); }
+                    0x1608c8 => { let v = r.enumeration::<sit::InjuryStatusTypeEnum>()?; r.set(&mut e1, v, 2248); }
+                    0x1609ab => { let v = Some(NonVehicularRoadUsers::read(r)?); r.set(&mut e2, v.map(Box::new), 2475); }
+                    0x1604d5 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1237); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -288,6 +407,71 @@ impl GroupOfNonVehicularRoadUsersInvolved {
     }
 }
 
+impl GroupOfNonVehicularRoadUsersInvolved {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1393 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                995 => if r.first(&mut seen[1])? { f1 = r.enumeration::<sit::InjuryStatusTypeEnum>()?; },
+                1375 => if r.first(&mut seen[2])? { f2 = NonVehicularRoadUsers::read_json(r)?.map(Box::new); },
+                2505 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            number_of_non_vehicular_road_users: f0,
+            injury_status_type: f1,
+            non_vehicular_road_users: f2,
+            group_of_non_vehicular_road_users_involved_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1046)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.number_of_non_vehicular_road_users {
+            w.key(1393)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.injury_status_type {
+            w.key(995)?;
+            w.enumeration(853, v.literal())?;
+        }
+        if let Some(v) = &self.non_vehicular_road_users {
+            w.key(1375)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.group_of_non_vehicular_road_users_involved_extension {
+            w.key(2505)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `ubx:ImpactExtendedUrban`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ImpactExtendedUrban {
@@ -296,16 +480,16 @@ pub struct ImpactExtendedUrban {
 }
 
 impl ImpactExtendedUrban {
-    const FIELDS: &'static [u32] = &[0x12071b];
+    const FIELDS: &'static [u32] = &[0x160745];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1200dd);
+        r.expect_type(0x1600e3);
         r.attrs_done();
         let mut e0 = Vec::new();
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x12071b => { let v = Some(ClassifiedDelay::read(r)?); e0.extend(v); }
+                    0x160745 => { let v = Some(ClassifiedDelay::read(r)?); e0.extend(v); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -332,6 +516,55 @@ impl ImpactExtendedUrban {
     }
 }
 
+impl ImpactExtendedUrban {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = Vec::new();
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                339 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ClassifiedDelay::read_json(r)? { f0.push(v); } } },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            classified_delay: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1047)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.classified_delay.is_empty() {
+            w.key(339)?;
+            w.begin_array()?;
+            for v in &self.classified_delay {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `ubx:NetworkManagementExtendedUrban`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NetworkManagementExtendedUrban {
@@ -340,16 +573,16 @@ pub struct NetworkManagementExtendedUrban {
 }
 
 impl NetworkManagementExtendedUrban {
-    const FIELDS: &'static [u32] = &[0x120826];
+    const FIELDS: &'static [u32] = &[0x160862];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x120118);
+        r.expect_type(0x160121);
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x120826 => { let v = Some(NonVehicularRoadUsers::read(r)?); r.set(&mut e0, v.map(Box::new), 2086); }
+                    0x160862 => { let v = Some(NonVehicularRoadUsers::read(r)?); r.set(&mut e0, v.map(Box::new), 2146); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -376,6 +609,50 @@ impl NetworkManagementExtendedUrban {
     }
 }
 
+impl NetworkManagementExtendedUrban {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                856 => if r.first(&mut seen[0])? { f0 = NonVehicularRoadUsers::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            for_non_motorised_road_users: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1048)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.for_non_motorised_road_users {
+            w.key(856)?;
+            v.write_json(w, None)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `ubx:NonVehicularRoadUsers`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NonVehicularRoadUsers {
@@ -386,18 +663,18 @@ pub struct NonVehicularRoadUsers {
 }
 
 impl NonVehicularRoadUsers {
-    const FIELDS: &'static [u32] = &[0x120967, 0x120504];
+    const FIELDS: &'static [u32] = &[0x1609aa, 0x160527];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x12011f);
+        r.expect_type(0x160128);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x120967 => { let v = r.enumeration::<NonVehicularRoadUserTypeEnum>()?; e0.extend(v); }
-                    0x120504 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1284); }
+                    0x1609aa => { let v = r.enumeration::<NonVehicularRoadUserTypeEnum>()?; e0.extend(v); }
+                    0x160527 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1319); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -427,6 +704,63 @@ impl NonVehicularRoadUsers {
     }
 }
 
+impl NonVehicularRoadUsers {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1374 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<NonVehicularRoadUserTypeEnum>()? { f0.push(v); } } },
+                2506 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            non_vehicular_road_user: f0,
+            non_vehicular_road_users_extension: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1050)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        w.count("nonVehicularRoadUser", self.non_vehicular_road_user.len(), 1, usize::MAX)?;
+        if !self.non_vehicular_road_user.is_empty() {
+            w.key(1374)?;
+            w.begin_array()?;
+            for v in &self.non_vehicular_road_user {
+                w.item()?;
+                w.enumeration(1049, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.non_vehicular_road_users_extension {
+            w.key(2506)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `ubx:StreetWorks`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct StreetWorks {
@@ -435,16 +769,16 @@ pub struct StreetWorks {
 }
 
 impl StreetWorks {
-    const FIELDS: &'static [u32] = &[0x120b84];
+    const FIELDS: &'static [u32] = &[0x160bdf];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1201f9);
+        r.expect_type(0x160207);
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x120b84 => { let v = r.enumeration::<StreetWorksTypeEnum>()?; r.set(&mut e0, v, 2948); }
+                    0x160bdf => { let v = r.enumeration::<StreetWorksTypeEnum>()?; r.set(&mut e0, v, 3039); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -453,7 +787,7 @@ impl StreetWorks {
                 break;
             }
         }
-        r.required(&e0, 2948);
+        r.required(&e0, 3039);
         let v = Self {
             street_works_type: e0,
         };
@@ -472,6 +806,54 @@ impl StreetWorks {
             None => return Err(w.missing("ubx:streetWorksType")),
         }
         w.end(tag)
+    }
+}
+
+impl StreetWorks {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2203 => if r.first(&mut seen[0])? { f0 = r.enumeration::<StreetWorksTypeEnum>()?; },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2203);
+        Ok(Self {
+            street_works_type: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1051)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.street_works_type {
+            Some(v) => {
+                w.key(2203)?;
+                w.enumeration(1052, v.literal())?;
+            }
+            None => w.absent(2203, w.missing("streetWorksType"))?,
+        }
+        w.end_object()
     }
 }
 

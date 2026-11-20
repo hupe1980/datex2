@@ -4,9 +4,13 @@
 //! Names follow the standard; see <https://docs.datex2.eu/> for what each one means.
 
 #[allow(unused_imports)]
-use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst};
+use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst, message_container as con, exchange_information as ex, information_management as inf, cis_information as cis};
 #[allow(unused_imports)]
-use crate::out::{Out, Pattern};
+use crate::out::{Out, Pattern, Rules};
+#[allow(unused_imports)]
+use crate::json::{JsonReader, JsonWriter};
+#[allow(unused_imports)]
+use crate::{ErrorKind, WarningKind};
 #[allow(unused_imports)]
 use crate::xml::{Enumeration, Xml};
 #[allow(unused_imports)]
@@ -1622,10 +1626,10 @@ pub struct CompositePictogram {
 }
 
 impl CompositePictogram {
-    const FIELDS: &'static [u32] = &[0x130755, 0x13068e, 0x130a39, 0x130a3a, 0x130c50, 0x130a3b, 0x13083a, 0x13055a, 0x130a37, 0x130acb, 0x130440];
+    const FIELDS: &'static [u32] = &[0x170784, 0x1706b7, 0x170a7f, 0x170a80, 0x170cb2, 0x170a81, 0x170876, 0x17057d, 0x170a7d, 0x170b14, 0x17045c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130054);
+        r.expect_type(0x170056);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1641,17 +1645,17 @@ impl CompositePictogram {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130755 => { let v = r.string()?; r.set(&mut e0, v, 1877); }
-                    0x13068e => { let v = r.multilingual()?; r.set(&mut e1, v, 1678); }
-                    0x130a39 => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2617); }
-                    0x130a3a => { let v = r.value::<bool>()?; r.set(&mut e3, v, 2618); }
-                    0x130c50 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 3152); }
-                    0x130a3b => { let v = r.enumeration::<InformationTypeEnum>()?; r.set(&mut e5, v, 2619); }
-                    0x13083a => { let v = Some(GddStructure::read(r)?); r.set(&mut e6, v.map(Box::new), 2106); }
-                    0x13055a => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1370); }
-                    0x130a37 => { let v = r.enumeration::<CompositePictogramEnum>()?; r.set(&mut e8, v, 2615); }
-                    0x130acb => { let v = Some(RegularPictogram::read(r)?); r.set(&mut e9, v.map(Box::new), 2763); }
-                    0x130440 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1088); }
+                    0x170784 => { let v = r.string()?; r.set(&mut e0, v, 1924); }
+                    0x1706b7 => { let v = r.multilingual()?; r.set(&mut e1, v, 1719); }
+                    0x170a7f => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2687); }
+                    0x170a80 => { let v = r.value::<bool>()?; r.set(&mut e3, v, 2688); }
+                    0x170cb2 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 3250); }
+                    0x170a81 => { let v = r.enumeration::<InformationTypeEnum>()?; r.set(&mut e5, v, 2689); }
+                    0x170876 => { let v = Some(GddStructure::read(r)?); r.set(&mut e6, v.map(Box::new), 2166); }
+                    0x17057d => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1405); }
+                    0x170a7d => { let v = r.enumeration::<CompositePictogramEnum>()?; r.set(&mut e8, v, 2685); }
+                    0x170b14 => { let v = Some(RegularPictogram::read(r)?); r.set(&mut e9, v.map(Box::new), 2836); }
+                    0x17045c => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1116); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1660,8 +1664,8 @@ impl CompositePictogram {
                 break;
             }
         }
-        r.required(&e8, 2615);
-        r.required(&e9, 2763);
+        r.required(&e8, 2685);
+        r.required(&e9, 2836);
         let v = Self {
             custom_pictogram_code: e0,
             additional_description: e1,
@@ -1706,6 +1710,128 @@ impl CompositePictogram {
     }
 }
 
+impl CompositePictogram {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                482 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                59 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                1585 => if r.first(&mut seen[2])? { f2 = r.boolean()?; },
+                1586 => if r.first(&mut seen[3])? { f3 = r.boolean()?; },
+                2583 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                1587 => if r.first(&mut seen[5])? { f5 = r.enumeration::<InformationTypeEnum>()?; },
+                911 => if r.first(&mut seen[6])? { f6 = GddStructure::read_json(r)?.map(Box::new); },
+                2620 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                1583 => if r.first(&mut seen[8])? { f8 = r.enumeration::<CompositePictogramEnum>()?; },
+                1836 => if r.first(&mut seen[9])? { f9 = RegularPictogram::read_json(r)?.map(Box::new); },
+                2588 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f8, 1583);
+        r.required(&f9, 1836);
+        Ok(Self {
+            custom_pictogram_code: f0,
+            additional_description: f1,
+            pictogram_flashing: f2,
+            pictogram_in_inverse_colour: f3,
+            vienna_convention_compliant: f4,
+            pictogram_information_type: f5,
+            gdd_structure: f6,
+            pictogram_extension: f7,
+            pictogram_description: f8,
+            regular_pictogram: f9,
+            composite_pictogram_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1054)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.custom_pictogram_code {
+            w.key(482)?;
+            w.max_len("customPictogramCode", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.additional_description {
+            w.key(59)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.pictogram_flashing {
+            w.key(1585)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.pictogram_in_inverse_colour {
+            w.key(1586)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.vienna_convention_compliant {
+            w.key(2583)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.pictogram_information_type {
+            w.key(1587)?;
+            w.enumeration(1069, v.literal())?;
+        }
+        if let Some(v) = &self.gdd_structure {
+            w.key(911)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.pictogram_extension {
+            w.key(2620)?;
+            w.extension(v)?;
+        }
+        match &self.pictogram_description {
+            Some(v) => {
+                w.key(1583)?;
+                w.enumeration(1055, v.literal())?;
+            }
+            None => w.absent(1583, w.missing("pictogramDescription"))?,
+        }
+        match &self.regular_pictogram {
+            Some(v) => {
+                w.key(1836)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1836, w.missing("regularPictogram"))?,
+        }
+        if let Some(v) = &self.composite_pictogram_extension {
+            w.key(2588)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:DisplayArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DisplayArea {
@@ -1730,10 +1856,10 @@ pub struct DisplayArea {
 }
 
 impl DisplayArea {
-    const FIELDS: &'static [u32] = &[0x130b2d, 0x130900, 0x130a52, 0x130a53, 0x130a55, 0x130a56, 0x130797, 0x1309f4, 0x13046c];
+    const FIELDS: &'static [u32] = &[0x170b7a, 0x17093f, 0x170a98, 0x170a99, 0x170a9b, 0x170a9c, 0x1707c8, 0x170a39, 0x170488];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130081);
+        r.expect_type(0x170083);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1747,15 +1873,15 @@ impl DisplayArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130b2d => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2861); }
-                    0x130900 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2304); }
-                    0x130a52 => { let v = r.enumeration::<PositionXAbsoluteEnum>()?; r.set(&mut e2, v, 2642); }
-                    0x130a53 => { let v = r.enumeration::<PositionXRelativeEnum>()?; r.set(&mut e3, v, 2643); }
-                    0x130a55 => { let v = r.enumeration::<PositionYAbsoluteEnum>()?; r.set(&mut e4, v, 2645); }
-                    0x130a56 => { let v = r.enumeration::<PositionYRelativeEnum>()?; r.set(&mut e5, v, 2646); }
-                    0x130797 => { let v = Some(DisplayGeometry::read(r)?); r.set(&mut e6, v.map(Box::new), 1943); }
-                    0x1309f4 => { let v = Some(loc::Lane::read(r)?); e7.extend(v); }
-                    0x13046c => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1132); }
+                    0x170b7a => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2938); }
+                    0x17093f => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2367); }
+                    0x170a98 => { let v = r.enumeration::<PositionXAbsoluteEnum>()?; r.set(&mut e2, v, 2712); }
+                    0x170a99 => { let v = r.enumeration::<PositionXRelativeEnum>()?; r.set(&mut e3, v, 2713); }
+                    0x170a9b => { let v = r.enumeration::<PositionYAbsoluteEnum>()?; r.set(&mut e4, v, 2715); }
+                    0x170a9c => { let v = r.enumeration::<PositionYRelativeEnum>()?; r.set(&mut e5, v, 2716); }
+                    0x1707c8 => { let v = Some(DisplayGeometry::read(r)?); r.set(&mut e6, v.map(Box::new), 1992); }
+                    0x170a39 => { let v = Some(loc::Lane::read(r)?); e7.extend(v); }
+                    0x170488 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1160); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1798,6 +1924,111 @@ impl DisplayArea {
     }
 }
 
+impl DisplayArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 9];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2025 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1268 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1610 => if r.first(&mut seen[2])? { f2 = r.enumeration::<PositionXAbsoluteEnum>()?; },
+                1611 => if r.first(&mut seen[3])? { f3 = r.enumeration::<PositionXRelativeEnum>()?; },
+                1613 => if r.first(&mut seen[4])? { f4 = r.enumeration::<PositionYAbsoluteEnum>()?; },
+                1614 => if r.first(&mut seen[5])? { f5 = r.enumeration::<PositionYRelativeEnum>()?; },
+                577 => if r.first(&mut seen[6])? { f6 = DisplayGeometry::read_json(r)?.map(Box::new); },
+                1516 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::Lane::read_json(r)? { f7.push(v); } } },
+                2598 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            sequencing_capable: f0,
+            max_number_of_sequential_pages: f1,
+            position_x_absolute: f2,
+            position_x_relative_to_previous: f3,
+            position_y_absolute: f4,
+            position_y_relative_to_previous: f5,
+            display_geometry: f6,
+            overridden_lane_association: f7,
+            display_area_extension: f8,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1057)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.sequencing_capable {
+            w.key(2025)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.max_number_of_sequential_pages {
+            w.key(1268)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.position_x_absolute {
+            w.key(1610)?;
+            w.enumeration(1078, v.literal())?;
+        }
+        if let Some(v) = &self.position_x_relative_to_previous {
+            w.key(1611)?;
+            w.enumeration(1079, v.literal())?;
+        }
+        if let Some(v) = &self.position_y_absolute {
+            w.key(1613)?;
+            w.enumeration(1080, v.literal())?;
+        }
+        if let Some(v) = &self.position_y_relative_to_previous {
+            w.key(1614)?;
+            w.enumeration(1081, v.literal())?;
+        }
+        if let Some(v) = &self.display_geometry {
+            w.key(577)?;
+            v.write_json(w, None)?;
+        }
+        if !self.overridden_lane_association.is_empty() {
+            w.key(1516)?;
+            w.begin_array()?;
+            for v in &self.overridden_lane_association {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.display_area_extension {
+            w.key(2598)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:DisplayGeometry`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DisplayGeometry {
@@ -1818,10 +2049,10 @@ pub struct DisplayGeometry {
 }
 
 impl DisplayGeometry {
-    const FIELDS: &'static [u32] = &[0x130a3f, 0x130a40, 0x130798, 0x130799, 0x130a51, 0x130a54, 0x13046e];
+    const FIELDS: &'static [u32] = &[0x170a85, 0x170a86, 0x1707c9, 0x1707ca, 0x170a97, 0x170a9a, 0x17048a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130083);
+        r.expect_type(0x170085);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1833,13 +2064,13 @@ impl DisplayGeometry {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130a3f => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2623); }
-                    0x130a40 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2624); }
-                    0x130798 => { let v = r.value::<f32>()?; r.set(&mut e2, v, 1944); }
-                    0x130799 => { let v = r.value::<f32>()?; r.set(&mut e3, v, 1945); }
-                    0x130a51 => { let v = r.value::<f32>()?; r.set(&mut e4, v, 2641); }
-                    0x130a54 => { let v = r.value::<f32>()?; r.set(&mut e5, v, 2644); }
-                    0x13046e => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1134); }
+                    0x170a85 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2693); }
+                    0x170a86 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2694); }
+                    0x1707c9 => { let v = r.value::<f32>()?; r.set(&mut e2, v, 1993); }
+                    0x1707ca => { let v = r.value::<f32>()?; r.set(&mut e3, v, 1994); }
+                    0x170a97 => { let v = r.value::<f32>()?; r.set(&mut e4, v, 2711); }
+                    0x170a9a => { let v = r.value::<f32>()?; r.set(&mut e5, v, 2714); }
+                    0x17048a => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1162); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1878,6 +2109,92 @@ impl DisplayGeometry {
     }
 }
 
+impl DisplayGeometry {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1591 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                1592 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                578 => if r.first(&mut seen[2])? { f2 = r.number::<f32>()?; },
+                579 => if r.first(&mut seen[3])? { f3 = r.number::<f32>()?; },
+                1609 => if r.first(&mut seen[4])? { f4 = r.number::<f32>()?; },
+                1612 => if r.first(&mut seen[5])? { f5 = r.number::<f32>()?; },
+                2600 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            pixels_across: f0,
+            pixels_down: f1,
+            display_height: f2,
+            display_width: f3,
+            position_x: f4,
+            position_y: f5,
+            display_geometry_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1060)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.pixels_across {
+            w.key(1591)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.pixels_down {
+            w.key(1592)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.display_height {
+            w.key(578)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.display_width {
+            w.key(579)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.position_x {
+            w.key(1609)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.position_y {
+            w.key(1612)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.display_geometry_extension {
+            w.key(2600)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:DisplayedNumericalInformation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DisplayedNumericalInformation {
@@ -1892,10 +2209,10 @@ pub struct DisplayedNumericalInformation {
 }
 
 impl DisplayedNumericalInformation {
-    const FIELDS: &'static [u32] = &[0x130991, 0x13098f, 0x130c09, 0x13046f];
+    const FIELDS: &'static [u32] = &[0x1709d5, 0x1709d3, 0x170c68, 0x17048b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130084);
+        r.expect_type(0x170086);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1904,10 +2221,10 @@ impl DisplayedNumericalInformation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130991 => { let v = r.enumeration::<DisplayedNumericalInformationTypeEnum>()?; r.set(&mut e0, v, 2449); }
-                    0x13098f => { let v = r.value::<Decimal>()?; r.set(&mut e1, v, 2447); }
-                    0x130c09 => { let v = r.enumeration::<UnitOfMeasureEnum>()?; r.set(&mut e2, v, 3081); }
-                    0x13046f => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1135); }
+                    0x1709d5 => { let v = r.enumeration::<DisplayedNumericalInformationTypeEnum>()?; r.set(&mut e0, v, 2517); }
+                    0x1709d3 => { let v = r.value::<Decimal>()?; r.set(&mut e1, v, 2515); }
+                    0x170c68 => { let v = r.enumeration::<UnitOfMeasureEnum>()?; r.set(&mut e2, v, 3176); }
+                    0x17048b => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1163); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1916,9 +2233,9 @@ impl DisplayedNumericalInformation {
                 break;
             }
         }
-        r.required(&e0, 2449);
-        r.required(&e1, 2447);
-        r.required(&e2, 3081);
+        r.required(&e0, 2517);
+        r.required(&e1, 2515);
+        r.required(&e2, 3176);
         let v = Self {
             numerical_information_type: e0,
             numeric_value: e1,
@@ -1952,6 +2269,83 @@ impl DisplayedNumericalInformation {
     }
 }
 
+impl DisplayedNumericalInformation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1417 => if r.first(&mut seen[0])? { f0 = r.enumeration::<DisplayedNumericalInformationTypeEnum>()?; },
+                1415 => if r.first(&mut seen[1])? { f1 = r.number::<Decimal>()?; },
+                2509 => if r.first(&mut seen[2])? { f2 = r.enumeration::<UnitOfMeasureEnum>()?; },
+                2601 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1417);
+        r.required(&f1, 1415);
+        r.required(&f2, 2509);
+        Ok(Self {
+            numerical_information_type: f0,
+            numeric_value: f1,
+            unit_of_measure: f2,
+            displayed_numerical_information_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1061)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.numerical_information_type {
+            Some(v) => {
+                w.key(1417)?;
+                w.enumeration(1062, v.literal())?;
+            }
+            None => w.absent(1417, w.missing("numericalInformationType"))?,
+        }
+        match &self.numeric_value {
+            Some(v) => {
+                w.key(1415)?;
+                w.decimal(v)?;
+            }
+            None => w.absent(1415, w.missing("numericValue"))?,
+        }
+        match &self.unit_of_measure {
+            Some(v) => {
+                w.key(2509)?;
+                w.enumeration(1092, v.literal())?;
+            }
+            None => w.absent(2509, w.missing("unitOfMeasure"))?,
+        }
+        if let Some(v) = &self.displayed_numerical_information_extension {
+            w.key(2601)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:GddPictogramAttributes`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GddPictogramAttributes {
@@ -1962,18 +2356,18 @@ pub struct GddPictogramAttributes {
 }
 
 impl GddPictogramAttributes {
-    const FIELDS: &'static [u32] = &[0x1306d5, 0x1304a1];
+    const FIELDS: &'static [u32] = &[0x1706fe, 0x1704c1];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1300b7);
+        r.expect_type(0x1700bd);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x1306d5 => { let v = r.base64()?; r.set(&mut e0, v, 1749); }
-                    0x1304a1 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1185); }
+                    0x1706fe => { let v = r.base64()?; r.set(&mut e0, v, 1790); }
+                    0x1704c1 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1217); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1982,7 +2376,7 @@ impl GddPictogramAttributes {
                 break;
             }
         }
-        r.required(&e0, 1749);
+        r.required(&e0, 1790);
         let v = Self {
             attributes: e0,
             gdd_pictogram_attributes_extension: e1,
@@ -2006,6 +2400,61 @@ impl GddPictogramAttributes {
     }
 }
 
+impl GddPictogramAttributes {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                265 => if r.first(&mut seen[0])? { f0 = r.base64()?; },
+                2604 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 265);
+        Ok(Self {
+            attributes: f0,
+            gdd_pictogram_attributes_extension: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1063)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.attributes {
+            Some(v) => {
+                w.key(265)?;
+                w.base64(v)?;
+            }
+            None => w.absent(265, w.missing("attributes"))?,
+        }
+        if let Some(v) = &self.gdd_pictogram_attributes_extension {
+            w.key(2604)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:GddPictogramIdentification`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GddPictogramIdentification {
@@ -2020,10 +2469,10 @@ pub struct GddPictogramIdentification {
 }
 
 impl GddPictogramIdentification {
-    const FIELDS: &'static [u32] = &[0x130747, 0x130b31, 0x130a34, 0x1304a2];
+    const FIELDS: &'static [u32] = &[0x170776, 0x170b7e, 0x170a7a, 0x1704c2];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1300b8);
+        r.expect_type(0x1700be);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2032,10 +2481,10 @@ impl GddPictogramIdentification {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130747 => { let v = r.string()?; r.set(&mut e0, v, 1863); }
-                    0x130b31 => { let v = r.enumeration::<GddServiceCategoryEnum>()?; r.set(&mut e1, v, 2865); }
-                    0x130a34 => { let v = r.value::<u64>()?; r.set(&mut e2, v, 2612); }
-                    0x1304a2 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1186); }
+                    0x170776 => { let v = r.string()?; r.set(&mut e0, v, 1910); }
+                    0x170b7e => { let v = r.enumeration::<GddServiceCategoryEnum>()?; r.set(&mut e1, v, 2942); }
+                    0x170a7a => { let v = r.value::<u64>()?; r.set(&mut e2, v, 2682); }
+                    0x1704c2 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1218); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2044,9 +2493,9 @@ impl GddPictogramIdentification {
                 break;
             }
         }
-        r.required(&e0, 1863);
-        r.required(&e1, 2865);
-        r.required(&e2, 2612);
+        r.required(&e0, 1910);
+        r.required(&e1, 2942);
+        r.required(&e2, 2682);
         let v = Self {
             country: e0,
             service_category: e1,
@@ -2080,6 +2529,83 @@ impl GddPictogramIdentification {
     }
 }
 
+impl GddPictogramIdentification {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                468 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2029 => if r.first(&mut seen[1])? { f1 = r.enumeration::<GddServiceCategoryEnum>()?; },
+                1580 => if r.first(&mut seen[2])? { f2 = r.number::<u64>()?; },
+                2605 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 468);
+        r.required(&f1, 2029);
+        r.required(&f2, 1580);
+        Ok(Self {
+            country: f0,
+            service_category: f1,
+            pictogram_category_code: f2,
+            gdd_pictogram_identification_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1064)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.country {
+            Some(v) => {
+                w.key(468)?;
+                w.max_len("country", v, 2)?; w.string(v)?;
+            }
+            None => w.absent(468, w.missing("country"))?,
+        }
+        match &self.service_category {
+            Some(v) => {
+                w.key(2029)?;
+                w.enumeration(1065, v.literal())?;
+            }
+            None => w.absent(2029, w.missing("serviceCategory"))?,
+        }
+        match &self.pictogram_category_code {
+            Some(v) => {
+                w.key(1580)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1580, w.missing("pictogramCategoryCode"))?,
+        }
+        if let Some(v) = &self.gdd_pictogram_identification_extension {
+            w.key(2605)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:GddStructure`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GddStructure {
@@ -2092,10 +2618,10 @@ pub struct GddStructure {
 }
 
 impl GddStructure {
-    const FIELDS: &'static [u32] = &[0x130839, 0x130838, 0x1304a3];
+    const FIELDS: &'static [u32] = &[0x170875, 0x170874, 0x1704c3];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1300b9);
+        r.expect_type(0x1700bf);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2103,9 +2629,9 @@ impl GddStructure {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130839 => { let v = Some(GddPictogramIdentification::read(r)?); r.set(&mut e0, v.map(Box::new), 2105); }
-                    0x130838 => { let v = Some(GddPictogramAttributes::read(r)?); r.set(&mut e1, v.map(Box::new), 2104); }
-                    0x1304a3 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1187); }
+                    0x170875 => { let v = Some(GddPictogramIdentification::read(r)?); r.set(&mut e0, v.map(Box::new), 2165); }
+                    0x170874 => { let v = Some(GddPictogramAttributes::read(r)?); r.set(&mut e1, v.map(Box::new), 2164); }
+                    0x1704c3 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1219); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2114,7 +2640,7 @@ impl GddStructure {
                 break;
             }
         }
-        r.required(&e0, 2105);
+        r.required(&e0, 2165);
         let v = Self {
             gdd_pictogram_identification: e0,
             gdd_pictogram_attributes: e1,
@@ -2140,6 +2666,68 @@ impl GddStructure {
     }
 }
 
+impl GddStructure {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                910 => if r.first(&mut seen[0])? { f0 = GddPictogramIdentification::read_json(r)?.map(Box::new); },
+                909 => if r.first(&mut seen[1])? { f1 = GddPictogramAttributes::read_json(r)?.map(Box::new); },
+                2606 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 910);
+        Ok(Self {
+            gdd_pictogram_identification: f0,
+            gdd_pictogram_attributes: f1,
+            gdd_structure_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1066)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.gdd_pictogram_identification {
+            Some(v) => {
+                w.key(910)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(910, w.missing("gddPictogramIdentification"))?,
+        }
+        if let Some(v) = &self.gdd_pictogram_attributes {
+            w.key(909)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.gdd_structure_extension {
+            w.key(2606)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:Image`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Image {
@@ -2152,10 +2740,10 @@ pub struct Image {
 }
 
 impl Image {
-    const FIELDS: &'static [u32] = &[0x130876, 0x130877, 0x1304c5];
+    const FIELDS: &'static [u32] = &[0x1708b2, 0x1708b3, 0x1704e5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1300da);
+        r.expect_type(0x1700e0);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2163,9 +2751,9 @@ impl Image {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130876 => { let v = r.base64()?; r.set(&mut e0, v, 2166); }
-                    0x130877 => { let v = r.enumeration::<ImageFormatEnum>()?; r.set(&mut e1, v, 2167); }
-                    0x1304c5 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1221); }
+                    0x1708b2 => { let v = r.base64()?; r.set(&mut e0, v, 2226); }
+                    0x1708b3 => { let v = r.enumeration::<ImageFormatEnum>()?; r.set(&mut e1, v, 2227); }
+                    0x1704e5 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1253); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2174,8 +2762,8 @@ impl Image {
                 break;
             }
         }
-        r.required(&e0, 2166);
-        r.required(&e1, 2167);
+        r.required(&e0, 2226);
+        r.required(&e1, 2227);
         let v = Self {
             image_data: e0,
             image_format: e1,
@@ -2204,6 +2792,72 @@ impl Image {
     }
 }
 
+impl Image {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                971 => if r.first(&mut seen[0])? { f0 = r.base64()?; },
+                972 => if r.first(&mut seen[1])? { f1 = r.enumeration::<ImageFormatEnum>()?; },
+                2607 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 971);
+        r.required(&f1, 972);
+        Ok(Self {
+            image_data: f0,
+            image_format: f1,
+            image_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1067)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.image_data {
+            Some(v) => {
+                w.key(971)?;
+                w.base64(v)?;
+            }
+            None => w.absent(971, w.missing("imageData"))?,
+        }
+        match &self.image_format {
+            Some(v) => {
+                w.key(972)?;
+                w.enumeration(1068, v.literal())?;
+            }
+            None => w.absent(972, w.missing("imageFormat"))?,
+        }
+        if let Some(v) = &self.image_extension {
+            w.key(2607)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:ManagedLogicalLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ManagedLogicalLocation {
@@ -2218,10 +2872,10 @@ pub struct ManagedLogicalLocation {
 }
 
 impl ManagedLogicalLocation {
-    const FIELDS: &'static [u32] = &[0x1308f2, 0x13079f, 0x1308f1, 0x1304e7];
+    const FIELDS: &'static [u32] = &[0x170930, 0x1707d0, 0x17092f, 0x170509];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1300fe);
+        r.expect_type(0x170106);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2230,10 +2884,10 @@ impl ManagedLogicalLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x1308f2 => { let v = r.multilingual()?; r.set(&mut e0, v, 2290); }
-                    0x13079f => { let v = r.value::<u64>()?; r.set(&mut e1, v, 1951); }
-                    0x1308f1 => { let v = loc::Location::read(r)?; r.set(&mut e2, v, 2289); }
-                    0x1304e7 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1255); }
+                    0x170930 => { let v = r.multilingual()?; r.set(&mut e0, v, 2352); }
+                    0x1707d0 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2000); }
+                    0x17092f => { let v = loc::Location::read(r)?; r.set(&mut e2, v, 2351); }
+                    0x170509 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1289); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2266,6 +2920,71 @@ impl ManagedLogicalLocation {
     }
 }
 
+impl ManagedLogicalLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1253 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                585 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1252 => if r.first(&mut seen[2])? { f2 = loc::Location::read_json(r)?; },
+                2611 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            managed_logical_location: f0,
+            distance_from_logical_location: f1,
+            managed_location: f2,
+            managed_logical_location_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1070)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.managed_logical_location {
+            w.key(1253)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.distance_from_logical_location {
+            w.key(585)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.managed_location {
+            w.key(1252)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.managed_logical_location_extension {
+            w.key(2611)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:MultiPageDisplay`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct MultiPageDisplay {
@@ -2286,10 +3005,10 @@ pub struct MultiPageDisplay {
 }
 
 impl MultiPageDisplay {
-    const FIELDS: &'static [u32] = &[0x130899, 0x1308c4, 0x1308c2, 0x13046d, 0x130b2b, 0x130796, 0x1304f9];
+    const FIELDS: &'static [u32] = &[0x1708d7, 0x170902, 0x170900, 0x170489, 0x170b78, 0x1707c7, 0x17051c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130110);
+        r.expect_type(0x170119);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2301,13 +3020,13 @@ impl MultiPageDisplay {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130899 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2201); }
-                    0x1308c4 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2244); }
-                    0x1308c2 => { let v = r.multilingual()?; r.set(&mut e2, v, 2242); }
-                    0x13046d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1133); }
-                    0x130b2b => { let v = r.value::<u64>()?; r.set(&mut e4, v, 2859); }
-                    0x130796 => { let v = Some(MultiPageDisplayPageNumberDisplayAreaSettings::read(r)?); e5.extend(v); }
-                    0x1304f9 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1273); }
+                    0x1708d7 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2263); }
+                    0x170902 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2306); }
+                    0x170900 => { let v = r.multilingual()?; r.set(&mut e2, v, 2304); }
+                    0x170489 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1161); }
+                    0x170b78 => { let v = r.value::<u64>()?; r.set(&mut e4, v, 2936); }
+                    0x1707c7 => { let v = Some(MultiPageDisplayPageNumberDisplayAreaSettings::read(r)?); e5.extend(v); }
+                    0x17051c => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1308); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2346,6 +3065,97 @@ impl MultiPageDisplay {
     }
 }
 
+impl MultiPageDisplay {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1010 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1053 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                1051 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                2599 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                2023 => if r.first(&mut seen[4])? { f4 = r.number::<u64>()?; },
+                576 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = MultiPageDisplayPageNumberDisplayAreaSettings::read_json(r)? { f5.push(v); } } },
+                2614 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            is_blank: f0,
+            legally_binding: f1,
+            legal_basis: f2,
+            display_area_settings_extension: f3,
+            sequence_group_number: f4,
+            display_area_settings: f5,
+            multi_page_display_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1072)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.is_blank {
+            w.key(1010)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legally_binding {
+            w.key(1053)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legal_basis {
+            w.key(1051)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.display_area_settings_extension {
+            w.key(2599)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.sequence_group_number {
+            w.key(2023)?;
+            w.integer(*v)?;
+        }
+        if !self.display_area_settings.is_empty() {
+            w.key(576)?;
+            w.begin_array()?;
+            for v in &self.display_area_settings {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.multi_page_display_extension {
+            w.key(2614)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:PictogramDisplay`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PictogramDisplay {
@@ -2372,10 +3182,10 @@ pub struct PictogramDisplay {
 }
 
 impl PictogramDisplay {
-    const FIELDS: &'static [u32] = &[0x130899, 0x1308c4, 0x1308c2, 0x13046d, 0x13089c, 0x130a38, 0x130a33, 0x130b92, 0x130874, 0x130559];
+    const FIELDS: &'static [u32] = &[0x1708d7, 0x170902, 0x170900, 0x170489, 0x1708da, 0x170a7e, 0x170a79, 0x170bf0, 0x1708b0, 0x17057c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130176);
+        r.expect_type(0x17017f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2390,16 +3200,16 @@ impl PictogramDisplay {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130899 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2201); }
-                    0x1308c4 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2244); }
-                    0x1308c2 => { let v = r.multilingual()?; r.set(&mut e2, v, 2242); }
-                    0x13046d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1133); }
-                    0x13089c => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2204); }
-                    0x130a38 => { let v = r.string()?; r.set(&mut e5, v, 2616); }
-                    0x130a33 => { let v = Pictogram::read(r)?; r.set(&mut e6, v, 2611); }
-                    0x130b92 => { let v = SupplementaryInformationDisplay::read(r)?; r.set(&mut e7, v, 2962); }
-                    0x130874 => { let v = Some(Image::read(r)?); r.set(&mut e8, v.map(Box::new), 2164); }
-                    0x130559 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1369); }
+                    0x1708d7 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2263); }
+                    0x170902 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2306); }
+                    0x170900 => { let v = r.multilingual()?; r.set(&mut e2, v, 2304); }
+                    0x170489 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1161); }
+                    0x1708da => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2266); }
+                    0x170a7e => { let v = r.string()?; r.set(&mut e5, v, 2686); }
+                    0x170a79 => { let v = Pictogram::read(r)?; r.set(&mut e6, v, 2681); }
+                    0x170bf0 => { let v = SupplementaryInformationDisplay::read(r)?; r.set(&mut e7, v, 3056); }
+                    0x1708b0 => { let v = Some(Image::read(r)?); r.set(&mut e8, v.map(Box::new), 2224); }
+                    0x17057c => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1404); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2408,7 +3218,7 @@ impl PictogramDisplay {
                 break;
             }
         }
-        r.required(&e6, 2611);
+        r.required(&e6, 2681);
         let v = Self {
             is_blank: e0,
             legally_binding: e1,
@@ -2448,6 +3258,117 @@ impl PictogramDisplay {
     }
 }
 
+impl PictogramDisplay {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 10];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1010 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1053 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                1051 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                2599 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                1013 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                1584 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                1579 => if r.first(&mut seen[6])? { f6 = Pictogram::read_json(r)?; },
+                2220 => if r.first(&mut seen[7])? { f7 = SupplementaryInformationDisplay::read_json(r)?; },
+                969 => if r.first(&mut seen[8])? { f8 = Image::read_json(r)?.map(Box::new); },
+                2619 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f6, 1579);
+        Ok(Self {
+            is_blank: f0,
+            legally_binding: f1,
+            legal_basis: f2,
+            display_area_settings_extension: f3,
+            is_primary_pictogram: f4,
+            pictogram_display_url: f5,
+            pictogram: f6,
+            supplementary_information_display: f7,
+            image: f8,
+            pictogram_display_extension: f9,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1074)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.is_blank {
+            w.key(1010)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legally_binding {
+            w.key(1053)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legal_basis {
+            w.key(1051)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.display_area_settings_extension {
+            w.key(2599)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.is_primary_pictogram {
+            w.key(1013)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.pictogram_display_url {
+            w.key(1584)?;
+            w.string(v)?;
+        }
+        match &self.pictogram {
+            Some(v) => {
+                w.key(1579)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(1579, w.missing("pictogram"))?,
+        }
+        if let Some(v) = &self.supplementary_information_display {
+            w.key(2220)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.image {
+            w.key(969)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.pictogram_display_extension {
+            w.key(2619)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:PictogramDisplayArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PictogramDisplayArea {
@@ -2478,10 +3399,10 @@ pub struct PictogramDisplayArea {
 }
 
 impl PictogramDisplayArea {
-    const FIELDS: &'static [u32] = &[0x130b2d, 0x130900, 0x130a52, 0x130a53, 0x130a55, 0x130a56, 0x130797, 0x1309f4, 0x13046c, 0x130a36, 0x130a3c, 0x130558];
+    const FIELDS: &'static [u32] = &[0x170b7a, 0x17093f, 0x170a98, 0x170a99, 0x170a9b, 0x170a9c, 0x1707c8, 0x170a39, 0x170488, 0x170a7c, 0x170a82, 0x17057b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130177);
+        r.expect_type(0x170180);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2498,18 +3419,18 @@ impl PictogramDisplayArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130b2d => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2861); }
-                    0x130900 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2304); }
-                    0x130a52 => { let v = r.enumeration::<PositionXAbsoluteEnum>()?; r.set(&mut e2, v, 2642); }
-                    0x130a53 => { let v = r.enumeration::<PositionXRelativeEnum>()?; r.set(&mut e3, v, 2643); }
-                    0x130a55 => { let v = r.enumeration::<PositionYAbsoluteEnum>()?; r.set(&mut e4, v, 2645); }
-                    0x130a56 => { let v = r.enumeration::<PositionYRelativeEnum>()?; r.set(&mut e5, v, 2646); }
-                    0x130797 => { let v = Some(DisplayGeometry::read(r)?); r.set(&mut e6, v.map(Box::new), 1943); }
-                    0x1309f4 => { let v = Some(loc::Lane::read(r)?); e7.extend(v); }
-                    0x13046c => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1132); }
-                    0x130a36 => { let v = r.string()?; r.set(&mut e9, v, 2614); }
-                    0x130a3c => { let v = r.value::<u64>()?; r.set(&mut e10, v, 2620); }
-                    0x130558 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1368); }
+                    0x170b7a => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2938); }
+                    0x17093f => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2367); }
+                    0x170a98 => { let v = r.enumeration::<PositionXAbsoluteEnum>()?; r.set(&mut e2, v, 2712); }
+                    0x170a99 => { let v = r.enumeration::<PositionXRelativeEnum>()?; r.set(&mut e3, v, 2713); }
+                    0x170a9b => { let v = r.enumeration::<PositionYAbsoluteEnum>()?; r.set(&mut e4, v, 2715); }
+                    0x170a9c => { let v = r.enumeration::<PositionYRelativeEnum>()?; r.set(&mut e5, v, 2716); }
+                    0x1707c8 => { let v = Some(DisplayGeometry::read(r)?); r.set(&mut e6, v.map(Box::new), 1992); }
+                    0x170a39 => { let v = Some(loc::Lane::read(r)?); e7.extend(v); }
+                    0x170488 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1160); }
+                    0x170a7c => { let v = r.string()?; r.set(&mut e9, v, 2684); }
+                    0x170a82 => { let v = r.value::<u64>()?; r.set(&mut e10, v, 2690); }
+                    0x17057b => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1403); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2558,6 +3479,132 @@ impl PictogramDisplayArea {
     }
 }
 
+impl PictogramDisplayArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2025 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1268 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1610 => if r.first(&mut seen[2])? { f2 = r.enumeration::<PositionXAbsoluteEnum>()?; },
+                1611 => if r.first(&mut seen[3])? { f3 = r.enumeration::<PositionXRelativeEnum>()?; },
+                1613 => if r.first(&mut seen[4])? { f4 = r.enumeration::<PositionYAbsoluteEnum>()?; },
+                1614 => if r.first(&mut seen[5])? { f5 = r.enumeration::<PositionYRelativeEnum>()?; },
+                577 => if r.first(&mut seen[6])? { f6 = DisplayGeometry::read_json(r)?.map(Box::new); },
+                1516 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::Lane::read_json(r)? { f7.push(v); } } },
+                2598 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                1582 => if r.first(&mut seen[9])? { f9 = r.string()?; },
+                1588 => if r.first(&mut seen[10])? { f10 = r.number::<u64>()?; },
+                2618 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            sequencing_capable: f0,
+            max_number_of_sequential_pages: f1,
+            position_x_absolute: f2,
+            position_x_relative_to_previous: f3,
+            position_y_absolute: f4,
+            position_y_relative_to_previous: f5,
+            display_geometry: f6,
+            overridden_lane_association: f7,
+            display_area_extension: f8,
+            pictogram_code_list_identifier: f9,
+            pictogram_number_of_colours: f10,
+            pictogram_display_area_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1075)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.sequencing_capable {
+            w.key(2025)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.max_number_of_sequential_pages {
+            w.key(1268)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.position_x_absolute {
+            w.key(1610)?;
+            w.enumeration(1078, v.literal())?;
+        }
+        if let Some(v) = &self.position_x_relative_to_previous {
+            w.key(1611)?;
+            w.enumeration(1079, v.literal())?;
+        }
+        if let Some(v) = &self.position_y_absolute {
+            w.key(1613)?;
+            w.enumeration(1080, v.literal())?;
+        }
+        if let Some(v) = &self.position_y_relative_to_previous {
+            w.key(1614)?;
+            w.enumeration(1081, v.literal())?;
+        }
+        if let Some(v) = &self.display_geometry {
+            w.key(577)?;
+            v.write_json(w, None)?;
+        }
+        if !self.overridden_lane_association.is_empty() {
+            w.key(1516)?;
+            w.begin_array()?;
+            for v in &self.overridden_lane_association {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.display_area_extension {
+            w.key(2598)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.pictogram_code_list_identifier {
+            w.key(1582)?;
+            w.max_len("pictogramCodeListIdentifier", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.pictogram_number_of_colours {
+            w.key(1588)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.pictogram_display_area_extension {
+            w.key(2618)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:RegularPictogram`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RegularPictogram {
@@ -2588,10 +3635,10 @@ pub struct RegularPictogram {
 }
 
 impl RegularPictogram {
-    const FIELDS: &'static [u32] = &[0x130755, 0x13068e, 0x130a39, 0x130a3a, 0x130c50, 0x130a3b, 0x13083a, 0x13055a, 0x130a37, 0x130a6e, 0x13079a, 0x130594];
+    const FIELDS: &'static [u32] = &[0x170784, 0x1706b7, 0x170a7f, 0x170a80, 0x170cb2, 0x170a81, 0x170876, 0x17057d, 0x170a7d, 0x170ab5, 0x1707cb, 0x1705b7];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1301b2);
+        r.expect_type(0x1701bb);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2608,18 +3655,18 @@ impl RegularPictogram {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130755 => { let v = r.string()?; r.set(&mut e0, v, 1877); }
-                    0x13068e => { let v = r.multilingual()?; r.set(&mut e1, v, 1678); }
-                    0x130a39 => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2617); }
-                    0x130a3a => { let v = r.value::<bool>()?; r.set(&mut e3, v, 2618); }
-                    0x130c50 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 3152); }
-                    0x130a3b => { let v = r.enumeration::<InformationTypeEnum>()?; r.set(&mut e5, v, 2619); }
-                    0x13083a => { let v = Some(GddStructure::read(r)?); r.set(&mut e6, v.map(Box::new), 2106); }
-                    0x13055a => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1370); }
-                    0x130a37 => { let v = r.enumeration::<PictogramEnum>()?; e8.extend(v); }
-                    0x130a6e => { let v = r.value::<bool>()?; r.set(&mut e9, v, 2670); }
-                    0x13079a => { let v = Some(DisplayedNumericalInformation::read(r)?); e10.extend(v); }
-                    0x130594 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1428); }
+                    0x170784 => { let v = r.string()?; r.set(&mut e0, v, 1924); }
+                    0x1706b7 => { let v = r.multilingual()?; r.set(&mut e1, v, 1719); }
+                    0x170a7f => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2687); }
+                    0x170a80 => { let v = r.value::<bool>()?; r.set(&mut e3, v, 2688); }
+                    0x170cb2 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 3250); }
+                    0x170a81 => { let v = r.enumeration::<InformationTypeEnum>()?; r.set(&mut e5, v, 2689); }
+                    0x170876 => { let v = Some(GddStructure::read(r)?); r.set(&mut e6, v.map(Box::new), 2166); }
+                    0x17057d => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1405); }
+                    0x170a7d => { let v = r.enumeration::<PictogramEnum>()?; e8.extend(v); }
+                    0x170ab5 => { let v = r.value::<bool>()?; r.set(&mut e9, v, 2741); }
+                    0x1707cb => { let v = Some(DisplayedNumericalInformation::read(r)?); e10.extend(v); }
+                    0x1705b7 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1463); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2669,6 +3716,138 @@ impl RegularPictogram {
     }
 }
 
+impl RegularPictogram {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = Vec::new();
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                482 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                59 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                1585 => if r.first(&mut seen[2])? { f2 = r.boolean()?; },
+                1586 => if r.first(&mut seen[3])? { f3 = r.boolean()?; },
+                2583 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                1587 => if r.first(&mut seen[5])? { f5 = r.enumeration::<InformationTypeEnum>()?; },
+                911 => if r.first(&mut seen[6])? { f6 = GddStructure::read_json(r)?.map(Box::new); },
+                2620 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                1583 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<PictogramEnum>()? { f8.push(v); } } },
+                1639 => if r.first(&mut seen[9])? { f9 = r.boolean()?; },
+                580 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = DisplayedNumericalInformation::read_json(r)? { f10.push(v); } } },
+                2622 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            custom_pictogram_code: f0,
+            additional_description: f1,
+            pictogram_flashing: f2,
+            pictogram_in_inverse_colour: f3,
+            vienna_convention_compliant: f4,
+            pictogram_information_type: f5,
+            gdd_structure: f6,
+            pictogram_extension: f7,
+            pictogram_description: f8,
+            presence_of_red_triangle: f9,
+            displayed_numerical_information: f10,
+            regular_pictogram_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1082)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.custom_pictogram_code {
+            w.key(482)?;
+            w.max_len("customPictogramCode", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.additional_description {
+            w.key(59)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.pictogram_flashing {
+            w.key(1585)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.pictogram_in_inverse_colour {
+            w.key(1586)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.vienna_convention_compliant {
+            w.key(2583)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.pictogram_information_type {
+            w.key(1587)?;
+            w.enumeration(1069, v.literal())?;
+        }
+        if let Some(v) = &self.gdd_structure {
+            w.key(911)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.pictogram_extension {
+            w.key(2620)?;
+            w.extension(v)?;
+        }
+        if !self.pictogram_description.is_empty() {
+            w.key(1583)?;
+            w.begin_array()?;
+            for v in &self.pictogram_description {
+                w.item()?;
+                w.enumeration(1076, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.presence_of_red_triangle {
+            w.key(1639)?;
+            w.boolean(*v)?;
+        }
+        w.count("displayedNumericalInformation", self.displayed_numerical_information.len(), 0, 2)?;
+        if !self.displayed_numerical_information.is_empty() {
+            w.key(580)?;
+            w.begin_array()?;
+            for v in &self.displayed_numerical_information {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.regular_pictogram_extension {
+            w.key(2622)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:SupplementaryPanelArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SupplementaryPanelArea {
@@ -2699,10 +3878,10 @@ pub struct SupplementaryPanelArea {
 }
 
 impl SupplementaryPanelArea {
-    const FIELDS: &'static [u32] = &[0x130b2d, 0x130900, 0x130a52, 0x130a53, 0x130a55, 0x130a56, 0x130797, 0x1309f4, 0x13046c, 0x130b93, 0x130ad2, 0x1305e0];
+    const FIELDS: &'static [u32] = &[0x170b7a, 0x17093f, 0x170a98, 0x170a99, 0x170a9b, 0x170a9c, 0x1707c8, 0x170a39, 0x170488, 0x170bf1, 0x170b1b, 0x170609];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130202);
+        r.expect_type(0x170211);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2719,18 +3898,18 @@ impl SupplementaryPanelArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130b2d => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2861); }
-                    0x130900 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2304); }
-                    0x130a52 => { let v = r.enumeration::<PositionXAbsoluteEnum>()?; r.set(&mut e2, v, 2642); }
-                    0x130a53 => { let v = r.enumeration::<PositionXRelativeEnum>()?; r.set(&mut e3, v, 2643); }
-                    0x130a55 => { let v = r.enumeration::<PositionYAbsoluteEnum>()?; r.set(&mut e4, v, 2645); }
-                    0x130a56 => { let v = r.enumeration::<PositionYRelativeEnum>()?; r.set(&mut e5, v, 2646); }
-                    0x130797 => { let v = Some(DisplayGeometry::read(r)?); r.set(&mut e6, v.map(Box::new), 1943); }
-                    0x1309f4 => { let v = Some(loc::Lane::read(r)?); e7.extend(v); }
-                    0x13046c => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1132); }
-                    0x130b93 => { let v = r.string()?; r.set(&mut e9, v, 2963); }
-                    0x130ad2 => { let v = r.value::<i64>()?; r.set(&mut e10, v, 2770); }
-                    0x1305e0 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1504); }
+                    0x170b7a => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2938); }
+                    0x17093f => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2367); }
+                    0x170a98 => { let v = r.enumeration::<PositionXAbsoluteEnum>()?; r.set(&mut e2, v, 2712); }
+                    0x170a99 => { let v = r.enumeration::<PositionXRelativeEnum>()?; r.set(&mut e3, v, 2713); }
+                    0x170a9b => { let v = r.enumeration::<PositionYAbsoluteEnum>()?; r.set(&mut e4, v, 2715); }
+                    0x170a9c => { let v = r.enumeration::<PositionYRelativeEnum>()?; r.set(&mut e5, v, 2716); }
+                    0x1707c8 => { let v = Some(DisplayGeometry::read(r)?); r.set(&mut e6, v.map(Box::new), 1992); }
+                    0x170a39 => { let v = Some(loc::Lane::read(r)?); e7.extend(v); }
+                    0x170488 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1160); }
+                    0x170bf1 => { let v = r.string()?; r.set(&mut e9, v, 3057); }
+                    0x170b1b => { let v = r.value::<i64>()?; r.set(&mut e10, v, 2843); }
+                    0x170609 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1545); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2779,6 +3958,132 @@ impl SupplementaryPanelArea {
     }
 }
 
+impl SupplementaryPanelArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2025 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1268 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1610 => if r.first(&mut seen[2])? { f2 = r.enumeration::<PositionXAbsoluteEnum>()?; },
+                1611 => if r.first(&mut seen[3])? { f3 = r.enumeration::<PositionXRelativeEnum>()?; },
+                1613 => if r.first(&mut seen[4])? { f4 = r.enumeration::<PositionYAbsoluteEnum>()?; },
+                1614 => if r.first(&mut seen[5])? { f5 = r.enumeration::<PositionYRelativeEnum>()?; },
+                577 => if r.first(&mut seen[6])? { f6 = DisplayGeometry::read_json(r)?.map(Box::new); },
+                1516 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::Lane::read_json(r)? { f7.push(v); } } },
+                2598 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                2221 => if r.first(&mut seen[9])? { f9 = r.string()?; },
+                1843 => if r.first(&mut seen[10])? { f10 = r.number::<i64>()?; },
+                2626 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            sequencing_capable: f0,
+            max_number_of_sequential_pages: f1,
+            position_x_absolute: f2,
+            position_x_relative_to_previous: f3,
+            position_y_absolute: f4,
+            position_y_relative_to_previous: f5,
+            display_geometry: f6,
+            overridden_lane_association: f7,
+            display_area_extension: f8,
+            supplementary_pictogram_code_list_identifier: f9,
+            related_pictogram_area: f10,
+            supplementary_panel_area_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1086)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.sequencing_capable {
+            w.key(2025)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.max_number_of_sequential_pages {
+            w.key(1268)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.position_x_absolute {
+            w.key(1610)?;
+            w.enumeration(1078, v.literal())?;
+        }
+        if let Some(v) = &self.position_x_relative_to_previous {
+            w.key(1611)?;
+            w.enumeration(1079, v.literal())?;
+        }
+        if let Some(v) = &self.position_y_absolute {
+            w.key(1613)?;
+            w.enumeration(1080, v.literal())?;
+        }
+        if let Some(v) = &self.position_y_relative_to_previous {
+            w.key(1614)?;
+            w.enumeration(1081, v.literal())?;
+        }
+        if let Some(v) = &self.display_geometry {
+            w.key(577)?;
+            v.write_json(w, None)?;
+        }
+        if !self.overridden_lane_association.is_empty() {
+            w.key(1516)?;
+            w.begin_array()?;
+            for v in &self.overridden_lane_association {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.display_area_extension {
+            w.key(2598)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.supplementary_pictogram_code_list_identifier {
+            w.key(2221)?;
+            w.max_len("supplementaryPictogramCodeListIdentifier", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.related_pictogram_area {
+            w.key(1843)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.supplementary_panel_area_extension {
+            w.key(2626)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:SupplementaryPictogram`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SupplementaryPictogram {
@@ -2809,10 +4114,10 @@ pub struct SupplementaryPictogram {
 }
 
 impl SupplementaryPictogram {
-    const FIELDS: &'static [u32] = &[0x130899, 0x1308c4, 0x1308c2, 0x13046d, 0x1305df, 0x130a37, 0x130a35, 0x130a3d, 0x13068e, 0x130a39, 0x130a3b, 0x1305e2];
+    const FIELDS: &'static [u32] = &[0x1708d7, 0x170902, 0x170900, 0x170489, 0x170608, 0x170a7d, 0x170a7b, 0x170a83, 0x1706b7, 0x170a7f, 0x170a81, 0x17060b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130203);
+        r.expect_type(0x170212);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2829,18 +4134,18 @@ impl SupplementaryPictogram {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130899 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2201); }
-                    0x1308c4 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2244); }
-                    0x1308c2 => { let v = r.multilingual()?; r.set(&mut e2, v, 2242); }
-                    0x13046d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1133); }
-                    0x1305df => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1503); }
-                    0x130a37 => { let v = r.enumeration::<SupplementalPictogramEnum>()?; r.set(&mut e5, v, 2615); }
-                    0x130a35 => { let v = r.string()?; r.set(&mut e6, v, 2613); }
-                    0x130a3d => { let v = r.string()?; r.set(&mut e7, v, 2621); }
-                    0x13068e => { let v = r.multilingual()?; r.set(&mut e8, v, 1678); }
-                    0x130a39 => { let v = r.value::<bool>()?; r.set(&mut e9, v, 2617); }
-                    0x130a3b => { let v = r.enumeration::<InformationTypeEnum>()?; r.set(&mut e10, v, 2619); }
-                    0x1305e2 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1506); }
+                    0x1708d7 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2263); }
+                    0x170902 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2306); }
+                    0x170900 => { let v = r.multilingual()?; r.set(&mut e2, v, 2304); }
+                    0x170489 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1161); }
+                    0x170608 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1544); }
+                    0x170a7d => { let v = r.enumeration::<SupplementalPictogramEnum>()?; r.set(&mut e5, v, 2685); }
+                    0x170a7b => { let v = r.string()?; r.set(&mut e6, v, 2683); }
+                    0x170a83 => { let v = r.string()?; r.set(&mut e7, v, 2691); }
+                    0x1706b7 => { let v = r.multilingual()?; r.set(&mut e8, v, 1719); }
+                    0x170a7f => { let v = r.value::<bool>()?; r.set(&mut e9, v, 2687); }
+                    0x170a81 => { let v = r.enumeration::<InformationTypeEnum>()?; r.set(&mut e10, v, 2689); }
+                    0x17060b => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1547); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2889,6 +4194,127 @@ impl SupplementaryPictogram {
     }
 }
 
+impl SupplementaryPictogram {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1010 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1053 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                1051 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                2599 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                2624 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                1583 => if r.first(&mut seen[5])? { f5 = r.enumeration::<SupplementalPictogramEnum>()?; },
+                1581 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1589 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                59 => if r.first(&mut seen[8])? { f8 = r.multilingual()?; },
+                1585 => if r.first(&mut seen[9])? { f9 = r.boolean()?; },
+                1587 => if r.first(&mut seen[10])? { f10 = r.enumeration::<InformationTypeEnum>()?; },
+                2628 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            is_blank: f0,
+            legally_binding: f1,
+            legal_basis: f2,
+            display_area_settings_extension: f3,
+            supplementary_information_display_extension: f4,
+            pictogram_description: f5,
+            pictogram_code: f6,
+            pictogram_url: f7,
+            additional_description: f8,
+            pictogram_flashing: f9,
+            pictogram_information_type: f10,
+            supplementary_pictogram_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1087)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.is_blank {
+            w.key(1010)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legally_binding {
+            w.key(1053)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legal_basis {
+            w.key(1051)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.display_area_settings_extension {
+            w.key(2599)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.supplementary_information_display_extension {
+            w.key(2624)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.pictogram_description {
+            w.key(1583)?;
+            w.enumeration(1084, v.literal())?;
+        }
+        if let Some(v) = &self.pictogram_code {
+            w.key(1581)?;
+            w.max_len("pictogramCode", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.pictogram_url {
+            w.key(1589)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.additional_description {
+            w.key(59)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.pictogram_flashing {
+            w.key(1585)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.pictogram_information_type {
+            w.key(1587)?;
+            w.enumeration(1069, v.literal())?;
+        }
+        if let Some(v) = &self.supplementary_pictogram_extension {
+            w.key(2628)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:SupplementaryText`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SupplementaryText {
@@ -2909,10 +4335,10 @@ pub struct SupplementaryText {
 }
 
 impl SupplementaryText {
-    const FIELDS: &'static [u32] = &[0x130899, 0x1308c4, 0x1308c2, 0x13046d, 0x1305df, 0x130bb1, 0x1305e4];
+    const FIELDS: &'static [u32] = &[0x1708d7, 0x170902, 0x170900, 0x170489, 0x170608, 0x170c10, 0x17060d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130206);
+        r.expect_type(0x170215);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2924,13 +4350,13 @@ impl SupplementaryText {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130899 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2201); }
-                    0x1308c4 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2244); }
-                    0x1308c2 => { let v = r.multilingual()?; r.set(&mut e2, v, 2242); }
-                    0x13046d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1133); }
-                    0x1305df => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1503); }
-                    0x130bb1 => { let v = Some(TextLine::read(r)?); r.set(&mut e5, v.map(Box::new), 2993); }
-                    0x1305e4 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1508); }
+                    0x1708d7 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2263); }
+                    0x170902 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2306); }
+                    0x170900 => { let v = r.multilingual()?; r.set(&mut e2, v, 2304); }
+                    0x170489 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1161); }
+                    0x170608 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1544); }
+                    0x170c10 => { let v = Some(TextLine::read(r)?); r.set(&mut e5, v.map(Box::new), 3088); }
+                    0x17060d => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1549); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2939,7 +4365,7 @@ impl SupplementaryText {
                 break;
             }
         }
-        r.required(&e5, 2993);
+        r.required(&e5, 3088);
         let v = Self {
             is_blank: e0,
             legally_binding: e1,
@@ -2973,6 +4399,96 @@ impl SupplementaryText {
     }
 }
 
+impl SupplementaryText {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1010 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1053 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                1051 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                2599 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                2624 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                2251 => if r.first(&mut seen[5])? { f5 = TextLine::read_json(r)?.map(Box::new); },
+                2630 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f5, 2251);
+        Ok(Self {
+            is_blank: f0,
+            legally_binding: f1,
+            legal_basis: f2,
+            display_area_settings_extension: f3,
+            supplementary_information_display_extension: f4,
+            text_line: f5,
+            supplementary_text_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1088)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.is_blank {
+            w.key(1010)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legally_binding {
+            w.key(1053)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legal_basis {
+            w.key(1051)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.display_area_settings_extension {
+            w.key(2599)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.supplementary_information_display_extension {
+            w.key(2624)?;
+            w.extension(v)?;
+        }
+        match &self.text_line {
+            Some(v) => {
+                w.key(2251)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2251, w.missing("textLine"))?,
+        }
+        if let Some(v) = &self.supplementary_text_extension {
+            w.key(2630)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:TextDisplay`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TextDisplay {
@@ -2995,10 +4511,10 @@ pub struct TextDisplay {
 }
 
 impl TextDisplay {
-    const FIELDS: &'static [u32] = &[0x130899, 0x1308c4, 0x1308c2, 0x13046d, 0x130bad, 0x130baf, 0x130bb1, 0x1305ee];
+    const FIELDS: &'static [u32] = &[0x1708d7, 0x170902, 0x170900, 0x170489, 0x170c0c, 0x170c0e, 0x170c10, 0x170617];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x13020f);
+        r.expect_type(0x17021e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3011,14 +4527,14 @@ impl TextDisplay {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130899 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2201); }
-                    0x1308c4 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2244); }
-                    0x1308c2 => { let v = r.multilingual()?; r.set(&mut e2, v, 2242); }
-                    0x13046d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1133); }
-                    0x130bad => { let v = r.string()?; r.set(&mut e4, v, 2989); }
-                    0x130baf => { let v = r.string()?; r.set(&mut e5, v, 2991); }
-                    0x130bb1 => { let v = Some(TextDisplayLineIndexTextLine::read(r)?); e6.extend(v); }
-                    0x1305ee => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1518); }
+                    0x1708d7 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2263); }
+                    0x170902 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2306); }
+                    0x170900 => { let v = r.multilingual()?; r.set(&mut e2, v, 2304); }
+                    0x170489 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1161); }
+                    0x170c0c => { let v = r.string()?; r.set(&mut e4, v, 3084); }
+                    0x170c0e => { let v = r.string()?; r.set(&mut e5, v, 3086); }
+                    0x170c10 => { let v = Some(TextDisplayLineIndexTextLine::read(r)?); e6.extend(v); }
+                    0x170617 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1559); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3056,6 +4572,104 @@ impl TextDisplay {
         for v in &self.text_line { v.write(w, "vms:textLine", "", "")?; }
         if let Some(v) = &self.text_display_extension { w.extension("vms:_textDisplayExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl TextDisplay {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1010 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1053 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                1051 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                2599 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                2247 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                2249 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                2251 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = TextDisplayLineIndexTextLine::read_json(r)? { f6.push(v); } } },
+                2634 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            is_blank: f0,
+            legally_binding: f1,
+            legal_basis: f2,
+            display_area_settings_extension: f3,
+            text_code: f4,
+            text_image_url: f5,
+            text_line: f6,
+            text_display_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1089)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.is_blank {
+            w.key(1010)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legally_binding {
+            w.key(1053)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legal_basis {
+            w.key(1051)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.display_area_settings_extension {
+            w.key(2599)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.text_code {
+            w.key(2247)?;
+            w.max_len("textCode", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.text_image_url {
+            w.key(2249)?;
+            w.string(v)?;
+        }
+        if !self.text_line.is_empty() {
+            w.key(2251)?;
+            w.begin_array()?;
+            for v in &self.text_line {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.text_display_extension {
+            w.key(2634)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -3105,10 +4719,10 @@ pub struct TextDisplayArea {
 }
 
 impl TextDisplayArea {
-    const FIELDS: &'static [u32] = &[0x130b2d, 0x130900, 0x130a52, 0x130a53, 0x130a55, 0x130a56, 0x130797, 0x1309f4, 0x13046c, 0x130a84, 0x1308fe, 0x1308ff, 0x130bae, 0x1308fb, 0x13092f, 0x1308fd, 0x130931, 0x1308fc, 0x130930, 0x1305ed];
+    const FIELDS: &'static [u32] = &[0x170b7a, 0x17093f, 0x170a98, 0x170a99, 0x170a9b, 0x170a9c, 0x1707c8, 0x170a39, 0x170488, 0x170acb, 0x17093d, 0x17093e, 0x170c0d, 0x17093a, 0x170971, 0x17093c, 0x170973, 0x17093b, 0x170972, 0x170616];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130210);
+        r.expect_type(0x17021f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3133,26 +4747,26 @@ impl TextDisplayArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130b2d => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2861); }
-                    0x130900 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2304); }
-                    0x130a52 => { let v = r.enumeration::<PositionXAbsoluteEnum>()?; r.set(&mut e2, v, 2642); }
-                    0x130a53 => { let v = r.enumeration::<PositionXRelativeEnum>()?; r.set(&mut e3, v, 2643); }
-                    0x130a55 => { let v = r.enumeration::<PositionYAbsoluteEnum>()?; r.set(&mut e4, v, 2645); }
-                    0x130a56 => { let v = r.enumeration::<PositionYRelativeEnum>()?; r.set(&mut e5, v, 2646); }
-                    0x130797 => { let v = Some(DisplayGeometry::read(r)?); r.set(&mut e6, v.map(Box::new), 1943); }
-                    0x1309f4 => { let v = Some(loc::Lane::read(r)?); e7.extend(v); }
-                    0x13046c => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1132); }
-                    0x130a84 => { let v = r.value::<bool>()?; r.set(&mut e9, v, 2692); }
-                    0x1308fe => { let v = r.value::<u64>()?; r.set(&mut e10, v, 2302); }
-                    0x1308ff => { let v = r.value::<u64>()?; r.set(&mut e11, v, 2303); }
-                    0x130bae => { let v = r.string()?; r.set(&mut e12, v, 2990); }
-                    0x1308fb => { let v = r.value::<u64>()?; r.set(&mut e13, v, 2299); }
-                    0x13092f => { let v = r.value::<u64>()?; r.set(&mut e14, v, 2351); }
-                    0x1308fd => { let v = r.value::<u64>()?; r.set(&mut e15, v, 2301); }
-                    0x130931 => { let v = r.value::<u64>()?; r.set(&mut e16, v, 2353); }
-                    0x1308fc => { let v = r.value::<u64>()?; r.set(&mut e17, v, 2300); }
-                    0x130930 => { let v = r.value::<u64>()?; r.set(&mut e18, v, 2352); }
-                    0x1305ed => { let v = r.raw()?; r.set(&mut e19, v.map(Box::new), 1517); }
+                    0x170b7a => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2938); }
+                    0x17093f => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2367); }
+                    0x170a98 => { let v = r.enumeration::<PositionXAbsoluteEnum>()?; r.set(&mut e2, v, 2712); }
+                    0x170a99 => { let v = r.enumeration::<PositionXRelativeEnum>()?; r.set(&mut e3, v, 2713); }
+                    0x170a9b => { let v = r.enumeration::<PositionYAbsoluteEnum>()?; r.set(&mut e4, v, 2715); }
+                    0x170a9c => { let v = r.enumeration::<PositionYRelativeEnum>()?; r.set(&mut e5, v, 2716); }
+                    0x1707c8 => { let v = Some(DisplayGeometry::read(r)?); r.set(&mut e6, v.map(Box::new), 1992); }
+                    0x170a39 => { let v = Some(loc::Lane::read(r)?); e7.extend(v); }
+                    0x170488 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1160); }
+                    0x170acb => { let v = r.value::<bool>()?; r.set(&mut e9, v, 2763); }
+                    0x17093d => { let v = r.value::<u64>()?; r.set(&mut e10, v, 2365); }
+                    0x17093e => { let v = r.value::<u64>()?; r.set(&mut e11, v, 2366); }
+                    0x170c0d => { let v = r.string()?; r.set(&mut e12, v, 3085); }
+                    0x17093a => { let v = r.value::<u64>()?; r.set(&mut e13, v, 2362); }
+                    0x170971 => { let v = r.value::<u64>()?; r.set(&mut e14, v, 2417); }
+                    0x17093c => { let v = r.value::<u64>()?; r.set(&mut e15, v, 2364); }
+                    0x170973 => { let v = r.value::<u64>()?; r.set(&mut e16, v, 2419); }
+                    0x17093b => { let v = r.value::<u64>()?; r.set(&mut e17, v, 2363); }
+                    0x170972 => { let v = r.value::<u64>()?; r.set(&mut e18, v, 2418); }
+                    0x170616 => { let v = r.raw()?; r.set(&mut e19, v.map(Box::new), 1558); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3217,6 +4831,188 @@ impl TextDisplayArea {
     }
 }
 
+impl TextDisplayArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 20];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = None;
+        let mut f18 = None;
+        let mut f19 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2025 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1268 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1610 => if r.first(&mut seen[2])? { f2 = r.enumeration::<PositionXAbsoluteEnum>()?; },
+                1611 => if r.first(&mut seen[3])? { f3 = r.enumeration::<PositionXRelativeEnum>()?; },
+                1613 => if r.first(&mut seen[4])? { f4 = r.enumeration::<PositionYAbsoluteEnum>()?; },
+                1614 => if r.first(&mut seen[5])? { f5 = r.enumeration::<PositionYRelativeEnum>()?; },
+                577 => if r.first(&mut seen[6])? { f6 = DisplayGeometry::read_json(r)?.map(Box::new); },
+                1516 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::Lane::read_json(r)? { f7.push(v); } } },
+                2598 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                1763 => if r.first(&mut seen[9])? { f9 = r.boolean()?; },
+                1266 => if r.first(&mut seen[10])? { f10 = r.number::<u64>()?; },
+                1267 => if r.first(&mut seen[11])? { f11 = r.number::<u64>()?; },
+                2248 => if r.first(&mut seen[12])? { f12 = r.string()?; },
+                1263 => if r.first(&mut seen[13])? { f13 = r.number::<u64>()?; },
+                1319 => if r.first(&mut seen[14])? { f14 = r.number::<u64>()?; },
+                1265 => if r.first(&mut seen[15])? { f15 = r.number::<u64>()?; },
+                1321 => if r.first(&mut seen[16])? { f16 = r.number::<u64>()?; },
+                1264 => if r.first(&mut seen[17])? { f17 = r.number::<u64>()?; },
+                1320 => if r.first(&mut seen[18])? { f18 = r.number::<u64>()?; },
+                2633 => if r.first(&mut seen[19])? { f19 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            sequencing_capable: f0,
+            max_number_of_sequential_pages: f1,
+            position_x_absolute: f2,
+            position_x_relative_to_previous: f3,
+            position_y_absolute: f4,
+            position_y_relative_to_previous: f5,
+            display_geometry: f6,
+            overridden_lane_association: f7,
+            display_area_extension: f8,
+            proportional_font: f9,
+            max_number_of_characters: f10,
+            max_number_of_rows: f11,
+            text_code_list_identifier: f12,
+            max_font_height: f13,
+            min_font_height: f14,
+            max_font_width: f15,
+            min_font_width: f16,
+            max_font_spacing: f17,
+            min_font_spacing: f18,
+            text_display_area_extension: f19,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1090)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.sequencing_capable {
+            w.key(2025)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.max_number_of_sequential_pages {
+            w.key(1268)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.position_x_absolute {
+            w.key(1610)?;
+            w.enumeration(1078, v.literal())?;
+        }
+        if let Some(v) = &self.position_x_relative_to_previous {
+            w.key(1611)?;
+            w.enumeration(1079, v.literal())?;
+        }
+        if let Some(v) = &self.position_y_absolute {
+            w.key(1613)?;
+            w.enumeration(1080, v.literal())?;
+        }
+        if let Some(v) = &self.position_y_relative_to_previous {
+            w.key(1614)?;
+            w.enumeration(1081, v.literal())?;
+        }
+        if let Some(v) = &self.display_geometry {
+            w.key(577)?;
+            v.write_json(w, None)?;
+        }
+        if !self.overridden_lane_association.is_empty() {
+            w.key(1516)?;
+            w.begin_array()?;
+            for v in &self.overridden_lane_association {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.display_area_extension {
+            w.key(2598)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.proportional_font {
+            w.key(1763)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.max_number_of_characters {
+            w.key(1266)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.max_number_of_rows {
+            w.key(1267)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.text_code_list_identifier {
+            w.key(2248)?;
+            w.max_len("textCodeListIdentifier", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.max_font_height {
+            w.key(1263)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.min_font_height {
+            w.key(1319)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.max_font_width {
+            w.key(1265)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.min_font_width {
+            w.key(1321)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.max_font_spacing {
+            w.key(1264)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.min_font_spacing {
+            w.key(1320)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.text_display_area_extension {
+            w.key(2633)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:TextLine`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TextLine {
@@ -3239,11 +5035,11 @@ pub struct TextLine {
 }
 
 impl TextLine {
-    const FIELDS: &'static [u32] = &[0x130bb1, 0x1308cb, 0x1308cc, 0x1308cd, 0x13089a, 0x130bb0, 0x1305ef];
+    const FIELDS: &'static [u32] = &[0x170c10, 0x170909, 0x17090a, 0x17090b, 0x1708d8, 0x170c0f, 0x170618];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130211);
-        let a0 = r.attr(2255);
+        r.expect_type(0x170220);
+        let a0 = r.attr(2317);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3255,13 +5051,13 @@ impl TextLine {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130bb1 => { let v = r.string()?; r.set(&mut e0, v, 2993); }
-                    0x1308cb => { let v = r.enumeration::<ColourEnum>()?; r.set(&mut e1, v, 2251); }
-                    0x1308cc => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2252); }
-                    0x1308cd => { let v = r.string()?; r.set(&mut e3, v, 2253); }
-                    0x13089a => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2202); }
-                    0x130bb0 => { let v = r.enumeration::<InformationTypeEnum>()?; e5.extend(v); }
-                    0x1305ef => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1519); }
+                    0x170c10 => { let v = r.string()?; r.set(&mut e0, v, 3088); }
+                    0x170909 => { let v = r.enumeration::<ColourEnum>()?; r.set(&mut e1, v, 2313); }
+                    0x17090a => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2314); }
+                    0x17090b => { let v = r.string()?; r.set(&mut e3, v, 2315); }
+                    0x1708d8 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2264); }
+                    0x170c0f => { let v = r.enumeration::<InformationTypeEnum>()?; e5.extend(v); }
+                    0x170618 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1560); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3270,7 +5066,7 @@ impl TextLine {
                 break;
             }
         }
-        r.required(&e0, 2993);
+        r.required(&e0, 3088);
         let v = Self {
             line_language: a0,
             text_line: e0,
@@ -3303,6 +5099,108 @@ impl TextLine {
         for v in &self.text_information_type { w.enumeration("vms:textInformationType", v.literal())?; }
         if let Some(v) = &self.text_line_extension { w.extension("vms:_textLineExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl TextLine {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1064 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2251 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1060 => if r.first(&mut seen[2])? { f2 = r.enumeration::<ColourEnum>()?; },
+                1061 => if r.first(&mut seen[3])? { f3 = r.boolean()?; },
+                1062 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                1011 => if r.first(&mut seen[5])? { f5 = r.boolean()?; },
+                2250 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<InformationTypeEnum>()? { f6.push(v); } } },
+                2635 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 2251);
+        Ok(Self {
+            line_language: f0,
+            text_line: f1,
+            line_colour: f2,
+            line_flashing: f3,
+            line_html: f4,
+            is_exact_text_on_sign: f5,
+            text_information_type: f6,
+            text_line_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1091)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.line_language {
+            w.key(1064)?;
+            w.pattern("lineLanguage", v, Pattern::Language)?; w.string(v)?;
+        }
+        match &self.text_line {
+            Some(v) => {
+                w.key(2251)?;
+                w.max_len("textLine", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(2251, w.missing("textLine"))?,
+        }
+        if let Some(v) = &self.line_colour {
+            w.key(1060)?;
+            w.enumeration(1053, v.literal())?;
+        }
+        if let Some(v) = &self.line_flashing {
+            w.key(1061)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.line_html {
+            w.key(1062)?;
+            w.max_len("lineHtml", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.is_exact_text_on_sign {
+            w.key(1011)?;
+            w.boolean(*v)?;
+        }
+        if !self.text_information_type.is_empty() {
+            w.key(2250)?;
+            w.begin_array()?;
+            for v in &self.text_information_type {
+                w.item()?;
+                w.enumeration(1069, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.text_line_extension {
+            w.key(2635)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -3344,10 +5242,10 @@ pub struct Vms {
 }
 
 impl Vms {
-    const FIELDS: &'static [u32] = &[0x1308b1, 0x130777, 0x1309f8, 0x130a32, 0x130c64, 0x130c65, 0x1307b1, 0x130798, 0x130799, 0x13085c, 0x130765, 0x130c54, 0x130c5f, 0x1308f2, 0x130878, 0x13064d];
+    const FIELDS: &'static [u32] = &[0x1708ef, 0x1707a8, 0x170a3d, 0x170a78, 0x170cc6, 0x170cc7, 0x1707e3, 0x1707c9, 0x1707ca, 0x170898, 0x170795, 0x170cb6, 0x170cc1, 0x170930, 0x1708b4, 0x170676];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x13026c);
+        r.expect_type(0x17027b);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3368,22 +5266,22 @@ impl Vms {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x1308b1 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2225); }
-                    0x130777 => { let v = r.multilingual()?; r.set(&mut e1, v, 1911); }
-                    0x1309f8 => { let v = r.multilingual()?; r.set(&mut e2, v, 2552); }
-                    0x130a32 => { let v = r.enumeration::<PhysicalSupportEnum>()?; r.set(&mut e3, v, 2610); }
-                    0x130c64 => { let v = r.enumeration::<VmsTypeEnum>()?; r.set(&mut e4, v, 3172); }
-                    0x130c65 => { let v = r.string()?; r.set(&mut e5, v, 3173); }
-                    0x1307b1 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1969); }
-                    0x130798 => { let v = r.value::<f32>()?; r.set(&mut e7, v, 1944); }
-                    0x130799 => { let v = r.value::<f32>()?; r.set(&mut e8, v, 1945); }
-                    0x13085c => { let v = r.value::<f32>()?; r.set(&mut e9, v, 2140); }
-                    0x130765 => { let v = r.enumeration::<DedicatedUsageEnum>()?; r.set(&mut e10, v, 1893); }
-                    0x130c54 => { let v = Some(VmsConfiguration::read(r)?); r.set(&mut e11, v.map(Box::new), 3156); }
-                    0x130c5f => { let v = loc::Location::read(r)?; r.set(&mut e12, v, 3167); }
-                    0x1308f2 => { let v = Some(ManagedLogicalLocation::read(r)?); r.set(&mut e13, v.map(Box::new), 2290); }
-                    0x130878 => { let v = Some(com::UrlLink::read(r)?); r.set(&mut e14, v.map(Box::new), 2168); }
-                    0x13064d => { let v = r.raw()?; r.set(&mut e15, v.map(Box::new), 1613); }
+                    0x1708ef => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2287); }
+                    0x1707a8 => { let v = r.multilingual()?; r.set(&mut e1, v, 1960); }
+                    0x170a3d => { let v = r.multilingual()?; r.set(&mut e2, v, 2621); }
+                    0x170a78 => { let v = r.enumeration::<PhysicalSupportEnum>()?; r.set(&mut e3, v, 2680); }
+                    0x170cc6 => { let v = r.enumeration::<VmsTypeEnum>()?; r.set(&mut e4, v, 3270); }
+                    0x170cc7 => { let v = r.string()?; r.set(&mut e5, v, 3271); }
+                    0x1707e3 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 2019); }
+                    0x1707c9 => { let v = r.value::<f32>()?; r.set(&mut e7, v, 1993); }
+                    0x1707ca => { let v = r.value::<f32>()?; r.set(&mut e8, v, 1994); }
+                    0x170898 => { let v = r.value::<f32>()?; r.set(&mut e9, v, 2200); }
+                    0x170795 => { let v = r.enumeration::<DedicatedUsageEnum>()?; r.set(&mut e10, v, 1941); }
+                    0x170cb6 => { let v = Some(VmsConfiguration::read(r)?); r.set(&mut e11, v.map(Box::new), 3254); }
+                    0x170cc1 => { let v = loc::Location::read(r)?; r.set(&mut e12, v, 3265); }
+                    0x170930 => { let v = Some(ManagedLogicalLocation::read(r)?); r.set(&mut e13, v.map(Box::new), 2352); }
+                    0x1708b4 => { let v = Some(com::UrlLink::read(r)?); r.set(&mut e14, v.map(Box::new), 2228); }
+                    0x170676 => { let v = r.raw()?; r.set(&mut e15, v.map(Box::new), 1654); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3392,7 +5290,7 @@ impl Vms {
                 break;
             }
         }
-        r.required(&e11, 3156);
+        r.required(&e11, 3254);
         let v = Self {
             lanterns_present: e0,
             description: e1,
@@ -3444,6 +5342,159 @@ impl Vms {
     }
 }
 
+impl Vms {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 16];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1034 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                545 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                1520 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                1578 => if r.first(&mut seen[3])? { f3 = r.enumeration::<PhysicalSupportEnum>()?; },
+                2636 => if r.first(&mut seen[4])? { f4 = r.enumeration::<VmsTypeEnum>()?; },
+                2637 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                604 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                578 => if r.first(&mut seen[7])? { f7 = r.number::<f32>()?; },
+                579 => if r.first(&mut seen[8])? { f8 = r.number::<f32>()?; },
+                945 => if r.first(&mut seen[9])? { f9 = r.number::<f32>()?; },
+                526 => if r.first(&mut seen[10])? { f10 = r.enumeration::<DedicatedUsageEnum>()?; },
+                2589 => if r.first(&mut seen[11])? { f11 = VmsConfiguration::read_json(r)?.map(Box::new); },
+                2609 => if r.first(&mut seen[12])? { f12 = loc::Location::read_json(r)?; },
+                1253 => if r.first(&mut seen[13])? { f13 = ManagedLogicalLocation::read_json(r)?.map(Box::new); },
+                973 => if r.first(&mut seen[14])? { f14 = com::UrlLink::read_json(r)?.map(Box::new); },
+                2647 => if r.first(&mut seen[15])? { f15 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f11, 2589);
+        Ok(Self {
+            lanterns_present: f0,
+            description: f1,
+            owner: f2,
+            physical_support: f3,
+            vms_type: f4,
+            vms_type_code: f5,
+            dynamically_configurable: f6,
+            display_height: f7,
+            display_width: f8,
+            height_above_carriageway: f9,
+            dedicated_usage: f10,
+            vms_configuration: f11,
+            vms_location: f12,
+            managed_logical_location: f13,
+            image_link: f14,
+            vms_extension: f15,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1093)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.lanterns_present {
+            w.key(1034)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.physical_support {
+            w.key(1578)?;
+            w.enumeration(1073, v.literal())?;
+        }
+        if let Some(v) = &self.vms_type {
+            w.key(2636)?;
+            w.enumeration(1106, v.literal())?;
+        }
+        if let Some(v) = &self.vms_type_code {
+            w.key(2637)?;
+            w.max_len("vmsTypeCode", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.dynamically_configurable {
+            w.key(604)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.display_height {
+            w.key(578)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.display_width {
+            w.key(579)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.height_above_carriageway {
+            w.key(945)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.dedicated_usage {
+            w.key(526)?;
+            w.enumeration(1056, v.literal())?;
+        }
+        match &self.vms_configuration {
+            Some(v) => {
+                w.key(2589)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2589, w.missing("vmsConfiguration"))?,
+        }
+        if let Some(v) = &self.vms_location {
+            w.key(2609)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.managed_logical_location {
+            w.key(1253)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.image_link {
+            w.key(973)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.vms_extension {
+            w.key(2647)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:VmsConfiguration`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsConfiguration {
@@ -3456,10 +5507,10 @@ pub struct VmsConfiguration {
 }
 
 impl VmsConfiguration {
-    const FIELDS: &'static [u32] = &[0x130973, 0x130794, 0x130648];
+    const FIELDS: &'static [u32] = &[0x1709b7, 0x1707c5, 0x170671];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x13026d);
+        r.expect_type(0x17027c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -3467,9 +5518,9 @@ impl VmsConfiguration {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130973 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2419); }
-                    0x130794 => { let v = Some(VmsConfigurationDisplayAreaIndexDisplayArea::read(r)?); e1.extend(v); }
-                    0x130648 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1608); }
+                    0x1709b7 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2487); }
+                    0x1707c5 => { let v = Some(VmsConfigurationDisplayAreaIndexDisplayArea::read(r)?); e1.extend(v); }
+                    0x170671 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1649); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3500,6 +5551,69 @@ impl VmsConfiguration {
     }
 }
 
+impl VmsConfiguration {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1387 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                574 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsConfigurationDisplayAreaIndexDisplayArea::read_json(r)? { f1.push(v); } } },
+                2641 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            number_of_display_areas: f0,
+            display_area: f1,
+            vms_configuration_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1094)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.number_of_display_areas {
+            w.key(1387)?;
+            w.integer(*v)?;
+        }
+        if !self.display_area.is_empty() {
+            w.key(574)?;
+            w.begin_array()?;
+            for v in &self.display_area {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.vms_configuration_extension {
+            w.key(2641)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:VmsController`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsController {
@@ -3522,12 +5636,12 @@ pub struct VmsController {
 }
 
 impl VmsController {
-    const FIELDS: &'static [u32] = &[0x13098d, 0x130805, 0x130897, 0x1307bc, 0x130c53, 0x130649];
+    const FIELDS: &'static [u32] = &[0x1709d1, 0x170840, 0x1708d5, 0x1707ee, 0x170cb5, 0x170672];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x13026e);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x17027d);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3538,12 +5652,12 @@ impl VmsController {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x13098d => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2445); }
-                    0x130805 => { let v = r.string()?; r.set(&mut e1, v, 2053); }
-                    0x130897 => { let v = r.string()?; r.set(&mut e2, v, 2199); }
-                    0x1307bc => { let v = r.string()?; r.set(&mut e3, v, 1980); }
-                    0x130c53 => { let v = Some(VmsControllerVmsIndexVms::read(r)?); e4.extend(v); }
-                    0x130649 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1609); }
+                    0x1709d1 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2513); }
+                    0x170840 => { let v = r.string()?; r.set(&mut e1, v, 2112); }
+                    0x1708d5 => { let v = r.string()?; r.set(&mut e2, v, 2261); }
+                    0x1707ee => { let v = r.string()?; r.set(&mut e3, v, 2030); }
+                    0x170cb5 => { let v = Some(VmsControllerVmsIndexVms::read(r)?); e4.extend(v); }
+                    0x170672 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1650); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3590,6 +5704,112 @@ impl VmsController {
     }
 }
 
+impl VmsController {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1413 => if r.first(&mut seen[2])? { f2 = r.number::<u64>()?; },
+                739 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1008 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                650 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                2586 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsControllerVmsIndexVms::read_json(r)? { f6.push(v); } } },
+                2642 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            number_of_vms: f2,
+            external_identifier: f3,
+            ip_address: f4,
+            electronic_address: f5,
+            vms: f6,
+            vms_controller_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1095)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.number_of_vms {
+            w.key(1413)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.external_identifier {
+            w.key(739)?;
+            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.ip_address {
+            w.key(1008)?;
+            w.max_len("ipAddress", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.electronic_address {
+            w.key(650)?;
+            w.max_len("electronicAddress", v, 1024)?; w.string(v)?;
+        }
+        if !self.vms.is_empty() {
+            w.key(2586)?;
+            w.begin_array()?;
+            for v in &self.vms {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.vms_controller_extension {
+            w.key(2642)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:VmsControllerFault`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsControllerFault {
@@ -3616,10 +5836,10 @@ pub struct VmsControllerFault {
 }
 
 impl VmsControllerFault {
-    const FIELDS: &'static [u32] = &[0x30812, 0x30811, 0x30810, 0x30816, 0x30814, 0x30819, 0x308f6, 0x3049a, 0x130c56, 0x13064a];
+    const FIELDS: &'static [u32] = &[0x4084e, 0x4084d, 0x4084c, 0x40852, 0x40850, 0x40855, 0x40935, 0x404ba, 0x170cb8, 0x170673];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x13026f);
+        r.expect_type(0x17027e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3634,16 +5854,16 @@ impl VmsControllerFault {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x30812 => { let v = r.string()?; r.set(&mut e0, v, 2066); }
-                    0x30811 => { let v = r.multilingual()?; r.set(&mut e1, v, 2065); }
-                    0x30810 => { let v = r.date_time()?; r.set(&mut e2, v, 2064); }
-                    0x30816 => { let v = r.date_time()?; r.set(&mut e3, v, 2070); }
-                    0x30814 => { let v = r.enumeration::<com::FaultSeverityEnum>()?; r.set(&mut e4, v, 2068); }
-                    0x30819 => { let v = r.enumeration::<com::FaultUrgencyEnum>()?; r.set(&mut e5, v, 2073); }
-                    0x308f6 => { let v = r.string()?; r.set(&mut e6, v, 2294); }
-                    0x3049a => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1178); }
-                    0x130c56 => { let v = r.enumeration::<VmsControllerFaultEnum>()?; r.set(&mut e8, v, 3158); }
-                    0x13064a => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1610); }
+                    0x4084e => { let v = r.string()?; r.set(&mut e0, v, 2126); }
+                    0x4084d => { let v = r.multilingual()?; r.set(&mut e1, v, 2125); }
+                    0x4084c => { let v = r.date_time()?; r.set(&mut e2, v, 2124); }
+                    0x40852 => { let v = r.date_time()?; r.set(&mut e3, v, 2130); }
+                    0x40850 => { let v = r.enumeration::<com::FaultSeverityEnum>()?; r.set(&mut e4, v, 2128); }
+                    0x40855 => { let v = r.enumeration::<com::FaultUrgencyEnum>()?; r.set(&mut e5, v, 2133); }
+                    0x40935 => { let v = r.string()?; r.set(&mut e6, v, 2357); }
+                    0x404ba => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1210); }
+                    0x170cb8 => { let v = r.enumeration::<VmsControllerFaultEnum>()?; r.set(&mut e8, v, 3256); }
+                    0x170673 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1651); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3652,8 +5872,8 @@ impl VmsControllerFault {
                 break;
             }
         }
-        r.required(&e3, 2070);
-        r.required(&e8, 3158);
+        r.required(&e3, 2130);
+        r.required(&e8, 3256);
         let v = Self {
             fault_identifier: e0,
             fault_description: e1,
@@ -3696,6 +5916,121 @@ impl VmsControllerFault {
     }
 }
 
+impl VmsControllerFault {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 10];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                836 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                835 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                834 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                840 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                838 => if r.first(&mut seen[4])? { f4 = r.enumeration::<com::FaultSeverityEnum>()?; },
+                843 => if r.first(&mut seen[5])? { f5 = r.enumeration::<com::FaultUrgencyEnum>()?; },
+                1258 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                363 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                2591 => if r.first(&mut seen[8])? { f8 = r.enumeration::<VmsControllerFaultEnum>()?; },
+                2644 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f3, 840);
+        r.required(&f8, 2591);
+        Ok(Self {
+            fault_identifier: f0,
+            fault_description: f1,
+            fault_creation_time: f2,
+            fault_last_update_time: f3,
+            fault_impact_severity: f4,
+            fault_urgency_to_rectify: f5,
+            manufacturer_fault_code: f6,
+            fault_extension: f7,
+            vms_controller_fault: f8,
+            vms_controller_fault_extension: f9,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1096)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.fault_identifier {
+            w.key(836)?;
+            w.max_len("faultIdentifier", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.fault_description {
+            w.key(835)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.fault_creation_time {
+            w.key(834)?;
+            w.date_time(v)?;
+        }
+        match &self.fault_last_update_time {
+            Some(v) => {
+                w.key(840)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(840, w.missing("faultLastUpdateTime"))?,
+        }
+        if let Some(v) = &self.fault_impact_severity {
+            w.key(838)?;
+            w.enumeration(173, v.literal())?;
+        }
+        if let Some(v) = &self.fault_urgency_to_rectify {
+            w.key(843)?;
+            w.enumeration(174, v.literal())?;
+        }
+        if let Some(v) = &self.manufacturer_fault_code {
+            w.key(1258)?;
+            w.max_len("manufacturerFaultCode", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.fault_extension {
+            w.key(363)?;
+            w.extension(v)?;
+        }
+        match &self.vms_controller_fault {
+            Some(v) => {
+                w.key(2591)?;
+                w.enumeration(1097, v.literal())?;
+            }
+            None => w.absent(2591, w.missing("vmsControllerFault"))?,
+        }
+        if let Some(v) = &self.vms_controller_fault_extension {
+            w.key(2644)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:VmsControllerStatus`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsControllerStatus {
@@ -3716,10 +6051,10 @@ pub struct VmsControllerStatus {
 }
 
 impl VmsControllerStatus {
-    const FIELDS: &'static [u32] = &[0x130c5b, 0x130c57, 0x130b7c, 0x130885, 0x130c63, 0x130c56, 0x13064b];
+    const FIELDS: &'static [u32] = &[0x170cbd, 0x170cb9, 0x170bd7, 0x1708c3, 0x170cc5, 0x170cb8, 0x170674];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130270);
+        r.expect_type(0x17027f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3731,13 +6066,13 @@ impl VmsControllerStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130c5b => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 3163); }
-                    0x130c57 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 3159); }
-                    0x130b7c => { let v = r.date_time()?; r.set(&mut e2, v, 2940); }
-                    0x130885 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2181); }
-                    0x130c63 => { let v = Some(VmsControllerStatusVmsIndexVmsStatus::read(r)?); e4.extend(v); }
-                    0x130c56 => { let v = Some(VmsControllerFault::read(r)?); e5.extend(v); }
-                    0x13064b => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1611); }
+                    0x170cbd => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 3261); }
+                    0x170cb9 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 3257); }
+                    0x170bd7 => { let v = r.date_time()?; r.set(&mut e2, v, 3031); }
+                    0x1708c3 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2243); }
+                    0x170cc5 => { let v = Some(VmsControllerStatusVmsIndexVmsStatus::read(r)?); e4.extend(v); }
+                    0x170cb8 => { let v = Some(VmsControllerFault::read(r)?); e5.extend(v); }
+                    0x170674 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1652); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3746,8 +6081,8 @@ impl VmsControllerStatus {
                 break;
             }
         }
-        r.required(&e0, 3163);
-        r.required(&e1, 3159);
+        r.required(&e0, 3261);
+        r.required(&e1, 3257);
         let v = Self {
             vms_controller_table_reference: e0,
             vms_controller_reference: e1,
@@ -3784,6 +6119,110 @@ impl VmsControllerStatus {
     }
 }
 
+impl VmsControllerStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = Vec::new();
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2596 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                2592 => if r.first(&mut seen[1])? { f1 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                2196 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                990 => if r.first(&mut seen[3])? { f3 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                2623 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsControllerStatusVmsIndexVmsStatus::read_json(r)? { f4.push(v); } } },
+                2591 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsControllerFault::read_json(r)? { f5.push(v); } } },
+                2645 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2596);
+        r.required(&f1, 2592);
+        Ok(Self {
+            vms_controller_table_reference: f0,
+            vms_controller_reference: f1,
+            status_update_time: f2,
+            information_manager_override: f3,
+            vms_status: f4,
+            vms_controller_fault: f5,
+            vms_controller_status_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1098)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.vms_controller_table_reference {
+            Some(v) => {
+                w.key(2596)?;
+                v.write_json(w, Some("VmsControllerTable"))?;
+            }
+            None => w.absent(2596, w.missing("vmsControllerTableReference"))?,
+        }
+        match &self.vms_controller_reference {
+            Some(v) => {
+                w.key(2592)?;
+                v.write_json(w, Some("VmsController"))?;
+            }
+            None => w.absent(2592, w.missing("vmsControllerReference"))?,
+        }
+        if let Some(v) = &self.status_update_time {
+            w.key(2196)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.information_manager_override {
+            w.key(990)?;
+            v.write_json(w, None)?;
+        }
+        if !self.vms_status.is_empty() {
+            w.key(2623)?;
+            w.begin_array()?;
+            for v in &self.vms_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.vms_controller_fault.is_empty() {
+            w.key(2591)?;
+            w.begin_array()?;
+            for v in &self.vms_controller_fault {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.vms_controller_status_extension {
+            w.key(2645)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:VmsControllerTable`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsControllerTable {
@@ -3802,12 +6241,12 @@ pub struct VmsControllerTable {
 }
 
 impl VmsControllerTable {
-    const FIELDS: &'static [u32] = &[0x130c5a, 0x130884, 0x130c55, 0x13064c];
+    const FIELDS: &'static [u32] = &[0x170cbc, 0x1708c2, 0x170cb7, 0x170675];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130271);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x170280);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3816,10 +6255,10 @@ impl VmsControllerTable {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130c5a => { let v = r.string()?; r.set(&mut e0, v, 3162); }
-                    0x130884 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e1, v.map(Box::new), 2180); }
-                    0x130c55 => { let v = Some(VmsController::read(r)?); e2.extend(v); }
-                    0x13064c => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1612); }
+                    0x170cbc => { let v = r.string()?; r.set(&mut e0, v, 3260); }
+                    0x1708c2 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e1, v.map(Box::new), 2242); }
+                    0x170cb7 => { let v = Some(VmsController::read(r)?); e2.extend(v); }
+                    0x170675 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1653); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3863,6 +6302,99 @@ impl VmsControllerTable {
     }
 }
 
+impl VmsControllerTable {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = Vec::new();
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                2595 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                989 => if r.first(&mut seen[3])? { f3 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                2590 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsController::read_json(r)? { f4.push(v); } } },
+                2646 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            vms_controller_table_identification: f2,
+            information_manager: f3,
+            vms_controller: f4,
+            vms_controller_table_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1099)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.vms_controller_table_identification {
+            w.key(2595)?;
+            w.max_len("vmsControllerTableIdentification", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.information_manager {
+            w.key(989)?;
+            v.write_json(w, None)?;
+        }
+        w.count("vmsController", self.vms_controller.len(), 1, usize::MAX)?;
+        if !self.vms_controller.is_empty() {
+            w.key(2590)?;
+            w.begin_array()?;
+            for v in &self.vms_controller {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.vms_controller_table_extension {
+            w.key(2646)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:VmsFault`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsFault {
@@ -3889,10 +6421,10 @@ pub struct VmsFault {
 }
 
 impl VmsFault {
-    const FIELDS: &'static [u32] = &[0x30812, 0x30811, 0x30810, 0x30816, 0x30814, 0x30819, 0x308f6, 0x3049a, 0x130c5d, 0x13064e];
+    const FIELDS: &'static [u32] = &[0x4084e, 0x4084d, 0x4084c, 0x40852, 0x40850, 0x40855, 0x40935, 0x404ba, 0x170cbf, 0x170677];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130272);
+        r.expect_type(0x170281);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3907,16 +6439,16 @@ impl VmsFault {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x30812 => { let v = r.string()?; r.set(&mut e0, v, 2066); }
-                    0x30811 => { let v = r.multilingual()?; r.set(&mut e1, v, 2065); }
-                    0x30810 => { let v = r.date_time()?; r.set(&mut e2, v, 2064); }
-                    0x30816 => { let v = r.date_time()?; r.set(&mut e3, v, 2070); }
-                    0x30814 => { let v = r.enumeration::<com::FaultSeverityEnum>()?; r.set(&mut e4, v, 2068); }
-                    0x30819 => { let v = r.enumeration::<com::FaultUrgencyEnum>()?; r.set(&mut e5, v, 2073); }
-                    0x308f6 => { let v = r.string()?; r.set(&mut e6, v, 2294); }
-                    0x3049a => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1178); }
-                    0x130c5d => { let v = r.enumeration::<VmsFaultEnum>()?; r.set(&mut e8, v, 3165); }
-                    0x13064e => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1614); }
+                    0x4084e => { let v = r.string()?; r.set(&mut e0, v, 2126); }
+                    0x4084d => { let v = r.multilingual()?; r.set(&mut e1, v, 2125); }
+                    0x4084c => { let v = r.date_time()?; r.set(&mut e2, v, 2124); }
+                    0x40852 => { let v = r.date_time()?; r.set(&mut e3, v, 2130); }
+                    0x40850 => { let v = r.enumeration::<com::FaultSeverityEnum>()?; r.set(&mut e4, v, 2128); }
+                    0x40855 => { let v = r.enumeration::<com::FaultUrgencyEnum>()?; r.set(&mut e5, v, 2133); }
+                    0x40935 => { let v = r.string()?; r.set(&mut e6, v, 2357); }
+                    0x404ba => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1210); }
+                    0x170cbf => { let v = r.enumeration::<VmsFaultEnum>()?; r.set(&mut e8, v, 3263); }
+                    0x170677 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1655); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3925,8 +6457,8 @@ impl VmsFault {
                 break;
             }
         }
-        r.required(&e3, 2070);
-        r.required(&e8, 3165);
+        r.required(&e3, 2130);
+        r.required(&e8, 3263);
         let v = Self {
             fault_identifier: e0,
             fault_description: e1,
@@ -3966,6 +6498,121 @@ impl VmsFault {
         }
         if let Some(v) = &self.vms_fault_extension { w.extension("vms:_vmsFaultExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl VmsFault {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 10];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                836 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                835 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                834 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                840 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                838 => if r.first(&mut seen[4])? { f4 = r.enumeration::<com::FaultSeverityEnum>()?; },
+                843 => if r.first(&mut seen[5])? { f5 = r.enumeration::<com::FaultUrgencyEnum>()?; },
+                1258 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                363 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                2603 => if r.first(&mut seen[8])? { f8 = r.enumeration::<VmsFaultEnum>()?; },
+                2649 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f3, 840);
+        r.required(&f8, 2603);
+        Ok(Self {
+            fault_identifier: f0,
+            fault_description: f1,
+            fault_creation_time: f2,
+            fault_last_update_time: f3,
+            fault_impact_severity: f4,
+            fault_urgency_to_rectify: f5,
+            manufacturer_fault_code: f6,
+            fault_extension: f7,
+            vms_fault: f8,
+            vms_fault_extension: f9,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1100)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.fault_identifier {
+            w.key(836)?;
+            w.max_len("faultIdentifier", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.fault_description {
+            w.key(835)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.fault_creation_time {
+            w.key(834)?;
+            w.date_time(v)?;
+        }
+        match &self.fault_last_update_time {
+            Some(v) => {
+                w.key(840)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(840, w.missing("faultLastUpdateTime"))?,
+        }
+        if let Some(v) = &self.fault_impact_severity {
+            w.key(838)?;
+            w.enumeration(173, v.literal())?;
+        }
+        if let Some(v) = &self.fault_urgency_to_rectify {
+            w.key(843)?;
+            w.enumeration(174, v.literal())?;
+        }
+        if let Some(v) = &self.manufacturer_fault_code {
+            w.key(1258)?;
+            w.max_len("manufacturerFaultCode", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.fault_extension {
+            w.key(363)?;
+            w.extension(v)?;
+        }
+        match &self.vms_fault {
+            Some(v) => {
+                w.key(2603)?;
+                w.enumeration(1101, v.literal())?;
+            }
+            None => w.absent(2603, w.missing("vmsFault"))?,
+        }
+        if let Some(v) = &self.vms_fault_extension {
+            w.key(2649)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -4009,10 +6656,10 @@ pub struct VmsMessage {
 }
 
 impl VmsMessage {
-    const FIELDS: &'static [u32] = &[0x1306d4, 0x13092c, 0x130b35, 0x130ab3, 0x130720, 0x13092b, 0x130a77, 0x1308f7, 0x130bb9, 0x130adf, 0x130ad3, 0x130ad4, 0x13079e, 0x130b2e, 0x130796, 0x130874, 0x13064f];
+    const FIELDS: &'static [u32] = &[0x1706fd, 0x17096d, 0x170b8f, 0x170afa, 0x17074d, 0x17096b, 0x170abe, 0x170936, 0x170c18, 0x170b29, 0x170b1c, 0x170b1d, 0x1707cf, 0x170b7b, 0x1707c7, 0x1708b0, 0x170678];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130273);
+        r.expect_type(0x170282);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4034,23 +6681,23 @@ impl VmsMessage {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x1306d4 => { let v = r.string()?; r.set(&mut e0, v, 1748); }
-                    0x13092c => { let v = r.multilingual()?; r.set(&mut e1, v, 2348); }
-                    0x130b35 => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2869); }
-                    0x130ab3 => { let v = r.multilingual()?; r.set(&mut e3, v, 2739); }
-                    0x130720 => { let v = r.enumeration::<SettingReasonEnum>()?; r.set(&mut e4, v, 1824); }
-                    0x13092b => { let v = r.enumeration::<MessageInformationTypeEnum>()?; e5.extend(v); }
-                    0x130a77 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 2679); }
-                    0x1308f7 => { let v = r.value::<bool>()?; r.set(&mut e7, v, 2295); }
-                    0x130bb9 => { let v = r.date_time()?; r.set(&mut e8, v, 3001); }
-                    0x130adf => { let v = r.multilingual()?; r.set(&mut e9, v, 2783); }
-                    0x130ad3 => { let v = Some(com::VersionedReference::read(r)?); e10.extend(v); }
-                    0x130ad4 => { let v = Some(com::VersionedReference::read(r)?); e11.extend(v); }
-                    0x13079e => { let v = r.value::<f32>()?; r.set(&mut e12, v, 1950); }
-                    0x130b2e => { let v = r.value::<f32>()?; r.set(&mut e13, v, 2862); }
-                    0x130796 => { let v = Some(VmsMessageDisplayAreaIndexDisplayAreaSettings::read(r)?); e14.extend(v); }
-                    0x130874 => { let v = Some(Image::read(r)?); r.set(&mut e15, v.map(Box::new), 2164); }
-                    0x13064f => { let v = r.raw()?; r.set(&mut e16, v.map(Box::new), 1615); }
+                    0x1706fd => { let v = r.string()?; r.set(&mut e0, v, 1789); }
+                    0x17096d => { let v = r.multilingual()?; r.set(&mut e1, v, 2413); }
+                    0x170b8f => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2959); }
+                    0x170afa => { let v = r.multilingual()?; r.set(&mut e3, v, 2810); }
+                    0x17074d => { let v = r.enumeration::<SettingReasonEnum>()?; r.set(&mut e4, v, 1869); }
+                    0x17096b => { let v = r.enumeration::<MessageInformationTypeEnum>()?; e5.extend(v); }
+                    0x170abe => { let v = r.value::<bool>()?; r.set(&mut e6, v, 2750); }
+                    0x170936 => { let v = r.value::<bool>()?; r.set(&mut e7, v, 2358); }
+                    0x170c18 => { let v = r.date_time()?; r.set(&mut e8, v, 3096); }
+                    0x170b29 => { let v = r.multilingual()?; r.set(&mut e9, v, 2857); }
+                    0x170b1c => { let v = Some(com::VersionedReference::read(r)?); e10.extend(v); }
+                    0x170b1d => { let v = Some(com::VersionedReference::read(r)?); e11.extend(v); }
+                    0x1707cf => { let v = r.value::<f32>()?; r.set(&mut e12, v, 1999); }
+                    0x170b7b => { let v = r.value::<f32>()?; r.set(&mut e13, v, 2939); }
+                    0x1707c7 => { let v = Some(VmsMessageDisplayAreaIndexDisplayAreaSettings::read(r)?); e14.extend(v); }
+                    0x1708b0 => { let v = Some(Image::read(r)?); r.set(&mut e15, v.map(Box::new), 2224); }
+                    0x170678 => { let v = r.raw()?; r.set(&mut e16, v.map(Box::new), 1656); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4059,7 +6706,7 @@ impl VmsMessage {
                 break;
             }
         }
-        r.required(&e8, 3001);
+        r.required(&e8, 3096);
         let v = Self {
             associated_traffic_management_plan: e0,
             message_set_by: e1,
@@ -4113,6 +6760,186 @@ impl VmsMessage {
     }
 }
 
+impl VmsMessage {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 17];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = Vec::new();
+        let mut f15 = None;
+        let mut f16 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                264 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                1315 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                2046 => if r.first(&mut seen[2])? { f2 = r.boolean()?; },
+                1810 => if r.first(&mut seen[3])? { f3 = r.multilingual()?; },
+                347 => if r.first(&mut seen[4])? { f4 = r.enumeration::<SettingReasonEnum>()?; },
+                1313 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<MessageInformationTypeEnum>()? { f5.push(v); } } },
+                1648 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                1259 => if r.first(&mut seen[7])? { f7 = r.boolean()?; },
+                2259 => if r.first(&mut seen[8])? { f8 = r.date_time()?; },
+                1857 => if r.first(&mut seen[9])? { f9 = r.multilingual()?; },
+                1844 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VersionedReference::read_json(r)? { f10.push(v); } } },
+                1845 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VersionedReference::read_json(r)? { f11.push(v); } } },
+                584 => if r.first(&mut seen[12])? { f12 = r.number::<f32>()?; },
+                2026 => if r.first(&mut seen[13])? { f13 = r.number::<f32>()?; },
+                576 => if r.first(&mut seen[14])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsMessageDisplayAreaIndexDisplayAreaSettings::read_json(r)? { f14.push(v); } } },
+                969 => if r.first(&mut seen[15])? { f15 = Image::read_json(r)?.map(Box::new); },
+                2650 => if r.first(&mut seen[16])? { f16 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f8, 2259);
+        Ok(Self {
+            associated_traffic_management_plan: f0,
+            message_set_by: f1,
+            set_by_system: f2,
+            reason_for_setting: f3,
+            coded_reason_for_setting: f4,
+            message_information_type: f5,
+            primary_setting: f6,
+            mare_nostrum_compliant: f7,
+            time_last_set: f8,
+            requested_by: f9,
+            related_situation: f10,
+            related_situation_record: f11,
+            distance_from_closest_situation_record: f12,
+            sequencing_interval: f13,
+            display_area_settings: f14,
+            image: f15,
+            vms_message_extension: f16,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1102)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.associated_traffic_management_plan {
+            w.key(264)?;
+            w.max_len("associatedTrafficManagementPlan", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.message_set_by {
+            w.key(1315)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.set_by_system {
+            w.key(2046)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.reason_for_setting {
+            w.key(1810)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.coded_reason_for_setting {
+            w.key(347)?;
+            w.enumeration(1083, v.literal())?;
+        }
+        if !self.message_information_type.is_empty() {
+            w.key(1313)?;
+            w.begin_array()?;
+            for v in &self.message_information_type {
+                w.item()?;
+                w.enumeration(1071, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.primary_setting {
+            w.key(1648)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.mare_nostrum_compliant {
+            w.key(1259)?;
+            w.boolean(*v)?;
+        }
+        match &self.time_last_set {
+            Some(v) => {
+                w.key(2259)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2259, w.missing("timeLastSet"))?,
+        }
+        if let Some(v) = &self.requested_by {
+            w.key(1857)?;
+            w.multilingual(v)?;
+        }
+        if !self.related_situation.is_empty() {
+            w.key(1844)?;
+            w.begin_array()?;
+            for v in &self.related_situation {
+                w.item()?;
+                v.write_json(w, Some("Situation"))?;
+            }
+            w.end_array()?;
+        }
+        if !self.related_situation_record.is_empty() {
+            w.key(1845)?;
+            w.begin_array()?;
+            for v in &self.related_situation_record {
+                w.item()?;
+                v.write_json(w, Some("SituationRecord"))?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.distance_from_closest_situation_record {
+            w.key(584)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.sequencing_interval {
+            w.key(2026)?;
+            w.float32(*v)?;
+        }
+        if !self.display_area_settings.is_empty() {
+            w.key(576)?;
+            w.begin_array()?;
+            for v in &self.display_area_settings {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.image {
+            w.key(969)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.vms_message_extension {
+            w.key(2650)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:VmsPublication`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsPublication {
@@ -4145,16 +6972,16 @@ pub struct VmsPublication {
 }
 
 impl VmsPublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x130857, 0x130c58, 0x130650];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x170893, 0x170cba, 0x170679];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130274);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0x170283);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4167,14 +6994,14 @@ impl VmsPublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x130857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2135); }
-                    0x130c58 => { let v = Some(VmsControllerStatus::read(r)?); e6.extend(v); }
-                    0x130650 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1616); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x170893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2195); }
+                    0x170cba => { let v = Some(VmsControllerStatus::read(r)?); e6.extend(v); }
+                    0x170679 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1657); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4183,9 +7010,9 @@ impl VmsPublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
-        r.required(&e5, 2135);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
+        r.required(&e5, 2195);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -4242,6 +7069,136 @@ impl VmsPublication {
     }
 }
 
+impl VmsPublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                940 => if r.first(&mut seen[10])? { f10 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                2593 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsControllerStatus::read_json(r)? { f11.push(v); } } },
+                2652 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        r.required(&f10, 940);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            header_information: f10,
+            vms_controller_status: f11,
+            vms_publication_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1103)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        match &self.header_information {
+            Some(v) => {
+                w.key(940)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(940, w.missing("headerInformation"))?,
+        }
+        w.count("vmsControllerStatus", self.vms_controller_status.len(), 1, usize::MAX)?;
+        if !self.vms_controller_status.is_empty() {
+            w.key(2593)?;
+            w.begin_array()?;
+            for v in &self.vms_controller_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.vms_publication_extension {
+            w.key(2652)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:VmsStatus`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsStatus {
@@ -4270,10 +7227,10 @@ pub struct VmsStatus {
 }
 
 impl VmsStatus {
-    const FIELDS: &'static [u32] = &[0x130824, 0x130ada, 0x130b7c, 0x130b2e, 0x130c7f, 0x130c5c, 0x130c61, 0x130c60, 0x1308f3, 0x130c5d, 0x130651];
+    const FIELDS: &'static [u32] = &[0x170860, 0x170b23, 0x170bd7, 0x170b7b, 0x170ce1, 0x170cbe, 0x170cc3, 0x170cc2, 0x170931, 0x170cbf, 0x17067a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130275);
+        r.expect_type(0x170284);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4289,17 +7246,17 @@ impl VmsStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130824 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2084); }
-                    0x130ada => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2778); }
-                    0x130b7c => { let v = r.date_time()?; r.set(&mut e2, v, 2940); }
-                    0x130b2e => { let v = r.value::<f32>()?; r.set(&mut e3, v, 2862); }
-                    0x130c7f => { let v = r.enumeration::<WorkingStatusEnum>()?; r.set(&mut e4, v, 3199); }
-                    0x130c5c => { let v = Some(VmsConfiguration::read(r)?); r.set(&mut e5, v.map(Box::new), 3164); }
-                    0x130c61 => { let v = Some(VmsStatusMessageIndexVmsMessage::read(r)?); e6.extend(v); }
-                    0x130c60 => { let v = loc::Location::read(r)?; r.set(&mut e7, v, 3168); }
-                    0x1308f3 => { let v = Some(ManagedLogicalLocation::read(r)?); r.set(&mut e8, v.map(Box::new), 2291); }
-                    0x130c5d => { let v = Some(VmsFault::read(r)?); e9.extend(v); }
-                    0x130651 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1617); }
+                    0x170860 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2144); }
+                    0x170b23 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2851); }
+                    0x170bd7 => { let v = r.date_time()?; r.set(&mut e2, v, 3031); }
+                    0x170b7b => { let v = r.value::<f32>()?; r.set(&mut e3, v, 2939); }
+                    0x170ce1 => { let v = r.enumeration::<WorkingStatusEnum>()?; r.set(&mut e4, v, 3297); }
+                    0x170cbe => { let v = Some(VmsConfiguration::read(r)?); r.set(&mut e5, v.map(Box::new), 3262); }
+                    0x170cc3 => { let v = Some(VmsStatusMessageIndexVmsMessage::read(r)?); e6.extend(v); }
+                    0x170cc2 => { let v = loc::Location::read(r)?; r.set(&mut e7, v, 3266); }
+                    0x170931 => { let v = Some(ManagedLogicalLocation::read(r)?); r.set(&mut e8, v.map(Box::new), 2353); }
+                    0x170cbf => { let v = Some(VmsFault::read(r)?); e9.extend(v); }
+                    0x17067a => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1658); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4346,6 +7303,130 @@ impl VmsStatus {
     }
 }
 
+impl VmsStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = Vec::new();
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                854 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1851 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                2196 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                2026 => if r.first(&mut seen[3])? { f3 = r.number::<f32>()?; },
+                2678 => if r.first(&mut seen[4])? { f4 = r.enumeration::<WorkingStatusEnum>()?; },
+                2602 => if r.first(&mut seen[5])? { f5 = VmsConfiguration::read_json(r)?.map(Box::new); },
+                2612 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsStatusMessageIndexVmsMessage::read_json(r)? { f6.push(v); } } },
+                2610 => if r.first(&mut seen[7])? { f7 = loc::Location::read_json(r)?; },
+                1254 => if r.first(&mut seen[8])? { f8 = ManagedLogicalLocation::read_json(r)?.map(Box::new); },
+                2603 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsFault::read_json(r)? { f9.push(v); } } },
+                2653 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            flashing_lights_on: f0,
+            remaining_power_capacity: f1,
+            status_update_time: f2,
+            sequencing_interval: f3,
+            working_status: f4,
+            vms_dynamic_configuration: f5,
+            vms_message: f6,
+            vms_location_override: f7,
+            managed_logical_location_override: f8,
+            vms_fault: f9,
+            vms_status_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1104)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.flashing_lights_on {
+            w.key(854)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.remaining_power_capacity {
+            w.key(1851)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.status_update_time {
+            w.key(2196)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.sequencing_interval {
+            w.key(2026)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.working_status {
+            w.key(2678)?;
+            w.enumeration(1107, v.literal())?;
+        }
+        if let Some(v) = &self.vms_dynamic_configuration {
+            w.key(2602)?;
+            v.write_json(w, None)?;
+        }
+        if !self.vms_message.is_empty() {
+            w.key(2612)?;
+            w.begin_array()?;
+            for v in &self.vms_message {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.vms_location_override {
+            w.key(2610)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.managed_logical_location_override {
+            w.key(1254)?;
+            v.write_json(w, None)?;
+        }
+        if !self.vms_fault.is_empty() {
+            w.key(2603)?;
+            w.begin_array()?;
+            for v in &self.vms_fault {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.vms_status_extension {
+            w.key(2653)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:VmsTablePublication`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsTablePublication {
@@ -4378,16 +7459,16 @@ pub struct VmsTablePublication {
 }
 
 impl VmsTablePublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x130857, 0x130c59, 0x130652];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x170893, 0x170cbb, 0x17067b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x130276);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0x170285);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4400,14 +7481,14 @@ impl VmsTablePublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x130857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2135); }
-                    0x130c59 => { let v = Some(VmsControllerTable::read(r)?); e6.extend(v); }
-                    0x130652 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1618); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x170893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2195); }
+                    0x170cbb => { let v = Some(VmsControllerTable::read(r)?); e6.extend(v); }
+                    0x17067b => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1659); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4416,9 +7497,9 @@ impl VmsTablePublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
-        r.required(&e5, 2135);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
+        r.required(&e5, 2195);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -4475,6 +7556,136 @@ impl VmsTablePublication {
     }
 }
 
+impl VmsTablePublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                940 => if r.first(&mut seen[10])? { f10 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                2594 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = VmsControllerTable::read_json(r)? { f11.push(v); } } },
+                2655 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        r.required(&f10, 940);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            header_information: f10,
+            vms_controller_table: f11,
+            vms_table_publication_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1105)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        match &self.header_information {
+            Some(v) => {
+                w.key(940)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(940, w.missing("headerInformation"))?,
+        }
+        w.count("vmsControllerTable", self.vms_controller_table.len(), 1, usize::MAX)?;
+        if !self.vms_controller_table.is_empty() {
+            w.key(2594)?;
+            w.begin_array()?;
+            for v in &self.vms_controller_table {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.vms_table_publication_extension {
+            w.key(2655)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:_MultiPageDisplayPageNumberDisplayAreaSettings`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct MultiPageDisplayPageNumberDisplayAreaSettings {
@@ -4485,17 +7696,17 @@ pub struct MultiPageDisplayPageNumberDisplayAreaSettings {
 }
 
 impl MultiPageDisplayPageNumberDisplayAreaSettings {
-    const FIELDS: &'static [u32] = &[0x130796];
+    const FIELDS: &'static [u32] = &[0x1707c7];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x13031d);
-        let a0 = r.req_attr_value::<i32>(2555)?;
+        r.expect_type(0x170331);
+        let a0 = r.req_attr_value::<i32>(2624)?;
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130796 => { let v = DisplayAreaSettings::read(r)?; r.set(&mut e0, v, 1942); }
+                    0x1707c7 => { let v = DisplayAreaSettings::read(r)?; r.set(&mut e0, v, 1991); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4504,7 +7715,7 @@ impl MultiPageDisplayPageNumberDisplayAreaSettings {
                 break;
             }
         }
-        r.required(&e0, 1942);
+        r.required(&e0, 1991);
         let v = Self {
             page_number: a0,
             display_area_settings: e0,
@@ -4531,6 +7742,65 @@ impl MultiPageDisplayPageNumberDisplayAreaSettings {
     }
 }
 
+impl MultiPageDisplayPageNumberDisplayAreaSettings {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1523 => if r.first(&mut seen[0])? { f0 = r.number::<i32>()?; },
+                576 => if r.first(&mut seen[1])? { f1 = DisplayAreaSettings::read_json(r)?; },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1523);
+        r.required(&f1, 576);
+        Ok(Self {
+            page_number: f0,
+            display_area_settings: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1108)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.page_number {
+            Some(v) => {
+                w.key(1523)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1523, w.missing_attr("pageNumber"))?,
+        }
+        match &self.display_area_settings {
+            Some(v) => {
+                w.key(576)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(576, w.missing("displayAreaSettings"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:_TextDisplayLineIndexTextLine`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TextDisplayLineIndexTextLine {
@@ -4541,17 +7811,17 @@ pub struct TextDisplayLineIndexTextLine {
 }
 
 impl TextDisplayLineIndexTextLine {
-    const FIELDS: &'static [u32] = &[0x130bb1];
+    const FIELDS: &'static [u32] = &[0x170c10];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1303b5);
-        let a0 = r.req_attr_value::<i32>(2254)?;
+        r.expect_type(0x1703ce);
+        let a0 = r.req_attr_value::<i32>(2316)?;
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130bb1 => { let v = Some(TextLine::read(r)?); r.set(&mut e0, v.map(Box::new), 2993); }
+                    0x170c10 => { let v = Some(TextLine::read(r)?); r.set(&mut e0, v.map(Box::new), 3088); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4560,7 +7830,7 @@ impl TextDisplayLineIndexTextLine {
                 break;
             }
         }
-        r.required(&e0, 2993);
+        r.required(&e0, 3088);
         let v = Self {
             line_index: a0,
             text_line: e0,
@@ -4587,6 +7857,65 @@ impl TextDisplayLineIndexTextLine {
     }
 }
 
+impl TextDisplayLineIndexTextLine {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1063 => if r.first(&mut seen[0])? { f0 = r.number::<i32>()?; },
+                2251 => if r.first(&mut seen[1])? { f1 = TextLine::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1063);
+        r.required(&f1, 2251);
+        Ok(Self {
+            line_index: f0,
+            text_line: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1109)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.line_index {
+            Some(v) => {
+                w.key(1063)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1063, w.missing_attr("lineIndex"))?,
+        }
+        match &self.text_line {
+            Some(v) => {
+                w.key(2251)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2251, w.missing("textLine"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:_VmsConfigurationDisplayAreaIndexDisplayArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsConfigurationDisplayAreaIndexDisplayArea {
@@ -4597,17 +7926,17 @@ pub struct VmsConfigurationDisplayAreaIndexDisplayArea {
 }
 
 impl VmsConfigurationDisplayAreaIndexDisplayArea {
-    const FIELDS: &'static [u32] = &[0x130794];
+    const FIELDS: &'static [u32] = &[0x1707c5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1303e1);
-        let a0 = r.req_attr_value::<i32>(1941)?;
+        r.expect_type(0x1703fb);
+        let a0 = r.req_attr_value::<i32>(1990)?;
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130794 => { let v = AnyDisplayArea::read(r)?; r.set(&mut e0, v, 1940); }
+                    0x1707c5 => { let v = AnyDisplayArea::read(r)?; r.set(&mut e0, v, 1989); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4616,7 +7945,7 @@ impl VmsConfigurationDisplayAreaIndexDisplayArea {
                 break;
             }
         }
-        r.required(&e0, 1940);
+        r.required(&e0, 1989);
         let v = Self {
             display_area_index: a0,
             display_area: e0,
@@ -4643,6 +7972,65 @@ impl VmsConfigurationDisplayAreaIndexDisplayArea {
     }
 }
 
+impl VmsConfigurationDisplayAreaIndexDisplayArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                575 => if r.first(&mut seen[0])? { f0 = r.number::<i32>()?; },
+                574 => if r.first(&mut seen[1])? { f1 = AnyDisplayArea::read_json(r)?; },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 575);
+        r.required(&f1, 574);
+        Ok(Self {
+            display_area_index: f0,
+            display_area: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1110)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.display_area_index {
+            Some(v) => {
+                w.key(575)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(575, w.missing_attr("displayAreaIndex"))?,
+        }
+        match &self.display_area {
+            Some(v) => {
+                w.key(574)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(574, w.missing("displayArea"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:_VmsControllerStatusVmsIndexVmsStatus`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsControllerStatusVmsIndexVmsStatus {
@@ -4653,17 +8041,17 @@ pub struct VmsControllerStatusVmsIndexVmsStatus {
 }
 
 impl VmsControllerStatusVmsIndexVmsStatus {
-    const FIELDS: &'static [u32] = &[0x130c63];
+    const FIELDS: &'static [u32] = &[0x170cc5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1303e3);
-        let a0 = r.req_attr_value::<i32>(3166)?;
+        r.expect_type(0x1703fd);
+        let a0 = r.req_attr_value::<i32>(3264)?;
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130c63 => { let v = Some(VmsStatus::read(r)?); r.set(&mut e0, v.map(Box::new), 3171); }
+                    0x170cc5 => { let v = Some(VmsStatus::read(r)?); r.set(&mut e0, v.map(Box::new), 3269); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4672,7 +8060,7 @@ impl VmsControllerStatusVmsIndexVmsStatus {
                 break;
             }
         }
-        r.required(&e0, 3171);
+        r.required(&e0, 3269);
         let v = Self {
             vms_index: a0,
             vms_status: e0,
@@ -4699,6 +8087,65 @@ impl VmsControllerStatusVmsIndexVmsStatus {
     }
 }
 
+impl VmsControllerStatusVmsIndexVmsStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2608 => if r.first(&mut seen[0])? { f0 = r.number::<i32>()?; },
+                2623 => if r.first(&mut seen[1])? { f1 = VmsStatus::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2608);
+        r.required(&f1, 2623);
+        Ok(Self {
+            vms_index: f0,
+            vms_status: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1111)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.vms_index {
+            Some(v) => {
+                w.key(2608)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(2608, w.missing_attr("vmsIndex"))?,
+        }
+        match &self.vms_status {
+            Some(v) => {
+                w.key(2623)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2623, w.missing("vmsStatus"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:_VmsControllerVmsIndexVms`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsControllerVmsIndexVms {
@@ -4709,17 +8156,17 @@ pub struct VmsControllerVmsIndexVms {
 }
 
 impl VmsControllerVmsIndexVms {
-    const FIELDS: &'static [u32] = &[0x130c53];
+    const FIELDS: &'static [u32] = &[0x170cb5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1303e6);
-        let a0 = r.req_attr_value::<i32>(3166)?;
+        r.expect_type(0x170400);
+        let a0 = r.req_attr_value::<i32>(3264)?;
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130c53 => { let v = Some(Vms::read(r)?); r.set(&mut e0, v.map(Box::new), 3155); }
+                    0x170cb5 => { let v = Some(Vms::read(r)?); r.set(&mut e0, v.map(Box::new), 3253); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4728,7 +8175,7 @@ impl VmsControllerVmsIndexVms {
                 break;
             }
         }
-        r.required(&e0, 3155);
+        r.required(&e0, 3253);
         let v = Self {
             vms_index: a0,
             vms: e0,
@@ -4755,6 +8202,65 @@ impl VmsControllerVmsIndexVms {
     }
 }
 
+impl VmsControllerVmsIndexVms {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2608 => if r.first(&mut seen[0])? { f0 = r.number::<i32>()?; },
+                2586 => if r.first(&mut seen[1])? { f1 = Vms::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2608);
+        r.required(&f1, 2586);
+        Ok(Self {
+            vms_index: f0,
+            vms: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1112)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.vms_index {
+            Some(v) => {
+                w.key(2608)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(2608, w.missing_attr("vmsIndex"))?,
+        }
+        match &self.vms {
+            Some(v) => {
+                w.key(2586)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2586, w.missing("vms"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:_VmsMessageDisplayAreaIndexDisplayAreaSettings`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsMessageDisplayAreaIndexDisplayAreaSettings {
@@ -4765,17 +8271,17 @@ pub struct VmsMessageDisplayAreaIndexDisplayAreaSettings {
 }
 
 impl VmsMessageDisplayAreaIndexDisplayAreaSettings {
-    const FIELDS: &'static [u32] = &[0x130796];
+    const FIELDS: &'static [u32] = &[0x1707c7];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1303e8);
-        let a0 = r.req_attr_value::<i32>(1941)?;
+        r.expect_type(0x170402);
+        let a0 = r.req_attr_value::<i32>(1990)?;
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130796 => { let v = DisplayAreaSettings::read(r)?; r.set(&mut e0, v, 1942); }
+                    0x1707c7 => { let v = DisplayAreaSettings::read(r)?; r.set(&mut e0, v, 1991); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4784,7 +8290,7 @@ impl VmsMessageDisplayAreaIndexDisplayAreaSettings {
                 break;
             }
         }
-        r.required(&e0, 1942);
+        r.required(&e0, 1991);
         let v = Self {
             display_area_index: a0,
             display_area_settings: e0,
@@ -4811,6 +8317,65 @@ impl VmsMessageDisplayAreaIndexDisplayAreaSettings {
     }
 }
 
+impl VmsMessageDisplayAreaIndexDisplayAreaSettings {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                575 => if r.first(&mut seen[0])? { f0 = r.number::<i32>()?; },
+                576 => if r.first(&mut seen[1])? { f1 = DisplayAreaSettings::read_json(r)?; },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 575);
+        r.required(&f1, 576);
+        Ok(Self {
+            display_area_index: f0,
+            display_area_settings: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1113)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.display_area_index {
+            Some(v) => {
+                w.key(575)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(575, w.missing_attr("displayAreaIndex"))?,
+        }
+        match &self.display_area_settings {
+            Some(v) => {
+                w.key(576)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(576, w.missing("displayAreaSettings"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `vms:_VmsStatusMessageIndexVmsMessage`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct VmsStatusMessageIndexVmsMessage {
@@ -4821,17 +8386,17 @@ pub struct VmsStatusMessageIndexVmsMessage {
 }
 
 impl VmsStatusMessageIndexVmsMessage {
-    const FIELDS: &'static [u32] = &[0x130c61];
+    const FIELDS: &'static [u32] = &[0x170cc3];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1303e9);
-        let a0 = r.req_attr_value::<i32>(2346)?;
+        r.expect_type(0x170403);
+        let a0 = r.req_attr_value::<i32>(2410)?;
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x130c61 => { let v = Some(VmsMessage::read(r)?); r.set(&mut e0, v.map(Box::new), 3169); }
+                    0x170cc3 => { let v = Some(VmsMessage::read(r)?); r.set(&mut e0, v.map(Box::new), 3267); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4840,7 +8405,7 @@ impl VmsStatusMessageIndexVmsMessage {
                 break;
             }
         }
-        r.required(&e0, 3169);
+        r.required(&e0, 3267);
         let v = Self {
             message_index: a0,
             vms_message: e0,
@@ -4867,6 +8432,65 @@ impl VmsStatusMessageIndexVmsMessage {
     }
 }
 
+impl VmsStatusMessageIndexVmsMessage {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1312 => if r.first(&mut seen[0])? { f0 = r.number::<i32>()?; },
+                2612 => if r.first(&mut seen[1])? { f1 = VmsMessage::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1312);
+        r.required(&f1, 2612);
+        Ok(Self {
+            message_index: f0,
+            vms_message: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1114)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.message_index {
+            Some(v) => {
+                w.key(1312)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1312, w.missing_attr("messageIndex"))?,
+        }
+        match &self.vms_message {
+            Some(v) => {
+                w.key(2612)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2612, w.missing("vmsMessage"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// Any concrete kind of XML type `vms:DisplayArea`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyDisplayArea {
@@ -4887,10 +8511,10 @@ impl AnyDisplayArea {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x130081) => Self::DisplayArea(Box::new(DisplayArea::read(r)?)),
-            Some(0x130177) => Self::PictogramDisplayArea(Box::new(PictogramDisplayArea::read(r)?)),
-            Some(0x130202) => Self::SupplementaryPanelArea(Box::new(SupplementaryPanelArea::read(r)?)),
-            Some(0x130210) => Self::TextDisplayArea(Box::new(TextDisplayArea::read(r)?)),
+            Some(0x170083) => Self::DisplayArea(Box::new(DisplayArea::read(r)?)),
+            Some(0x170180) => Self::PictogramDisplayArea(Box::new(PictogramDisplayArea::read(r)?)),
+            Some(0x170211) => Self::SupplementaryPanelArea(Box::new(SupplementaryPanelArea::read(r)?)),
+            Some(0x17021f) => Self::TextDisplayArea(Box::new(TextDisplayArea::read(r)?)),
             None => Self::DisplayArea(Box::new(DisplayArea::read(r)?)),
             _ => {
                 r.unknown_type_as("DisplayArea");
@@ -5001,6 +8625,88 @@ impl AnyDisplayArea {
     }
 }
 
+impl AnyDisplayArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 2597 | 2617 | 2625 | 2632) {
+                return DisplayArea::read_json_members(r, Some(key)).map(|v| Some(Self::DisplayArea(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2597 => if r.first(&mut seen)? { value = DisplayArea::read_json(r)?.map(|v| Self::DisplayArea(Box::new(v))); },
+                2617 => if r.first(&mut seen)? { value = PictogramDisplayArea::read_json(r)?.map(|v| Self::PictogramDisplayArea(Box::new(v))); },
+                2625 => if r.first(&mut seen)? { value = SupplementaryPanelArea::read_json(r)?.map(|v| Self::SupplementaryPanelArea(Box::new(v))); },
+                2632 => if r.first(&mut seen)? { value = TextDisplayArea::read_json(r)?.map(|v| Self::TextDisplayArea(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of DisplayArea in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::DisplayArea(v) => {
+                if w.wrapper(2597)? {
+                    w.begin_object(1058)?;
+                    w.key(2597)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PictogramDisplayArea(v) => {
+                if w.wrapper(2617)? {
+                    w.begin_object(1058)?;
+                    w.key(2617)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SupplementaryPanelArea(v) => {
+                if w.wrapper(2625)? {
+                    w.begin_object(1058)?;
+                    w.key(2625)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::TextDisplayArea(v) => {
+                if w.wrapper(2632)? {
+                    w.begin_object(1058)?;
+                    w.key(2632)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `vms:DisplayAreaSettings`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum DisplayAreaSettings {
@@ -5023,11 +8729,11 @@ impl DisplayAreaSettings {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x130110) => Self::MultiPageDisplay(Box::new(MultiPageDisplay::read(r)?)),
-            Some(0x130176) => Self::PictogramDisplay(Box::new(PictogramDisplay::read(r)?)),
-            Some(0x130203) => Self::SupplementaryPictogram(Box::new(SupplementaryPictogram::read(r)?)),
-            Some(0x130206) => Self::SupplementaryText(Box::new(SupplementaryText::read(r)?)),
-            Some(0x13020f) => Self::TextDisplay(Box::new(TextDisplay::read(r)?)),
+            Some(0x170119) => Self::MultiPageDisplay(Box::new(MultiPageDisplay::read(r)?)),
+            Some(0x17017f) => Self::PictogramDisplay(Box::new(PictogramDisplay::read(r)?)),
+            Some(0x170212) => Self::SupplementaryPictogram(Box::new(SupplementaryPictogram::read(r)?)),
+            Some(0x170215) => Self::SupplementaryText(Box::new(SupplementaryText::read(r)?)),
+            Some(0x17021e) => Self::TextDisplay(Box::new(TextDisplay::read(r)?)),
             _ => {
                 r.unknown_type("DisplayAreaSettings")?;
                 return Ok(None);
@@ -5092,6 +8798,93 @@ impl DisplayAreaSettings {
     }
 }
 
+impl DisplayAreaSettings {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2613 => if r.first(&mut seen)? { value = MultiPageDisplay::read_json(r)?.map(|v| Self::MultiPageDisplay(Box::new(v))); },
+                2616 => if r.first(&mut seen)? { value = PictogramDisplay::read_json(r)?.map(|v| Self::PictogramDisplay(Box::new(v))); },
+                2627 => if r.first(&mut seen)? { value = SupplementaryPictogram::read_json(r)?.map(|v| Self::SupplementaryPictogram(Box::new(v))); },
+                2629 => if r.first(&mut seen)? { value = SupplementaryText::read_json(r)?.map(|v| Self::SupplementaryText(Box::new(v))); },
+                2631 => if r.first(&mut seen)? { value = TextDisplay::read_json(r)?.map(|v| Self::TextDisplay(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of DisplayAreaSettings in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::MultiPageDisplay(v) => {
+                if w.wrapper(2613)? {
+                    w.begin_object(1059)?;
+                    w.key(2613)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PictogramDisplay(v) => {
+                if w.wrapper(2616)? {
+                    w.begin_object(1059)?;
+                    w.key(2616)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SupplementaryPictogram(v) => {
+                if w.wrapper(2627)? {
+                    w.begin_object(1059)?;
+                    w.key(2627)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SupplementaryText(v) => {
+                if w.wrapper(2629)? {
+                    w.begin_object(1059)?;
+                    w.key(2629)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::TextDisplay(v) => {
+                if w.wrapper(2631)? {
+                    w.begin_object(1059)?;
+                    w.key(2631)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `vms:Pictogram`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Pictogram {
@@ -5108,8 +8901,8 @@ impl Pictogram {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x130054) => Self::CompositePictogram(Box::new(CompositePictogram::read(r)?)),
-            Some(0x1301b2) => Self::RegularPictogram(Box::new(RegularPictogram::read(r)?)),
+            Some(0x170056) => Self::CompositePictogram(Box::new(CompositePictogram::read(r)?)),
+            Some(0x1701bb) => Self::RegularPictogram(Box::new(RegularPictogram::read(r)?)),
             _ => {
                 r.unknown_type("Pictogram")?;
                 return Ok(None);
@@ -5191,6 +8984,60 @@ impl Pictogram {
     }
 }
 
+impl Pictogram {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2587 => if r.first(&mut seen)? { value = CompositePictogram::read_json(r)?.map(|v| Self::CompositePictogram(Box::new(v))); },
+                2621 => if r.first(&mut seen)? { value = RegularPictogram::read_json(r)?.map(|v| Self::RegularPictogram(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Pictogram in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::CompositePictogram(v) => {
+                if w.wrapper(2587)? {
+                    w.begin_object(1077)?;
+                    w.key(2587)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::RegularPictogram(v) => {
+                if w.wrapper(2621)? {
+                    w.begin_object(1077)?;
+                    w.key(2621)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `vms:SupplementaryInformationDisplay`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum SupplementaryInformationDisplay {
@@ -5207,8 +9054,8 @@ impl SupplementaryInformationDisplay {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x130203) => Self::SupplementaryPictogram(Box::new(SupplementaryPictogram::read(r)?)),
-            Some(0x130206) => Self::SupplementaryText(Box::new(SupplementaryText::read(r)?)),
+            Some(0x170212) => Self::SupplementaryPictogram(Box::new(SupplementaryPictogram::read(r)?)),
+            Some(0x170215) => Self::SupplementaryText(Box::new(SupplementaryText::read(r)?)),
             _ => {
                 r.unknown_type("SupplementaryInformationDisplay")?;
                 return Ok(None);
@@ -5262,6 +9109,60 @@ impl SupplementaryInformationDisplay {
         match self {
             Self::SupplementaryPictogram(v) => v.write(w, tag, " xsi:type=\"vms:SupplementaryPictogram\"", ""),
             Self::SupplementaryText(v) => v.write(w, tag, " xsi:type=\"vms:SupplementaryText\"", ""),
+        }
+    }
+}
+
+impl SupplementaryInformationDisplay {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2627 => if r.first(&mut seen)? { value = SupplementaryPictogram::read_json(r)?.map(|v| Self::SupplementaryPictogram(Box::new(v))); },
+                2629 => if r.first(&mut seen)? { value = SupplementaryText::read_json(r)?.map(|v| Self::SupplementaryText(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of SupplementaryInformationDisplay in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::SupplementaryPictogram(v) => {
+                if w.wrapper(2627)? {
+                    w.begin_object(1085)?;
+                    w.key(2627)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SupplementaryText(v) => {
+                if w.wrapper(2629)? {
+                    w.begin_object(1085)?;
+                    w.key(2629)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
         }
     }
 }

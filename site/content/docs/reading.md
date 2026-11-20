@@ -38,7 +38,7 @@ use [`stream`](@/docs/streaming.md).
 |---|---|
 | Root `payload` with `xsi:type` | One publication |
 | Root `payload` without `xsi:type` | One publication, its type inferred from its content, and a warning |
-| Root `messageContainer` | Every payload in it; exchange metadata is skipped |
+| Root `messageContainer` | Every payload in it, and its exchange information in `exchange_information` |
 | A root named after the publication type (`SituationPublication`) | One publication |
 | SOAP 1.1 or 1.2 around a payload or message container | The same as without SOAP |
 | Anything else | An error naming the root element and its namespace |
@@ -103,7 +103,7 @@ list.
 | Decimal amount (prices) | `Decimal`, the digits as written, never a float |
 | Numbers | `f32`, `f64`, `i32`, `i64`, `u64`; measure types are aliases such as `KilometresPerHour = f32` |
 | Reference to another object | `VersionedReference { id, version }` or `Reference { id }` |
-| Extension content | `Extension`, the raw XML and the namespace bindings it uses |
+| Extension content | `Extension`, the content as written, with the namespace bindings it uses |
 
 A `DateTime` without a time zone has `offset_minutes == None` and no `unix_timestamp()`; the
 reader does not guess a zone.

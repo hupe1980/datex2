@@ -48,7 +48,8 @@ fn shared_fields_are_reachable_without_matching() {
 fn container(payloads: &str) -> String {
     format!(
         r#"<mc:messageContainer xmlns:mc="http://datex2.eu/schema/3/messageContainer" xmlns:ex="http://datex2.eu/schema/3/exchangeInformation" {NAMESPACES} modelBaseVersion="3">{payloads}
-           <mc:exchangeInformation><ex:exchangeContext><ex:codedExchangeProtocol>snapshotPull</ex:codedExchangeProtocol></ex:exchangeContext></mc:exchangeInformation>
+           <mc:exchangeInformation><ex:exchangeContext><ex:codedExchangeProtocol>snapshotPull</ex:codedExchangeProtocol><ex:exchangeSpecificationVersion>3.0</ex:exchangeSpecificationVersion><ex:supplierOrCisRequester/></ex:exchangeContext>
+           <ex:dynamicInformation><ex:exchangeStatus>online</ex:exchangeStatus><ex:messageGenerationTimestamp>2026-11-19T12:00:00Z</ex:messageGenerationTimestamp></ex:dynamicInformation></mc:exchangeInformation>
            </mc:messageContainer>"#
     )
 }
@@ -69,10 +70,15 @@ fn message_container_with_two_payloads() {
     )));
     assert_eq!(doc.envelope, Envelope::MessageContainer);
     assert_eq!(doc.publications.len(), 2);
+    assert_eq!(doc.warnings, []);
+    let exchange = doc
+        .exchange_information
+        .expect("exchange information is read");
     assert_eq!(
-        doc.warnings,
-        [],
-        "exchange information is skipped without a warning"
+        exchange
+            .exchange_context
+            .and_then(|c| c.coded_exchange_protocol),
+        Some(datex2::v3::exchange_information::ProtocolTypeEnum::SnapshotPull)
     );
 }
 

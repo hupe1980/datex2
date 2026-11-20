@@ -1,8 +1,8 @@
 //! An unofficial Rust implementation of [DATEX II](https://datex2.eu/), the European standard for
 //! road traffic and travel information.
 //!
-//! This release reads DATEX II **version 3 XML** into typed data, and writes it. To read, one call
-//! is enough:
+//! This release reads DATEX II **version 3**, in XML and in JSON, into typed data, and writes it.
+//! To read, one call is enough:
 //!
 //! ```
 //! let xml = br#"<d2:payload xmlns:d2="http://datex2.eu/schema/3/d2Payload"
@@ -48,9 +48,15 @@
 //! [`v3::write`] turns a publication into a document the official schema accepts, or says which
 //! rule of the schema the publication breaks.
 //!
+//! # JSON and the Mobilithek
+//!
+//! [`v3::json`] reads and writes the same model as JSON: the official DATEX II 3.7 mapping, and
+//! the German AFIR Recharging profile the Mobilithek requires
+//! ([`v3::json::mobilithek`]). Numbers keep their exact value; the crate has no JSON dependency.
+//!
 //! # What it does not do
 //!
-//! JSON, DATEX II version 2, and any network or file access. The crate reads the bytes you give
+//! DATEX II versions 1 and 2, and any network or file access. The crate reads the bytes you give
 //! it and writes to the sink you give it.
 //!
 //! This crate is not affiliated with or endorsed by the DATEX II organisation.
@@ -59,6 +65,7 @@
 #![warn(missing_docs)]
 
 mod error;
+mod json;
 mod out;
 mod types;
 mod xml;
@@ -91,6 +98,7 @@ mod documentation {
         Reading => "../site/content/docs/reading.md",
         Streaming => "../site/content/docs/streaming.md",
         Writing => "../site/content/docs/writing.md",
+        Json => "../site/content/docs/json.md",
         Model => "../site/content/docs/model.md",
         Tolerance => "../site/content/docs/tolerance.md",
         Errors => "../site/content/docs/errors.md",

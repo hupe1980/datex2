@@ -24,6 +24,10 @@ pub struct Time {
     pub second: u8,
     /// Fraction of the second in nanoseconds.
     pub nanosecond: u32,
+    /// How many digits of the fraction the document wrote, 0 to 9. A value read keeps them, so
+    /// that `12:00:00.010` is written back as `12:00:00.010`. When the nanoseconds need more
+    /// digits than this, they are written anyway.
+    pub fraction_digits: u8,
 }
 
 /// A point in time as written in the document.
@@ -85,9 +89,11 @@ impl fmt::Display for Date {
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:02}:{:02}:{:02}", self.hour, self.minute, self.second)?;
-        if self.nanosecond != 0 {
-            let digits = format!("{:09}", self.nanosecond);
-            write!(f, ".{}", digits.trim_end_matches('0'))?;
+        let all = format!("{:09}", self.nanosecond.min(999_999_999));
+        let needed = all.trim_end_matches('0').len();
+        let shown = needed.max(usize::from(self.fraction_digits.min(9)));
+        if shown > 0 {
+            write!(f, ".{}", &all[..shown])?;
         }
         Ok(())
     }
@@ -156,15 +162,18 @@ impl MultilingualString {
 /// Content of an extension slot, kept as it was written.
 ///
 /// DATEX II lets every class carry extension content defined outside the standard. The reader does
-/// not interpret it; it keeps the XML and the namespace prefixes that were in scope, so the content
-/// can be parsed by whoever knows the extension.
+/// not interpret it; it keeps it in the encoding it came in, so that it can be parsed by whoever
+/// knows the extension and written back unchanged. Content read from XML cannot be written as JSON
+/// and the reverse; the writer says so.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct Extension {
-    /// The XML between the start and end tag of the extension element.
+    /// XML: the content between the start and end tag of the extension element.
     pub xml: String,
-    /// Prefix and namespace URI of the bindings in scope that the content uses; the default
+    /// XML: prefix and namespace URI of the bindings in scope that the content uses; the default
     /// namespace has an empty prefix.
     pub namespaces: Vec<(String, String)>,
+    /// JSON: the extension object as written, braces included.
+    pub json: String,
 }
 
 impl Extension {
@@ -308,15 +317,18 @@ fn parse_time(s: &str) -> Option<Time> {
     let hour: u8 = digits(&hms[0..2], 2)?;
     let minute: u8 = digits(&hms[3..5], 2)?;
     let second: u8 = digits(&hms[6..8], 2)?;
-    let nanosecond = match frac {
-        None => 0,
+    let (nanosecond, fraction_digits) = match frac {
+        None => (0, 0),
         Some(f) => {
             if f.is_empty() || !f.bytes().all(|b| b.is_ascii_digit()) {
                 return None;
             }
             // Digits beyond nanoseconds are dropped.
             let kept = &f[..f.len().min(9)];
-            kept.parse::<u32>().ok()? * 10u32.pow(9 - kept.len() as u32)
+            (
+                kept.parse::<u32>().ok()? * 10u32.pow(9 - kept.len() as u32),
+                kept.len() as u8,
+            )
         }
     };
     (hour <= 24 && minute <= 59 && second <= 60).then_some(Time {
@@ -324,6 +336,7 @@ fn parse_time(s: &str) -> Option<Time> {
         minute,
         second,
         nanosecond,
+        fraction_digits,
     })
 }
 
@@ -454,6 +467,8 @@ mod tests {
         for s in [
             "2026-11-19T18:22:38Z",
             "2026-11-19T18:22:38.729813995Z",
+            "2026-11-19T18:22:38.010Z",
+            "2026-11-19T18:22:38.500+01:00",
             "2026-11-19T19:27:02.41+01:00",
             "2026-10-19T00:00:00",
             "1899-12-30T00:00:00+02:00",

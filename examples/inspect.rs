@@ -1,7 +1,8 @@
-//! Prints what a DATEX II v3 file contains and every deviation the reader tolerated.
+//! Prints what a DATEX II v3 file contains, XML or JSON, and every deviation the reader tolerated.
 //!
 //! ```text
 //! cargo run --release --example inspect -- incidents.xml
+//! cargo run --release --example inspect -- charging-points.json
 //! gzip -dc incidents.xml.gz | cargo run --release --example inspect
 //! ```
 
@@ -11,11 +12,16 @@ use std::io::{BufRead, BufReader};
 use datex2::v3::{self, Publication};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let input: Box<dyn BufRead> = match std::env::args().nth(1) {
+    let path = std::env::args().nth(1);
+    let input: Box<dyn BufRead> = match &path {
         Some(path) => Box::new(BufReader::new(std::fs::File::open(path)?)),
         None => Box::new(BufReader::new(std::io::stdin())),
     };
-    let doc = v3::read(input)?;
+    let doc = if path.is_some_and(|p| p.ends_with(".json")) {
+        v3::json::read(input)?
+    } else {
+        v3::read(input)?
+    };
 
     println!(
         "envelope: {:?}{}",

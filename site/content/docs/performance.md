@@ -1,14 +1,15 @@
 +++
 title = "Measurements"
-description = "Measured speed, memory use and build time of the datex2 crate on real DATEX II feeds: 158 MB/s reading, 8 MB to stream a 189 MB file, 9 s clean build."
+description = "Measured speed, memory use and build time of the datex2 crate on real DATEX II feeds: 158 MB/s reading XML, 90 MB/s reading JSON, 8 MB to stream a 189 MB file, 18 s clean build."
 weight = 110
 
 [extra]
 seo_title = "DATEX II parsing speed and memory in Rust"
 +++
 
-All figures: Apple M4 Pro, Rust 1.100, 2026-11-19, release build, one core. The input is the
-Dutch NDW roadworks and events feed, 189 MB of XML with 13,140 situations, unless stated.
+All figures: Apple M4 Pro, Rust 1.100, release build, one core; XML on 2026-11-19, JSON and build
+times on 2026-11-20. The input is the Dutch NDW roadworks and events feed, 189 MB of XML with
+13,140 situations, unless stated.
 
 | What | Result |
 |---|---|
@@ -16,8 +17,14 @@ Dutch NDW roadworks and events feed, 189 MB of XML with 13,140 situations, unles
 | Reading a 70 MB measured-data file | 0.5 s, about 134 MB/s; 94 MB peak memory |
 | Streaming the file situation by situation (`v3::stream`) | 0.9 to 1.2 s; **8 MB** peak memory |
 | Writing the publication back (`v3::to_string`, 181 MB) | 1.0 s, about 189 MB/s |
-| Clean debug build of the crate | 9 s |
-| Clean release build | about 20 s |
+| Reading the same situations as 3.7 JSON (`json::read`, 124 MB) | 1.4 s, about 90 MB/s; 300 MB peak memory |
+| Writing them as 3.7 JSON (`json::write`, 124 MB) | 0.4 to 0.5 s, about 270 MB/s |
+| Reading the largest Mobilithek feed in the corpus (5.5 MB of AFIR JSON) | 0.08 s |
+| Clean debug build of the crate | 18 to 21 s |
+| Clean release build | about 35 s |
+
+For the JSON figures the feed's national extension content was removed first: it is XML, and
+[stays XML](@/docs/json.md#extension-content-stays-in-its-encoding).
 
 ## Reproducing them
 
@@ -25,16 +32,18 @@ Dutch NDW roadworks and events feed, 189 MB of XML with 13,140 situations, unles
 cargo build --release --examples
 /usr/bin/time -l target/release/examples/inspect big.xml     # whole read
 /usr/bin/time -l target/release/examples/stream              # reads ./roadworks.xml
+target/release/examples/rewrite --json big.xml > big.json    # 3.7 JSON of the same data
+/usr/bin/time -l target/release/examples/inspect big.json    # whole JSON read
 ```
 
 `/usr/bin/time -l` is the macOS form; on Linux use `/usr/bin/time -v`.
 
 ## Why the build is fast
 
-The model has about 670 structs and 420 enums, with a reader and a writer each. The code is
-generated as plain, non-generic functions: no derive macros beyond `Debug`, `Clone`, `Default`
-and `PartialEq`, and no serde. Element names are matched as integers, so a reader is a `match`
-on constants.
+The model has about 670 structs and 420 enums, with a reader and a writer each for XML and for
+JSON. The code is generated as plain, non-generic functions: no derive macros beyond `Debug`,
+`Clone`, `Default` and `PartialEq`, and no serde. Element and member names are matched as
+integers, so a reader is a `match` on constants.
 
 ## Why streaming memory is flat
 

@@ -4,9 +4,13 @@
 //! Names follow the standard; see <https://docs.datex2.eu/> for what each one means.
 
 #[allow(unused_imports)]
-use super::{common as com, common_extension as comx, location_referencing as loc, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst};
+use super::{common as com, common_extension as comx, location_referencing as loc, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst, message_container as con, exchange_information as ex, information_management as inf, cis_information as cis};
 #[allow(unused_imports)]
-use crate::out::{Out, Pattern};
+use crate::out::{Out, Pattern, Rules};
+#[allow(unused_imports)]
+use crate::json::{JsonReader, JsonWriter};
+#[allow(unused_imports)]
+use crate::{ErrorKind, WarningKind};
 #[allow(unused_imports)]
 use crate::xml::{Enumeration, Xml};
 #[allow(unused_imports)]
@@ -161,10 +165,10 @@ pub struct Address {
 }
 
 impl Address {
-    const FIELDS: &'static [u32] = &[0xa0a57, 0xa0719, 0xa0748, 0xa0694, 0xa0404];
+    const FIELDS: &'static [u32] = &[0xd0a9d, 0xd0743, 0xd0777, 0xd06bd, 0xd041e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xa0016);
+        r.expect_type(0xd0016);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -174,11 +178,11 @@ impl Address {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xa0a57 => { let v = r.string()?; r.set(&mut e0, v, 2647); }
-                    0xa0719 => { let v = r.multilingual()?; r.set(&mut e1, v, 1817); }
-                    0xa0748 => { let v = r.string()?; r.set(&mut e2, v, 1864); }
-                    0xa0694 => { let v = Some(AddressLine::read(r)?); e3.extend(v); }
-                    0xa0404 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1028); }
+                    0xd0a9d => { let v = r.string()?; r.set(&mut e0, v, 2717); }
+                    0xd0743 => { let v = r.multilingual()?; r.set(&mut e1, v, 1859); }
+                    0xd0777 => { let v = r.string()?; r.set(&mut e2, v, 1911); }
+                    0xd06bd => { let v = Some(AddressLine::read(r)?); e3.extend(v); }
+                    0xd041e => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1054); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -213,6 +217,83 @@ impl Address {
     }
 }
 
+impl Address {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1615 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                337 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                469 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                65 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AddressLine::read_json(r)? { f3.push(v); } } },
+                1242 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            postcode: f0,
+            city: f1,
+            country_code: f2,
+            address_line: f3,
+            address_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(473)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.postcode {
+            w.key(1615)?;
+            w.max_len("postcode", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.city {
+            w.key(337)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.country_code {
+            w.key(469)?;
+            w.max_len("countryCode", v, 2)?; w.string(v)?;
+        }
+        if !self.address_line.is_empty() {
+            w.key(65)?;
+            w.begin_array()?;
+            for v in &self.address_line {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.address_extension {
+            w.key(1242)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `locx:AddressLine`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AddressLine {
@@ -227,11 +308,11 @@ pub struct AddressLine {
 }
 
 impl AddressLine {
-    const FIELDS: &'static [u32] = &[0xa0bfe, 0xa0bac, 0xa0405];
+    const FIELDS: &'static [u32] = &[0xd0c5d, 0xd0c0b, 0xd041f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xa0017);
-        let a0 = r.req_attr_value::<u64>(2521)?;
+        r.expect_type(0xd0017);
+        let a0 = r.req_attr_value::<u64>(2590)?;
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -239,9 +320,9 @@ impl AddressLine {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xa0bfe => { let v = r.enumeration::<AddressLineTypeEnum>()?; r.set(&mut e0, v, 3070); }
-                    0xa0bac => { let v = r.multilingual()?; r.set(&mut e1, v, 2988); }
-                    0xa0405 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1029); }
+                    0xd0c5d => { let v = r.enumeration::<AddressLineTypeEnum>()?; r.set(&mut e0, v, 3165); }
+                    0xd0c0b => { let v = r.multilingual()?; r.set(&mut e1, v, 3083); }
+                    0xd041f => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1055); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -250,8 +331,8 @@ impl AddressLine {
                 break;
             }
         }
-        r.required(&e0, 3070);
-        r.required(&e1, 2988);
+        r.required(&e0, 3165);
+        r.required(&e1, 3083);
         let v = Self {
             order: a0,
             r#type: e0,
@@ -285,6 +366,83 @@ impl AddressLine {
     }
 }
 
+impl AddressLine {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1489 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                2495 => if r.first(&mut seen[1])? { f1 = r.enumeration::<AddressLineTypeEnum>()?; },
+                2246 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                1243 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1489);
+        r.required(&f1, 2495);
+        r.required(&f2, 2246);
+        Ok(Self {
+            order: f0,
+            r#type: f1,
+            text: f2,
+            address_line_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(474)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.order {
+            Some(v) => {
+                w.key(1489)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1489, w.missing_attr("order"))?,
+        }
+        match &self.r#type {
+            Some(v) => {
+                w.key(2495)?;
+                w.enumeration(475, v.literal())?;
+            }
+            None => w.absent(2495, w.missing("type"))?,
+        }
+        match &self.text {
+            Some(v) => {
+                w.key(2246)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(2246, w.missing("text"))?,
+        }
+        if let Some(v) = &self.address_line_extension {
+            w.key(1243)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `locx:FacilityLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct FacilityLocation {
@@ -295,18 +453,18 @@ pub struct FacilityLocation {
 }
 
 impl FacilityLocation {
-    const FIELDS: &'static [u32] = &[0xa0bbd, 0xa0693];
+    const FIELDS: &'static [u32] = &[0xd0c1c, 0xd06bc];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xa00ac);
+        r.expect_type(0xd00b2);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xa0bbd => { let v = r.string()?; r.set(&mut e0, v, 3005); }
-                    0xa0693 => { let v = Some(Address::read(r)?); r.set(&mut e1, v.map(Box::new), 1683); }
+                    0xd0c1c => { let v = r.string()?; r.set(&mut e0, v, 3100); }
+                    0xd06bc => { let v = Some(Address::read(r)?); r.set(&mut e1, v.map(Box::new), 1724); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -335,6 +493,57 @@ impl FacilityLocation {
     }
 }
 
+impl FacilityLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2263 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                64 => if r.first(&mut seen[1])? { f1 = Address::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            time_zone: f0,
+            address: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(476)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.time_zone {
+            w.key(2263)?;
+            w.max_len("timeZone", v, 1024)?; w.pattern("timeZone", v, Pattern::TimeZone)?; w.string(v)?;
+        }
+        if let Some(v) = &self.address {
+            w.key(64)?;
+            v.write_json(w, None)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `locx:NamedAreaExtended`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NamedAreaExtended {
@@ -343,16 +552,16 @@ pub struct NamedAreaExtended {
 }
 
 impl NamedAreaExtended {
-    const FIELDS: &'static [u32] = &[0xa094c];
+    const FIELDS: &'static [u32] = &[0xd098e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xa0114);
+        r.expect_type(0xd011d);
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xa094c => { let v = r.string()?; r.set(&mut e0, v, 2380); }
+                    0xd098e => { let v = r.string()?; r.set(&mut e0, v, 2446); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -361,7 +570,7 @@ impl NamedAreaExtended {
                 break;
             }
         }
-        r.required(&e0, 2380);
+        r.required(&e0, 2446);
         let v = Self {
             named_area_code: e0,
         };
@@ -383,6 +592,54 @@ impl NamedAreaExtended {
     }
 }
 
+impl NamedAreaExtended {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1348 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1348);
+        Ok(Self {
+            named_area_code: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(478)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.named_area_code {
+            Some(v) => {
+                w.key(1348)?;
+                w.max_len("namedAreaCode", v, 8)?; w.string(v)?;
+            }
+            None => w.absent(1348, w.missing("namedAreaCode"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `locx:SupplementaryPositionalDescriptionExtended`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SupplementaryPositionalDescriptionExtended {
@@ -391,16 +648,16 @@ pub struct SupplementaryPositionalDescriptionExtended {
 }
 
 impl SupplementaryPositionalDescriptionExtended {
-    const FIELDS: &'static [u32] = &[0xa0867];
+    const FIELDS: &'static [u32] = &[0xd08a3];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xa0205);
+        r.expect_type(0xd0214);
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xa0867 => { let v = r.enumeration::<HouseNumberSideEnum>()?; r.set(&mut e0, v, 2151); }
+                    0xd08a3 => { let v = r.enumeration::<HouseNumberSideEnum>()?; r.set(&mut e0, v, 2211); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -424,6 +681,50 @@ impl SupplementaryPositionalDescriptionExtended {
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.house_number_side { w.enumeration("locx:houseNumberSide", v.literal())?; }
         w.end(tag)
+    }
+}
+
+impl SupplementaryPositionalDescriptionExtended {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                956 => if r.first(&mut seen[0])? { f0 = r.enumeration::<HouseNumberSideEnum>()?; },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            house_number_side: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(479)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.house_number_side {
+            w.key(956)?;
+            w.enumeration(477, v.literal())?;
+        }
+        w.end_object()
     }
 }
 

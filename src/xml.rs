@@ -119,6 +119,11 @@ pub(crate) trait Enumeration: Sized {
     fn from_literal(literal: &str) -> Option<Self>;
     /// The variant that carries a value outside the standard list.
     fn extended(value: String) -> Self;
+    /// The variant for a literal another spelling of the standard uses for a standard value,
+    /// such as the German AFIR profile's `domesticF` for `domesticFType`.
+    fn from_alias(_literal: &str) -> Option<Self> {
+        None
+    }
 }
 
 struct Attr {
@@ -1149,7 +1154,11 @@ impl<'a> Xml<'a> {
                 p => xml.contains(&format!("{p}:")),
             })
             .collect();
-        Ok(Extension { xml, namespaces })
+        Ok(Extension {
+            xml,
+            namespaces,
+            json: String::new(),
+        })
     }
 
     // ---- assembling a struct ------------------------------------------------------------------

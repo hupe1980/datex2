@@ -77,7 +77,7 @@ fn every_document_shape_streams() {
         .replace("<d2:payload", "<mc:payload")
         .replace("</d2:payload>", "</mc:payload>");
     let container = format!(
-        r#"<mc:messageContainer xmlns:mc="http://datex2.eu/schema/3/messageContainer" xmlns:ex="http://datex2.eu/schema/3/exchangeInformation">{in_container}<mc:exchangeInformation><ex:x/></mc:exchangeInformation>{in_container}</mc:messageContainer>"#
+        r#"<mc:messageContainer xmlns:mc="http://datex2.eu/schema/3/messageContainer" xmlns:ex="http://datex2.eu/schema/3/exchangeInformation">{in_container}<mc:exchangeInformation><ex:exchangeContext><ex:codedExchangeProtocol>snapshotPull</ex:codedExchangeProtocol><ex:exchangeSpecificationVersion>3.0</ex:exchangeSpecificationVersion><ex:supplierOrCisRequester/></ex:exchangeContext><ex:dynamicInformation><ex:exchangeStatus>online</ex:exchangeStatus><ex:messageGenerationTimestamp>2026-11-19T12:00:00Z</ex:messageGenerationTimestamp></ex:dynamicInformation></mc:exchangeInformation>{in_container}</mc:messageContainer>"#
     );
     let bare = format!(
         r#"<sit:SituationPublication {NAMESPACES} lang="en">{HEADER}{}</sit:SituationPublication>"#,

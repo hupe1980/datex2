@@ -8,8 +8,9 @@ const MODEL: &str = include_str!("../THREAT_MODEL.md");
 
 /// Every threat id ever published. Append-only: an id is never removed, renumbered or reused; a
 /// threat that no longer applies becomes `retired`.
-const PUBLISHED: [&str; 12] = [
+const PUBLISHED: [&str; 18] = [
     "T-01", "T-02", "T-03", "T-04", "T-05", "T-06", "T-07", "T-08", "T-09", "T-10", "T-11", "T-12",
+    "T-13", "T-14", "T-15", "T-16", "T-17", "T-18",
 ];
 
 /// The `## ` headings the document must have, in this order.

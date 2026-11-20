@@ -102,7 +102,8 @@ The ideas in it recur everywhere:
 Exchange between systems is specified separately ("Exchange 2020"). A payload may arrive
 wrapped in a `messageContainer`, which can hold several payloads plus exchange metadata, and
 that may arrive in a SOAP envelope. Most open feeds simply serve a file by HTTP. The reader
-unwraps all of these; it does not interpret the exchange metadata.
+unwraps all of these and keeps the exchange metadata, such as whether a delivery is a complete
+snapshot or a delta, in `Document::exchange_information`.
 
 ### Locations
 
@@ -118,7 +119,7 @@ DATEX II is built to be adapted:
   is then in the attribute `_extendedValue`. In this crate: the `Extended(String)` variant.
 - **Extension slots.** Every class ends with an element named `_…Extension` that may hold
   elements from other namespaces. National feeds use them widely. The crate keeps their content
-  as raw XML ([`Extension`](https://docs.rs/datex2/latest/datex2/struct.Extension.html)).
+  as it was written ([`Extension`](https://docs.rs/datex2/latest/datex2/struct.Extension.html)).
 - **Levels.** "Level A" is the standard model. "Level B" adds content through extension slots
   and stays readable by a Level A reader. "Level C" changes the model and uses its own
   namespaces (`http://levelC/schema/3/…`); some national feeds are published this way.

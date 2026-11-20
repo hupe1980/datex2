@@ -4,9 +4,13 @@
 //! Names follow the standard; see <https://docs.datex2.eu/> for what each one means.
 
 #[allow(unused_imports)]
-use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst};
+use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst, message_container as con, exchange_information as ex, information_management as inf, cis_information as cis};
 #[allow(unused_imports)]
-use crate::out::{Out, Pattern};
+use crate::out::{Out, Pattern, Rules};
+#[allow(unused_imports)]
+use crate::json::{JsonReader, JsonWriter};
+#[allow(unused_imports)]
+use crate::{ErrorKind, WarningKind};
 #[allow(unused_imports)]
 use crate::xml::{Enumeration, Xml};
 #[allow(unused_imports)]
@@ -382,10 +386,10 @@ pub struct AlternativeMobilityOptions {
 }
 
 impl AlternativeMobilityOptions {
-    const FIELDS: &'static [u32] = &[0x50777, 0x50c0e, 0x50419];
+    const FIELDS: &'static [u32] = &[0x607a8, 0x60c6e, 0x60434];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x5002c);
+        r.expect_type(0x6002d);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -393,9 +397,9 @@ impl AlternativeMobilityOptions {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x50777 => { let v = r.multilingual()?; r.set(&mut e0, v, 1911); }
-                    0x50c0e => { let v = r.string()?; r.set(&mut e1, v, 3086); }
-                    0x50419 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1049); }
+                    0x607a8 => { let v = r.multilingual()?; r.set(&mut e0, v, 1960); }
+                    0x60c6e => { let v = r.string()?; r.set(&mut e1, v, 3182); }
+                    0x60434 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1076); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -423,6 +427,64 @@ impl AlternativeMobilityOptions {
         if let Some(v) = &self.url { w.leaf("cz:url", v)?; }
         if let Some(v) = &self.alternative_mobility_options_extension { w.extension("cz:_alternativeMobilityOptionsExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl AlternativeMobilityOptions {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                545 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                2515 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                486 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            description: f0,
+            url: f1,
+            alternative_mobility_options_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(279)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.url {
+            w.key(2515)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.alternative_mobility_options_extension {
+            w.key(486)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -462,12 +524,12 @@ pub struct ControlledZone {
 }
 
 impl ControlledZone {
-    const FIELDS: &'static [u32] = &[0x50949, 0x50742, 0x50777, 0x50ab5, 0x50681, 0x50b73, 0x507ad, 0x5073f, 0x50be1, 0x5073e, 0x50b9f, 0x506b1, 0x5044b];
+    const FIELDS: &'static [u32] = &[0x6098b, 0x60771, 0x607a8, 0x60afc, 0x606aa, 0x60bce, 0x607de, 0x6076e, 0x60c40, 0x6076d, 0x60bfe, 0x606da, 0x60467];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x5005e);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x60060);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -485,19 +547,19 @@ impl ControlledZone {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x50949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x50742 => { let v = r.enumeration::<ControlledZoneTypeEnum>()?; e1.extend(v); }
-                    0x50777 => { let v = r.multilingual()?; r.set(&mut e2, v, 1911); }
-                    0x50ab5 => { let v = r.date_time()?; r.set(&mut e3, v, 2741); }
-                    0x50681 => { let v = r.enumeration::<ActivationTypeEnum>()?; r.set(&mut e4, v, 1665); }
-                    0x50b73 => { let v = r.enumeration::<tro::ActivationStatusEnum>()?; r.set(&mut e5, v, 2931); }
-                    0x507ad => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e6, v.map(Box::new), 1965); }
-                    0x5073f => { let v = Some(ControlledZoneSummary::read(r)?); r.set(&mut e7, v.map(Box::new), 1855); }
-                    0x50be1 => { let v = tro::AnyTrafficRegulationOrder::read(r)?; e8.extend(v); }
-                    0x5073e => { let v = Some(ControlledZoneRegulation::read(r)?); e9.extend(v); }
-                    0x50b9f => { let v = fac::Rates::read(r)?; e10.extend(v); }
-                    0x506b1 => { let v = Some(AlternativeMobilityOptions::read(r)?); e11.extend(v); }
-                    0x5044b => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1099); }
+                    0x6098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x60771 => { let v = r.enumeration::<ControlledZoneTypeEnum>()?; e1.extend(v); }
+                    0x607a8 => { let v = r.multilingual()?; r.set(&mut e2, v, 1960); }
+                    0x60afc => { let v = r.date_time()?; r.set(&mut e3, v, 2812); }
+                    0x606aa => { let v = r.enumeration::<ActivationTypeEnum>()?; r.set(&mut e4, v, 1706); }
+                    0x60bce => { let v = r.enumeration::<tro::ActivationStatusEnum>()?; r.set(&mut e5, v, 3022); }
+                    0x607de => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e6, v.map(Box::new), 2014); }
+                    0x6076e => { let v = Some(ControlledZoneSummary::read(r)?); r.set(&mut e7, v.map(Box::new), 1902); }
+                    0x60c40 => { let v = tro::AnyTrafficRegulationOrder::read(r)?; e8.extend(v); }
+                    0x6076d => { let v = Some(ControlledZoneRegulation::read(r)?); e9.extend(v); }
+                    0x60bfe => { let v = fac::Rates::read(r)?; e10.extend(v); }
+                    0x606da => { let v = Some(AlternativeMobilityOptions::read(r)?); e11.extend(v); }
+                    0x60467 => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1127); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -506,8 +568,8 @@ impl ControlledZone {
                 break;
             }
         }
-        r.required(&e3, 2741);
-        r.required(&e5, 2931);
+        r.required(&e3, 2812);
+        r.required(&e5, 3022);
         let v = Self {
             id: a0,
             version: a1,
@@ -566,6 +628,189 @@ impl ControlledZone {
     }
 }
 
+impl ControlledZone {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 15];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = Vec::new();
+        let mut f13 = Vec::new();
+        let mut f14 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                463 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<ControlledZoneTypeEnum>()? { f3.push(v); } } },
+                545 => if r.first(&mut seen[4])? { f4 = r.multilingual()?; },
+                1812 => if r.first(&mut seen[5])? { f5 = r.date_time()?; },
+                46 => if r.first(&mut seen[6])? { f6 = r.enumeration::<ActivationTypeEnum>()?; },
+                2187 => if r.first(&mut seen[7])? { f7 = r.enumeration::<tro::ActivationStatusEnum>()?; },
+                599 => if r.first(&mut seen[8])? { f8 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                460 => if r.first(&mut seen[9])? { f9 = ControlledZoneSummary::read_json(r)?.map(Box::new); },
+                2361 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = tro::AnyTrafficRegulationOrder::read_json(r)? { f10.push(v); } } },
+                459 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ControlledZoneRegulation::read_json(r)? { f11.push(v); } } },
+                2233 => if r.first(&mut seen[12])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = fac::Rates::read_json(r)? { f12.push(v); } } },
+                229 => if r.first(&mut seen[13])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AlternativeMobilityOptions::read_json(r)? { f13.push(v); } } },
+                489 => if r.first(&mut seen[14])? { f14 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f5, 1812);
+        r.required(&f7, 2187);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            controlled_zone_type: f3,
+            description: f4,
+            record_version_time: f5,
+            activation_type: f6,
+            status: f7,
+            dynamic_activation_publication_source: f8,
+            controlled_zone_summary: f9,
+            traffic_regulation_order: f10,
+            controlled_zone_regulation: f11,
+            tariff_information: f12,
+            alternative_mobility_options: f13,
+            controlled_zone_extension: f14,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(281)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.controlled_zone_type.is_empty() {
+            w.key(463)?;
+            w.begin_array()?;
+            for v in &self.controlled_zone_type {
+                w.item()?;
+                w.enumeration(288, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        match &self.record_version_time {
+            Some(v) => {
+                w.key(1812)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1812, w.missing("recordVersionTime"))?,
+        }
+        if let Some(v) = &self.activation_type {
+            w.key(46)?;
+            w.enumeration(278, v.literal())?;
+        }
+        match &self.status {
+            Some(v) => {
+                w.key(2187)?;
+                w.enumeration(960, v.literal())?;
+            }
+            None => w.absent(2187, w.missing("status"))?,
+        }
+        if let Some(v) = &self.dynamic_activation_publication_source {
+            w.key(599)?;
+            v.write_json(w, Some("ControlledZoneTablePublication"))?;
+        }
+        if let Some(v) = &self.controlled_zone_summary {
+            w.key(460)?;
+            v.write_json(w, None)?;
+        }
+        if !self.traffic_regulation_order.is_empty() {
+            w.key(2361)?;
+            w.begin_array()?;
+            for v in &self.traffic_regulation_order {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.controlled_zone_regulation.is_empty() {
+            w.key(459)?;
+            w.begin_array()?;
+            for v in &self.controlled_zone_regulation {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.tariff_information.is_empty() {
+            w.key(2233)?;
+            w.begin_array()?;
+            for v in &self.tariff_information {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.alternative_mobility_options.is_empty() {
+            w.key(229)?;
+            w.begin_array()?;
+            for v in &self.alternative_mobility_options {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.controlled_zone_extension {
+            w.key(489)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:ControlledZoneActivation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ControlledZoneActivation {
@@ -588,12 +833,12 @@ pub struct ControlledZoneActivation {
 }
 
 impl ControlledZoneActivation {
-    const FIELDS: &'static [u32] = &[0x5067f, 0x50682, 0x50c26, 0x503ff, 0x5073d, 0x5044a];
+    const FIELDS: &'static [u32] = &[0x606a8, 0x606ab, 0x60c86, 0x60419, 0x6076c, 0x60466];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x5005f);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x60061);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -604,12 +849,12 @@ impl ControlledZoneActivation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x5067f => { let v = r.date_time()?; r.set(&mut e0, v, 1663); }
-                    0x50682 => { let v = r.date_time()?; r.set(&mut e1, v, 1666); }
-                    0x50c26 => { let v = Some(com::Validity::read(r)?); r.set(&mut e2, v.map(Box::new), 3110); }
-                    0x503ff => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1023); }
-                    0x5073d => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 1853); }
-                    0x5044a => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1098); }
+                    0x606a8 => { let v = r.date_time()?; r.set(&mut e0, v, 1704); }
+                    0x606ab => { let v = r.date_time()?; r.set(&mut e1, v, 1707); }
+                    0x60c86 => { let v = Some(com::Validity::read(r)?); r.set(&mut e2, v.map(Box::new), 3206); }
+                    0x60419 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1049); }
+                    0x6076c => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 1900); }
+                    0x60466 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1126); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -618,10 +863,10 @@ impl ControlledZoneActivation {
                 break;
             }
         }
-        r.required(&e0, 1663);
-        r.required(&e1, 1666);
-        r.required(&e2, 3110);
-        r.required(&e4, 1853);
+        r.required(&e0, 1704);
+        r.required(&e1, 1707);
+        r.required(&e2, 3206);
+        r.required(&e4, 1900);
         let v = Self {
             id: a0,
             version: a1,
@@ -672,6 +917,123 @@ impl ControlledZoneActivation {
     }
 }
 
+impl ControlledZoneActivation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                44 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                47 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                2539 => if r.first(&mut seen[4])? { f4 = com::Validity::read_json(r)?.map(Box::new); },
+                485 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                458 => if r.first(&mut seen[6])? { f6 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                488 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 44);
+        r.required(&f3, 47);
+        r.required(&f4, 2539);
+        r.required(&f6, 458);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            activation_time: f2,
+            activation_version_time: f3,
+            validity: f4,
+            activation_status_extension: f5,
+            controlled_zone_reference: f6,
+            controlled_zone_activation_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(282)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.activation_time {
+            Some(v) => {
+                w.key(44)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(44, w.missing("activationTime"))?,
+        }
+        match &self.activation_version_time {
+            Some(v) => {
+                w.key(47)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(47, w.missing("activationVersionTime"))?,
+        }
+        match &self.validity {
+            Some(v) => {
+                w.key(2539)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2539, w.missing("validity"))?,
+        }
+        if let Some(v) = &self.activation_status_extension {
+            w.key(485)?;
+            w.extension(v)?;
+        }
+        match &self.controlled_zone_reference {
+            Some(v) => {
+                w.key(458)?;
+                v.write_json(w, Some("ControlledZone"))?;
+            }
+            None => w.absent(458, w.missing("controlledZoneReference"))?,
+        }
+        if let Some(v) = &self.controlled_zone_activation_extension {
+            w.key(488)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:ControlledZoneRegulation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ControlledZoneRegulation {
@@ -700,12 +1062,12 @@ pub struct ControlledZoneRegulation {
 }
 
 impl ControlledZoneRegulation {
-    const FIELDS: &'static [u32] = &[0x110b73, 0x110aff, 0x110c02, 0x110731, 0x110a23, 0x110617, 0x507de, 0x50a17, 0x5044c];
+    const FIELDS: &'static [u32] = &[0x150bce, 0x150b4c, 0x150c61, 0x15075f, 0x150a69, 0x150640, 0x60813, 0x60a5d, 0x60468];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x50060);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x60062);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -719,15 +1081,15 @@ impl ControlledZoneRegulation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x110b73 => { let v = r.enumeration::<tro::ActivationStatusEnum>()?; r.set(&mut e0, v, 2931); }
-                    0x110aff => { let v = tro::RoadSign::read(r)?; e1.extend(v); }
-                    0x110c02 => { let v = tro::TypeOfRegulation::read(r)?; e2.extend(v); }
-                    0x110731 => { let v = tro::Condition::read(r)?; r.set(&mut e3, v, 1841); }
-                    0x110a23 => { let v = Some(tro::PermitInformation::read(r)?); e4.extend(v); }
-                    0x110617 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1559); }
-                    0x507de => { let v = r.enumeration::<EnforcementMethodTypeEnum>()?; e6.extend(v); }
-                    0x50a17 => { let v = Some(Penalty::read(r)?); e7.extend(v); }
-                    0x5044c => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1100); }
+                    0x150bce => { let v = r.enumeration::<tro::ActivationStatusEnum>()?; r.set(&mut e0, v, 3022); }
+                    0x150b4c => { let v = tro::RoadSign::read(r)?; e1.extend(v); }
+                    0x150c61 => { let v = tro::TypeOfRegulation::read(r)?; e2.extend(v); }
+                    0x15075f => { let v = tro::Condition::read(r)?; r.set(&mut e3, v, 1887); }
+                    0x150a69 => { let v = Some(tro::PermitInformation::read(r)?); e4.extend(v); }
+                    0x150640 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1600); }
+                    0x60813 => { let v = r.enumeration::<EnforcementMethodTypeEnum>()?; e6.extend(v); }
+                    0x60a5d => { let v = Some(Penalty::read(r)?); e7.extend(v); }
+                    0x60468 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1128); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -780,6 +1142,153 @@ impl ControlledZoneRegulation {
     }
 }
 
+impl ControlledZoneRegulation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = None;
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                2187 => if r.first(&mut seen[2])? { f2 = r.enumeration::<tro::ActivationStatusEnum>()?; },
+                1978 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = tro::RoadSign::read_json(r)? { f3.push(v); } } },
+                2499 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = tro::TypeOfRegulation::read_json(r)? { f4.push(v); } } },
+                445 => if r.first(&mut seen[5])? { f5 = tro::Condition::read_json(r)?; },
+                1563 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = tro::PermitInformation::read_json(r)? { f6.push(v); } } },
+                2471 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                686 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<EnforcementMethodTypeEnum>()? { f8.push(v); } } },
+                1552 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Penalty::read_json(r)? { f9.push(v); } } },
+                491 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            status: f2,
+            road_sign: f3,
+            type_of_regulation: f4,
+            condition: f5,
+            permit_information: f6,
+            traffic_regulation_extension: f7,
+            enforcement_method_type: f8,
+            penalty: f9,
+            controlled_zone_regulation_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(283)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.status {
+            w.key(2187)?;
+            w.enumeration(960, v.literal())?;
+        }
+        if !self.road_sign.is_empty() {
+            w.key(1978)?;
+            w.begin_array()?;
+            for v in &self.road_sign {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.type_of_regulation.is_empty() {
+            w.key(2499)?;
+            w.begin_array()?;
+            for v in &self.type_of_regulation {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.condition {
+            w.key(445)?;
+            v.write_json(w)?;
+        }
+        if !self.permit_information.is_empty() {
+            w.key(1563)?;
+            w.begin_array()?;
+            for v in &self.permit_information {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.traffic_regulation_extension {
+            w.key(2471)?;
+            w.extension(v)?;
+        }
+        if !self.enforcement_method_type.is_empty() {
+            w.key(686)?;
+            w.begin_array()?;
+            for v in &self.enforcement_method_type {
+                w.item()?;
+                w.enumeration(290, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.penalty.is_empty() {
+            w.key(1552)?;
+            w.begin_array()?;
+            for v in &self.penalty {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.controlled_zone_regulation_extension {
+            w.key(491)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:ControlledZoneSummary`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ControlledZoneSummary {
@@ -796,10 +1305,10 @@ pub struct ControlledZoneSummary {
 }
 
 impl ControlledZoneSummary {
-    const FIELDS: &'static [u32] = &[0x5071a, 0x50883, 0x50c0f, 0x508e2, 0x5044d];
+    const FIELDS: &'static [u32] = &[0x60744, 0x608bf, 0x60c6f, 0x60920, 0x60469];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x50061);
+        r.expect_type(0x60063);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -809,11 +1318,11 @@ impl ControlledZoneSummary {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x5071a => { let v = r.multilingual()?; r.set(&mut e0, v, 1818); }
-                    0x50883 => { let v = r.multilingual()?; r.set(&mut e1, v, 2179); }
-                    0x50c0f => { let v = r.string()?; r.set(&mut e2, v, 3087); }
-                    0x508e2 => { let v = Some(loc::PointCoordinates::read(r)?); r.set(&mut e3, v.map(Box::new), 2274); }
-                    0x5044d => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1101); }
+                    0x60744 => { let v = r.multilingual()?; r.set(&mut e0, v, 1860); }
+                    0x608bf => { let v = r.multilingual()?; r.set(&mut e1, v, 2239); }
+                    0x60c6f => { let v = r.string()?; r.set(&mut e2, v, 3183); }
+                    0x60920 => { let v = Some(loc::PointCoordinates::read(r)?); r.set(&mut e3, v.map(Box::new), 2336); }
+                    0x60469 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1129); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -848,6 +1357,78 @@ impl ControlledZoneSummary {
     }
 }
 
+impl ControlledZoneSummary {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                338 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                986 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                2516 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1234 => if r.first(&mut seen[3])? { f3 = loc::PointCoordinates::read_json(r)?.map(Box::new); },
+                492 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            city_name: f0,
+            informal_name: f1,
+            url_for_further_information: f2,
+            location_for_display: f3,
+            controlled_zone_summary_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(285)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.city_name {
+            w.key(338)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.informal_name {
+            w.key(986)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.url_for_further_information {
+            w.key(2516)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.location_for_display {
+            w.key(1234)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.controlled_zone_summary_extension {
+            w.key(492)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:ControlledZoneTable`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ControlledZoneTable {
@@ -866,10 +1447,10 @@ pub struct ControlledZoneTable {
 }
 
 impl ControlledZoneTable {
-    const FIELDS: &'static [u32] = &[0x50741, 0x50b9c, 0x50884, 0x5073c, 0x50c20, 0x5044e];
+    const FIELDS: &'static [u32] = &[0x60770, 0x60bfb, 0x608c2, 0x6076b, 0x60c80, 0x6046a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x50062);
+        r.expect_type(0x60064);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -880,12 +1461,12 @@ impl ControlledZoneTable {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x50741 => { let v = r.multilingual()?; r.set(&mut e0, v, 1857); }
-                    0x50b9c => { let v = r.date_time()?; r.set(&mut e1, v, 2972); }
-                    0x50884 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e2, v.map(Box::new), 2180); }
-                    0x5073c => { let v = Some(ControlledZone::read(r)?); e3.extend(v); }
-                    0x50c20 => { let v = Some(ControlledZone::read(r)?); e4.extend(v); }
-                    0x5044e => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1102); }
+                    0x60770 => { let v = r.multilingual()?; r.set(&mut e0, v, 1904); }
+                    0x60bfb => { let v = r.date_time()?; r.set(&mut e1, v, 3067); }
+                    0x608c2 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e2, v.map(Box::new), 2242); }
+                    0x6076b => { let v = Some(ControlledZone::read(r)?); e3.extend(v); }
+                    0x60c80 => { let v = Some(ControlledZone::read(r)?); e4.extend(v); }
+                    0x6046a => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1130); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -894,7 +1475,7 @@ impl ControlledZoneTable {
                 break;
             }
         }
-        r.required(&e1, 2972);
+        r.required(&e1, 3067);
         let v = Self {
             controlled_zone_table_name: e0,
             table_version_time: e1,
@@ -923,6 +1504,99 @@ impl ControlledZoneTable {
         for v in &self.uvar_zone { v.write(w, "cz:uvarZone", "", "")?; }
         if let Some(v) = &self.controlled_zone_table_extension { w.extension("cz:_controlledZoneTableExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl ControlledZoneTable {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                462 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                2230 => if r.first(&mut seen[1])? { f1 = r.date_time()?; },
+                989 => if r.first(&mut seen[2])? { f2 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                457 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ControlledZone::read_json(r)? { f3.push(v); } } },
+                2533 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ControlledZone::read_json(r)? { f4.push(v); } } },
+                493 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 2230);
+        Ok(Self {
+            controlled_zone_table_name: f0,
+            table_version_time: f1,
+            information_manager: f2,
+            controlled_zone: f3,
+            uvar_zone: f4,
+            controlled_zone_table_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(286)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.controlled_zone_table_name {
+            w.key(462)?;
+            w.multilingual(v)?;
+        }
+        match &self.table_version_time {
+            Some(v) => {
+                w.key(2230)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2230, w.missing("tableVersionTime"))?,
+        }
+        if let Some(v) = &self.information_manager {
+            w.key(989)?;
+            v.write_json(w, None)?;
+        }
+        if !self.controlled_zone.is_empty() {
+            w.key(457)?;
+            w.begin_array()?;
+            for v in &self.controlled_zone {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.uvar_zone.is_empty() {
+            w.key(2533)?;
+            w.begin_array()?;
+            for v in &self.uvar_zone {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.controlled_zone_table_extension {
+            w.key(493)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -962,17 +1636,17 @@ pub struct ControlledZoneTablePublication {
 }
 
 impl ControlledZoneTablePublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x50a5f, 0x50857, 0x50740, 0x5044f];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x60aa5, 0x60893, 0x6076f, 0x6046b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x50063);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
-        let a6 = r.req_attr(2159);
+        r.expect_type(0x60065);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
+        let a6 = r.req_attr(2219);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -986,15 +1660,15 @@ impl ControlledZoneTablePublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x50a5f => { let v = Some(com::VersionedReference::read(r)?); e5.extend(v); }
-                    0x50857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2135); }
-                    0x50740 => { let v = Some(ControlledZoneTable::read(r)?); e7.extend(v); }
-                    0x5044f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1103); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x60aa5 => { let v = Some(com::VersionedReference::read(r)?); e5.extend(v); }
+                    0x60893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2195); }
+                    0x6076f => { let v = Some(ControlledZoneTable::read(r)?); e7.extend(v); }
+                    0x6046b => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1131); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1003,9 +1677,9 @@ impl ControlledZoneTablePublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
-        r.required(&e6, 2135);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
+        r.required(&e6, 2195);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -1069,6 +1743,159 @@ impl ControlledZoneTablePublication {
     }
 }
 
+impl ControlledZoneTablePublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 15];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = Vec::new();
+        let mut f14 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                964 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                847 => if r.first(&mut seen[6])? { f6 = r.multilingual()?; },
+                848 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                1779 => if r.first(&mut seen[8])? { f8 = r.date_time()?; },
+                1778 => if r.first(&mut seen[9])? { f9 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                1623 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VersionedReference::read_json(r)? { f11.push(v); } } },
+                940 => if r.first(&mut seen[12])? { f12 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                461 => if r.first(&mut seen[13])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ControlledZoneTable::read_json(r)? { f13.push(v); } } },
+                495 => if r.first(&mut seen[14])? { f14 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f5, 964);
+        r.required(&f8, 1779);
+        r.required(&f9, 1778);
+        r.required(&f12, 940);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            id: f5,
+            feed_description: f6,
+            feed_type: f7,
+            publication_time: f8,
+            publication_creator: f9,
+            payload_publication_extension: f10,
+            predefined_condition_publication_reference: f11,
+            header_information: f12,
+            controlled_zone_table: f13,
+            controlled_zone_table_publication_extension: f14,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(287)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        if !self.predefined_condition_publication_reference.is_empty() {
+            w.key(1623)?;
+            w.begin_array()?;
+            for v in &self.predefined_condition_publication_reference {
+                w.item()?;
+                v.write_json(w, Some("PredefinedConditionPublication"))?;
+            }
+            w.end_array()?;
+        }
+        match &self.header_information {
+            Some(v) => {
+                w.key(940)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(940, w.missing("headerInformation"))?,
+        }
+        w.count("controlledZoneTable", self.controlled_zone_table.len(), 1, usize::MAX)?;
+        if !self.controlled_zone_table.is_empty() {
+            w.key(461)?;
+            w.begin_array()?;
+            for v in &self.controlled_zone_table {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.controlled_zone_table_publication_extension {
+            w.key(495)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:DynamicActivationStatusPublication`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DynamicActivationStatusPublication {
@@ -1105,17 +1932,17 @@ pub struct DynamicActivationStatusPublication {
 }
 
 impl DynamicActivationStatusPublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x50a5f, 0x50857, 0x5067e, 0x50476];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x60aa5, 0x60893, 0x606a7, 0x60492];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x5008b);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
-        let a6 = r.req_attr(2159);
+        r.expect_type(0x6008d);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
+        let a6 = r.req_attr(2219);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1129,15 +1956,15 @@ impl DynamicActivationStatusPublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x50a5f => { let v = Some(com::VersionedReference::read(r)?); e5.extend(v); }
-                    0x50857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2135); }
-                    0x5067e => { let v = ActivationStatus::read(r)?; e7.extend(v); }
-                    0x50476 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1142); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x60aa5 => { let v = Some(com::VersionedReference::read(r)?); e5.extend(v); }
+                    0x60893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2195); }
+                    0x606a7 => { let v = ActivationStatus::read(r)?; e7.extend(v); }
+                    0x60492 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1170); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1146,9 +1973,9 @@ impl DynamicActivationStatusPublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
-        r.required(&e6, 2135);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
+        r.required(&e6, 2195);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -1211,6 +2038,158 @@ impl DynamicActivationStatusPublication {
     }
 }
 
+impl DynamicActivationStatusPublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 15];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = Vec::new();
+        let mut f14 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                964 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                847 => if r.first(&mut seen[6])? { f6 = r.multilingual()?; },
+                848 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                1779 => if r.first(&mut seen[8])? { f8 = r.date_time()?; },
+                1778 => if r.first(&mut seen[9])? { f9 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                1623 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VersionedReference::read_json(r)? { f11.push(v); } } },
+                940 => if r.first(&mut seen[12])? { f12 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                43 => if r.first(&mut seen[13])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ActivationStatus::read_json(r)? { f13.push(v); } } },
+                497 => if r.first(&mut seen[14])? { f14 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f5, 964);
+        r.required(&f8, 1779);
+        r.required(&f9, 1778);
+        r.required(&f12, 940);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            id: f5,
+            feed_description: f6,
+            feed_type: f7,
+            publication_time: f8,
+            publication_creator: f9,
+            payload_publication_extension: f10,
+            predefined_condition_publication_reference: f11,
+            header_information: f12,
+            activation_status: f13,
+            dynamic_activation_status_publication_extension: f14,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(289)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        if !self.predefined_condition_publication_reference.is_empty() {
+            w.key(1623)?;
+            w.begin_array()?;
+            for v in &self.predefined_condition_publication_reference {
+                w.item()?;
+                v.write_json(w, Some("PredefinedConditionPublication"))?;
+            }
+            w.end_array()?;
+        }
+        match &self.header_information {
+            Some(v) => {
+                w.key(940)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(940, w.missing("headerInformation"))?,
+        }
+        if !self.activation_status.is_empty() {
+            w.key(43)?;
+            w.begin_array()?;
+            for v in &self.activation_status {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dynamic_activation_status_publication_extension {
+            w.key(497)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:NonCodableCondition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NonCodableCondition {
@@ -1231,10 +2210,10 @@ pub struct NonCodableCondition {
 }
 
 impl NonCodableCondition {
-    const FIELDS: &'static [u32] = &[0x110955, 0x110683, 0x1108c2, 0x110442, 0x50731, 0x50bfe, 0x504fe];
+    const FIELDS: &'static [u32] = &[0x150997, 0x1506ac, 0x150900, 0x15045e, 0x6075f, 0x60c5d, 0x60521];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x50119);
+        r.expect_type(0x60122);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1246,13 +2225,13 @@ impl NonCodableCondition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x110955 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2389); }
-                    0x110683 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1667); }
-                    0x1108c2 => { let v = Some(tro::LegalBasis::read(r)?); r.set(&mut e2, v.map(Box::new), 2242); }
-                    0x110442 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1090); }
-                    0x50731 => { let v = r.multilingual()?; r.set(&mut e4, v, 1841); }
-                    0x50bfe => { let v = r.enumeration::<ConditionTypeEnum>()?; r.set(&mut e5, v, 3070); }
-                    0x504fe => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1278); }
+                    0x150997 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2455); }
+                    0x1506ac => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1708); }
+                    0x150900 => { let v = Some(tro::LegalBasis::read(r)?); r.set(&mut e2, v.map(Box::new), 2304); }
+                    0x15045e => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1118); }
+                    0x6075f => { let v = r.multilingual()?; r.set(&mut e4, v, 1887); }
+                    0x60c5d => { let v = r.enumeration::<ConditionTypeEnum>()?; r.set(&mut e5, v, 3165); }
+                    0x60521 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1313); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1261,7 +2240,7 @@ impl NonCodableCondition {
                 break;
             }
         }
-        r.required(&e5, 3070);
+        r.required(&e5, 3165);
         let v = Self {
             negate: e0,
             active: e1,
@@ -1295,6 +2274,96 @@ impl NonCodableCondition {
     }
 }
 
+impl NonCodableCondition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1356 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                48 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                1051 => if r.first(&mut seen[2])? { f2 = tro::LegalBasis::read_json(r)?.map(Box::new); },
+                2401 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                445 => if r.first(&mut seen[4])? { f4 = r.multilingual()?; },
+                2495 => if r.first(&mut seen[5])? { f5 = r.enumeration::<ConditionTypeEnum>()?; },
+                499 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f5, 2495);
+        Ok(Self {
+            negate: f0,
+            active: f1,
+            legal_basis: f2,
+            condition_extension: f3,
+            condition: f4,
+            r#type: f5,
+            non_codable_condition_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(291)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.negate {
+            w.key(1356)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.active {
+            w.key(48)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legal_basis {
+            w.key(1051)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.condition_extension {
+            w.key(2401)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.condition {
+            w.key(445)?;
+            w.multilingual(v)?;
+        }
+        match &self.r#type {
+            Some(v) => {
+                w.key(2495)?;
+                w.enumeration(280, v.literal())?;
+            }
+            None => w.absent(2495, w.missing("type"))?,
+        }
+        if let Some(v) = &self.non_codable_condition_extension {
+            w.key(499)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:NonPredefinedConditionActivation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NonPredefinedConditionActivation {
@@ -1319,12 +2388,12 @@ pub struct NonPredefinedConditionActivation {
 }
 
 impl NonPredefinedConditionActivation {
-    const FIELDS: &'static [u32] = &[0x5067f, 0x50682, 0x50c26, 0x503ff, 0x5073d, 0x50731, 0x50501];
+    const FIELDS: &'static [u32] = &[0x606a8, 0x606ab, 0x60c86, 0x60419, 0x6076c, 0x6075f, 0x60524];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x5011c);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x60125);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1336,13 +2405,13 @@ impl NonPredefinedConditionActivation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x5067f => { let v = r.date_time()?; r.set(&mut e0, v, 1663); }
-                    0x50682 => { let v = r.date_time()?; r.set(&mut e1, v, 1666); }
-                    0x50c26 => { let v = Some(com::Validity::read(r)?); r.set(&mut e2, v.map(Box::new), 3110); }
-                    0x503ff => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1023); }
-                    0x5073d => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 1853); }
-                    0x50731 => { let v = tro::Condition::read(r)?; r.set(&mut e5, v, 1841); }
-                    0x50501 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1281); }
+                    0x606a8 => { let v = r.date_time()?; r.set(&mut e0, v, 1704); }
+                    0x606ab => { let v = r.date_time()?; r.set(&mut e1, v, 1707); }
+                    0x60c86 => { let v = Some(com::Validity::read(r)?); r.set(&mut e2, v.map(Box::new), 3206); }
+                    0x60419 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1049); }
+                    0x6076c => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 1900); }
+                    0x6075f => { let v = tro::Condition::read(r)?; r.set(&mut e5, v, 1887); }
+                    0x60524 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1316); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1351,11 +2420,11 @@ impl NonPredefinedConditionActivation {
                 break;
             }
         }
-        r.required(&e0, 1663);
-        r.required(&e1, 1666);
-        r.required(&e2, 3110);
-        r.required(&e4, 1853);
-        r.required(&e5, 1841);
+        r.required(&e0, 1704);
+        r.required(&e1, 1707);
+        r.required(&e2, 3206);
+        r.required(&e4, 1900);
+        r.required(&e5, 1887);
         let v = Self {
             id: a0,
             version: a1,
@@ -1411,6 +2480,134 @@ impl NonPredefinedConditionActivation {
     }
 }
 
+impl NonPredefinedConditionActivation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 9];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                44 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                47 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                2539 => if r.first(&mut seen[4])? { f4 = com::Validity::read_json(r)?.map(Box::new); },
+                485 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                458 => if r.first(&mut seen[6])? { f6 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                445 => if r.first(&mut seen[7])? { f7 = tro::Condition::read_json(r)?; },
+                501 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 44);
+        r.required(&f3, 47);
+        r.required(&f4, 2539);
+        r.required(&f6, 458);
+        r.required(&f7, 445);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            activation_time: f2,
+            activation_version_time: f3,
+            validity: f4,
+            activation_status_extension: f5,
+            controlled_zone_reference: f6,
+            condition: f7,
+            non_predefined_condition_activation_extension: f8,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(292)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.activation_time {
+            Some(v) => {
+                w.key(44)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(44, w.missing("activationTime"))?,
+        }
+        match &self.activation_version_time {
+            Some(v) => {
+                w.key(47)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(47, w.missing("activationVersionTime"))?,
+        }
+        match &self.validity {
+            Some(v) => {
+                w.key(2539)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2539, w.missing("validity"))?,
+        }
+        if let Some(v) = &self.activation_status_extension {
+            w.key(485)?;
+            w.extension(v)?;
+        }
+        match &self.controlled_zone_reference {
+            Some(v) => {
+                w.key(458)?;
+                v.write_json(w, Some("ControlledZone"))?;
+            }
+            None => w.absent(458, w.missing("controlledZoneReference"))?,
+        }
+        match &self.condition {
+            Some(v) => {
+                w.key(445)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(445, w.missing("condition"))?,
+        }
+        if let Some(v) = &self.non_predefined_condition_activation_extension {
+            w.key(501)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:Penalty`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Penalty {
@@ -1423,10 +2620,10 @@ pub struct Penalty {
 }
 
 impl Penalty {
-    const FIELDS: &'static [u32] = &[0x506b9, 0x50a18, 0x5054c];
+    const FIELDS: &'static [u32] = &[0x606e2, 0x60a5e, 0x6056f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x50168);
+        r.expect_type(0x60171);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1434,9 +2631,9 @@ impl Penalty {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x506b9 => { let v = r.value::<Decimal>()?; r.set(&mut e0, v, 1721); }
-                    0x50a18 => { let v = r.multilingual()?; r.set(&mut e1, v, 2584); }
-                    0x5054c => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1356); }
+                    0x606e2 => { let v = r.value::<Decimal>()?; r.set(&mut e0, v, 1762); }
+                    0x60a5e => { let v = r.multilingual()?; r.set(&mut e1, v, 2654); }
+                    0x6056f => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1391); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1445,7 +2642,7 @@ impl Penalty {
                 break;
             }
         }
-        r.required(&e0, 1721);
+        r.required(&e0, 1762);
         let v = Self {
             amount_due: e0,
             penalty_description: e1,
@@ -1471,6 +2668,68 @@ impl Penalty {
     }
 }
 
+impl Penalty {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                237 => if r.first(&mut seen[0])? { f0 = r.number::<Decimal>()?; },
+                1553 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                502 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 237);
+        Ok(Self {
+            amount_due: f0,
+            penalty_description: f1,
+            penalty_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(293)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.amount_due {
+            Some(v) => {
+                w.key(237)?;
+                w.digits("amountDue", v, 8, 2)?; w.decimal(v)?;
+            }
+            None => w.absent(237, w.missing("amountDue"))?,
+        }
+        if let Some(v) = &self.penalty_description {
+            w.key(1553)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.penalty_extension {
+            w.key(502)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:PeriodCondition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PeriodCondition {
@@ -1489,10 +2748,10 @@ pub struct PeriodCondition {
 }
 
 impl PeriodCondition {
-    const FIELDS: &'static [u32] = &[0x110955, 0x110683, 0x1108c2, 0x110442, 0x50a1c, 0x5054f];
+    const FIELDS: &'static [u32] = &[0x150997, 0x1506ac, 0x150900, 0x15045e, 0x60a62, 0x60572];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x5016c);
+        r.expect_type(0x60175);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1503,12 +2762,12 @@ impl PeriodCondition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x110955 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2389); }
-                    0x110683 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1667); }
-                    0x1108c2 => { let v = Some(tro::LegalBasis::read(r)?); r.set(&mut e2, v.map(Box::new), 2242); }
-                    0x110442 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1090); }
-                    0x50a1c => { let v = Some(com::Period::read(r)?); e4.extend(v); }
-                    0x5054f => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1359); }
+                    0x150997 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2455); }
+                    0x1506ac => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1708); }
+                    0x150900 => { let v = Some(tro::LegalBasis::read(r)?); r.set(&mut e2, v.map(Box::new), 2304); }
+                    0x15045e => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1118); }
+                    0x60a62 => { let v = Some(com::Period::read(r)?); e4.extend(v); }
+                    0x60572 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1394); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1546,6 +2805,91 @@ impl PeriodCondition {
     }
 }
 
+impl PeriodCondition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = Vec::new();
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1356 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                48 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                1051 => if r.first(&mut seen[2])? { f2 = tro::LegalBasis::read_json(r)?.map(Box::new); },
+                2401 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                1557 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::Period::read_json(r)? { f4.push(v); } } },
+                504 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            negate: f0,
+            active: f1,
+            legal_basis: f2,
+            condition_extension: f3,
+            period: f4,
+            period_condition_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(294)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.negate {
+            w.key(1356)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.active {
+            w.key(48)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legal_basis {
+            w.key(1051)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.condition_extension {
+            w.key(2401)?;
+            w.extension(v)?;
+        }
+        w.count("period", self.period.len(), 1, usize::MAX)?;
+        if !self.period.is_empty() {
+            w.key(1557)?;
+            w.begin_array()?;
+            for v in &self.period {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.period_condition_extension {
+            w.key(504)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:PredefinedConditionActivation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PredefinedConditionActivation {
@@ -1570,12 +2914,12 @@ pub struct PredefinedConditionActivation {
 }
 
 impl PredefinedConditionActivation {
-    const FIELDS: &'static [u32] = &[0x5067f, 0x50682, 0x50c26, 0x503ff, 0x5073d, 0x50a60, 0x5056e];
+    const FIELDS: &'static [u32] = &[0x606a8, 0x606ab, 0x60c86, 0x60419, 0x6076c, 0x60aa6, 0x60591];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x5018c);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x60195);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1587,13 +2931,13 @@ impl PredefinedConditionActivation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x5067f => { let v = r.date_time()?; r.set(&mut e0, v, 1663); }
-                    0x50682 => { let v = r.date_time()?; r.set(&mut e1, v, 1666); }
-                    0x50c26 => { let v = Some(com::Validity::read(r)?); r.set(&mut e2, v.map(Box::new), 3110); }
-                    0x503ff => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1023); }
-                    0x5073d => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 1853); }
-                    0x50a60 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e5, v.map(Box::new), 2656); }
-                    0x5056e => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1390); }
+                    0x606a8 => { let v = r.date_time()?; r.set(&mut e0, v, 1704); }
+                    0x606ab => { let v = r.date_time()?; r.set(&mut e1, v, 1707); }
+                    0x60c86 => { let v = Some(com::Validity::read(r)?); r.set(&mut e2, v.map(Box::new), 3206); }
+                    0x60419 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1049); }
+                    0x6076c => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 1900); }
+                    0x60aa6 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e5, v.map(Box::new), 2726); }
+                    0x60591 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1425); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1602,11 +2946,11 @@ impl PredefinedConditionActivation {
                 break;
             }
         }
-        r.required(&e0, 1663);
-        r.required(&e1, 1666);
-        r.required(&e2, 3110);
-        r.required(&e4, 1853);
-        r.required(&e5, 2656);
+        r.required(&e0, 1704);
+        r.required(&e1, 1707);
+        r.required(&e2, 3206);
+        r.required(&e4, 1900);
+        r.required(&e5, 2726);
         let v = Self {
             id: a0,
             version: a1,
@@ -1662,6 +3006,134 @@ impl PredefinedConditionActivation {
     }
 }
 
+impl PredefinedConditionActivation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 9];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                44 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                47 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                2539 => if r.first(&mut seen[4])? { f4 = com::Validity::read_json(r)?.map(Box::new); },
+                485 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                458 => if r.first(&mut seen[6])? { f6 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1624 => if r.first(&mut seen[7])? { f7 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                506 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 44);
+        r.required(&f3, 47);
+        r.required(&f4, 2539);
+        r.required(&f6, 458);
+        r.required(&f7, 1624);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            activation_time: f2,
+            activation_version_time: f3,
+            validity: f4,
+            activation_status_extension: f5,
+            controlled_zone_reference: f6,
+            predefined_condition_reference: f7,
+            predefined_condition_activation_extension: f8,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(295)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.activation_time {
+            Some(v) => {
+                w.key(44)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(44, w.missing("activationTime"))?,
+        }
+        match &self.activation_version_time {
+            Some(v) => {
+                w.key(47)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(47, w.missing("activationVersionTime"))?,
+        }
+        match &self.validity {
+            Some(v) => {
+                w.key(2539)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2539, w.missing("validity"))?,
+        }
+        if let Some(v) = &self.activation_status_extension {
+            w.key(485)?;
+            w.extension(v)?;
+        }
+        match &self.controlled_zone_reference {
+            Some(v) => {
+                w.key(458)?;
+                v.write_json(w, Some("ControlledZone"))?;
+            }
+            None => w.absent(458, w.missing("controlledZoneReference"))?,
+        }
+        match &self.predefined_condition_reference {
+            Some(v) => {
+                w.key(1624)?;
+                v.write_json(w, Some("PredefinedCondition"))?;
+            }
+            None => w.absent(1624, w.missing("predefinedConditionReference"))?,
+        }
+        if let Some(v) = &self.predefined_condition_activation_extension {
+            w.key(506)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:RetrofittingCondition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RetrofittingCondition {
@@ -1682,10 +3154,10 @@ pub struct RetrofittingCondition {
 }
 
 impl RetrofittingCondition {
-    const FIELDS: &'static [u32] = &[0x110955, 0x110683, 0x1108c2, 0x110442, 0x50af0, 0x50c0f, 0x5059f];
+    const FIELDS: &'static [u32] = &[0x150997, 0x1506ac, 0x150900, 0x15045e, 0x60b3a, 0x60c6f, 0x605c2];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x501be);
+        r.expect_type(0x601c7);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1697,13 +3169,13 @@ impl RetrofittingCondition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x110955 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2389); }
-                    0x110683 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1667); }
-                    0x1108c2 => { let v = Some(tro::LegalBasis::read(r)?); r.set(&mut e2, v.map(Box::new), 2242); }
-                    0x110442 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1090); }
-                    0x50af0 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2800); }
-                    0x50c0f => { let v = r.string()?; r.set(&mut e5, v, 3087); }
-                    0x5059f => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1439); }
+                    0x150997 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2455); }
+                    0x1506ac => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1708); }
+                    0x150900 => { let v = Some(tro::LegalBasis::read(r)?); r.set(&mut e2, v.map(Box::new), 2304); }
+                    0x15045e => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1118); }
+                    0x60b3a => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2874); }
+                    0x60c6f => { let v = r.string()?; r.set(&mut e5, v, 3183); }
+                    0x605c2 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1474); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1712,7 +3184,7 @@ impl RetrofittingCondition {
                 break;
             }
         }
-        r.required(&e4, 2800);
+        r.required(&e4, 2874);
         let v = Self {
             negate: e0,
             active: e1,
@@ -1746,6 +3218,96 @@ impl RetrofittingCondition {
     }
 }
 
+impl RetrofittingCondition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1356 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                48 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                1051 => if r.first(&mut seen[2])? { f2 = tro::LegalBasis::read_json(r)?.map(Box::new); },
+                2401 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                1897 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                2516 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                508 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f4, 1897);
+        Ok(Self {
+            negate: f0,
+            active: f1,
+            legal_basis: f2,
+            condition_extension: f3,
+            retrofitting_possible: f4,
+            url_for_further_information: f5,
+            retrofitting_condition_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(297)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.negate {
+            w.key(1356)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.active {
+            w.key(48)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legal_basis {
+            w.key(1051)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.condition_extension {
+            w.key(2401)?;
+            w.extension(v)?;
+        }
+        match &self.retrofitting_possible {
+            Some(v) => {
+                w.key(1897)?;
+                w.boolean(*v)?;
+            }
+            None => w.absent(1897, w.missing("retrofittingPossible"))?,
+        }
+        if let Some(v) = &self.url_for_further_information {
+            w.key(2516)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.retrofitting_condition_extension {
+            w.key(508)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:TariffCondition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TariffCondition {
@@ -1764,10 +3326,10 @@ pub struct TariffCondition {
 }
 
 impl TariffCondition {
-    const FIELDS: &'static [u32] = &[0x110955, 0x110683, 0x1108c2, 0x110442, 0x50ba0, 0x505e7];
+    const FIELDS: &'static [u32] = &[0x150997, 0x1506ac, 0x150900, 0x15045e, 0x60bff, 0x60610];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x50209);
+        r.expect_type(0x60218);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1778,12 +3340,12 @@ impl TariffCondition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x110955 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2389); }
-                    0x110683 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1667); }
-                    0x1108c2 => { let v = Some(tro::LegalBasis::read(r)?); r.set(&mut e2, v.map(Box::new), 2242); }
-                    0x110442 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1090); }
-                    0x50ba0 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2976); }
-                    0x505e7 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1511); }
+                    0x150997 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2455); }
+                    0x1506ac => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1708); }
+                    0x150900 => { let v = Some(tro::LegalBasis::read(r)?); r.set(&mut e2, v.map(Box::new), 2304); }
+                    0x15045e => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1118); }
+                    0x60bff => { let v = r.value::<bool>()?; r.set(&mut e4, v, 3071); }
+                    0x60610 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1552); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1792,7 +3354,7 @@ impl TariffCondition {
                 break;
             }
         }
-        r.required(&e4, 2976);
+        r.required(&e4, 3071);
         let v = Self {
             negate: e0,
             active: e1,
@@ -1824,6 +3386,89 @@ impl TariffCondition {
     }
 }
 
+impl TariffCondition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1356 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                48 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                1051 => if r.first(&mut seen[2])? { f2 = tro::LegalBasis::read_json(r)?.map(Box::new); },
+                2401 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                2234 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                510 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f4, 2234);
+        Ok(Self {
+            negate: f0,
+            active: f1,
+            legal_basis: f2,
+            condition_extension: f3,
+            tariff_paid: f4,
+            tariff_condition_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(298)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.negate {
+            w.key(1356)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.active {
+            w.key(48)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.legal_basis {
+            w.key(1051)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.condition_extension {
+            w.key(2401)?;
+            w.extension(v)?;
+        }
+        match &self.tariff_paid {
+            Some(v) => {
+                w.key(2234)?;
+                w.boolean(*v)?;
+            }
+            None => w.absent(2234, w.missing("tariffPaid"))?,
+        }
+        if let Some(v) = &self.tariff_condition_extension {
+            w.key(510)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `cz:TrafficRegulationActivation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TrafficRegulationActivation {
@@ -1846,12 +3491,12 @@ pub struct TrafficRegulationActivation {
 }
 
 impl TrafficRegulationActivation {
-    const FIELDS: &'static [u32] = &[0x5067f, 0x50682, 0x50c26, 0x503ff, 0x50be2, 0x50616];
+    const FIELDS: &'static [u32] = &[0x606a8, 0x606ab, 0x60c86, 0x60419, 0x60c41, 0x6063f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x50239);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x60248);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1862,12 +3507,12 @@ impl TrafficRegulationActivation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x5067f => { let v = r.date_time()?; r.set(&mut e0, v, 1663); }
-                    0x50682 => { let v = r.date_time()?; r.set(&mut e1, v, 1666); }
-                    0x50c26 => { let v = Some(com::Validity::read(r)?); r.set(&mut e2, v.map(Box::new), 3110); }
-                    0x503ff => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1023); }
-                    0x50be2 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 3042); }
-                    0x50616 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1558); }
+                    0x606a8 => { let v = r.date_time()?; r.set(&mut e0, v, 1704); }
+                    0x606ab => { let v = r.date_time()?; r.set(&mut e1, v, 1707); }
+                    0x60c86 => { let v = Some(com::Validity::read(r)?); r.set(&mut e2, v.map(Box::new), 3206); }
+                    0x60419 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1049); }
+                    0x60c41 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 3137); }
+                    0x6063f => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1599); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1876,10 +3521,10 @@ impl TrafficRegulationActivation {
                 break;
             }
         }
-        r.required(&e0, 1663);
-        r.required(&e1, 1666);
-        r.required(&e2, 3110);
-        r.required(&e4, 3042);
+        r.required(&e0, 1704);
+        r.required(&e1, 1707);
+        r.required(&e2, 3206);
+        r.required(&e4, 3137);
         let v = Self {
             id: a0,
             version: a1,
@@ -1930,6 +3575,123 @@ impl TrafficRegulationActivation {
     }
 }
 
+impl TrafficRegulationActivation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                44 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                47 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                2539 => if r.first(&mut seen[4])? { f4 = com::Validity::read_json(r)?.map(Box::new); },
+                485 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                2362 => if r.first(&mut seen[6])? { f6 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                512 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 44);
+        r.required(&f3, 47);
+        r.required(&f4, 2539);
+        r.required(&f6, 2362);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            activation_time: f2,
+            activation_version_time: f3,
+            validity: f4,
+            activation_status_extension: f5,
+            traffic_regulation_reference: f6,
+            traffic_regulation_activation_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(299)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.activation_time {
+            Some(v) => {
+                w.key(44)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(44, w.missing("activationTime"))?,
+        }
+        match &self.activation_version_time {
+            Some(v) => {
+                w.key(47)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(47, w.missing("activationVersionTime"))?,
+        }
+        match &self.validity {
+            Some(v) => {
+                w.key(2539)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2539, w.missing("validity"))?,
+        }
+        if let Some(v) = &self.activation_status_extension {
+            w.key(485)?;
+            w.extension(v)?;
+        }
+        match &self.traffic_regulation_reference {
+            Some(v) => {
+                w.key(2362)?;
+                v.write_json(w, Some("TrafficRegulation"))?;
+            }
+            None => w.absent(2362, w.missing("trafficRegulationReference"))?,
+        }
+        if let Some(v) = &self.traffic_regulation_activation_extension {
+            w.key(512)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// Any concrete kind of XML type `cz:ActivationStatus`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ActivationStatus {
@@ -1950,10 +3712,10 @@ impl ActivationStatus {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x5005f) => Self::ControlledZoneActivation(Box::new(ControlledZoneActivation::read(r)?)),
-            Some(0x5011c) => Self::NonPredefinedConditionActivation(Box::new(NonPredefinedConditionActivation::read(r)?)),
-            Some(0x5018c) => Self::PredefinedConditionActivation(Box::new(PredefinedConditionActivation::read(r)?)),
-            Some(0x50239) => Self::TrafficRegulationActivation(Box::new(TrafficRegulationActivation::read(r)?)),
+            Some(0x60061) => Self::ControlledZoneActivation(Box::new(ControlledZoneActivation::read(r)?)),
+            Some(0x60125) => Self::NonPredefinedConditionActivation(Box::new(NonPredefinedConditionActivation::read(r)?)),
+            Some(0x60195) => Self::PredefinedConditionActivation(Box::new(PredefinedConditionActivation::read(r)?)),
+            Some(0x60248) => Self::TrafficRegulationActivation(Box::new(TrafficRegulationActivation::read(r)?)),
             _ => {
                 r.unknown_type("ActivationStatus")?;
                 return Ok(None);
@@ -2029,6 +3791,82 @@ impl ActivationStatus {
             Self::NonPredefinedConditionActivation(v) => v.write(w, tag, " xsi:type=\"cz:NonPredefinedConditionActivation\"", ""),
             Self::PredefinedConditionActivation(v) => v.write(w, tag, " xsi:type=\"cz:PredefinedConditionActivation\"", ""),
             Self::TrafficRegulationActivation(v) => v.write(w, tag, " xsi:type=\"cz:TrafficRegulationActivation\"", ""),
+        }
+    }
+}
+
+impl ActivationStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                487 => if r.first(&mut seen)? { value = ControlledZoneActivation::read_json(r)?.map(|v| Self::ControlledZoneActivation(Box::new(v))); },
+                500 => if r.first(&mut seen)? { value = NonPredefinedConditionActivation::read_json(r)?.map(|v| Self::NonPredefinedConditionActivation(Box::new(v))); },
+                505 => if r.first(&mut seen)? { value = PredefinedConditionActivation::read_json(r)?.map(|v| Self::PredefinedConditionActivation(Box::new(v))); },
+                511 => if r.first(&mut seen)? { value = TrafficRegulationActivation::read_json(r)?.map(|v| Self::TrafficRegulationActivation(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of ActivationStatus in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::ControlledZoneActivation(v) => {
+                if w.wrapper(487)? {
+                    w.begin_object(277)?;
+                    w.key(487)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::NonPredefinedConditionActivation(v) => {
+                if w.wrapper(500)? {
+                    w.begin_object(277)?;
+                    w.key(500)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PredefinedConditionActivation(v) => {
+                if w.wrapper(505)? {
+                    w.begin_object(277)?;
+                    w.key(505)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::TrafficRegulationActivation(v) => {
+                if w.wrapper(511)? {
+                    w.begin_object(277)?;
+                    w.key(511)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
         }
     }
 }

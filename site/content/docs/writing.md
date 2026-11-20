@@ -100,4 +100,4 @@ element.
 
 One publication per document, in a `d2:payload` root. Compact: no indentation or line breaks;
 pipe it through `xmllint --format` to read it. Message containers and SOAP envelopes are not
-written.
+written as XML; for JSON, see [JSON and the Mobilithek](@/docs/json.md).

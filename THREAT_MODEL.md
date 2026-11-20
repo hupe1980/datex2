@@ -6,7 +6,9 @@ text is published in the repository and in the crate documentation.
 
 ## Release status
 
-This describes `datex2` 0.1: reading, streaming and writing DATEX II version 3 XML.
+This describes `datex2` 0.2: reading, streaming and writing DATEX II version 3 XML, and reading
+and writing DATEX II version 3 JSON, including the German AFIR Recharging profile for the
+Mobilithek.
 
 The crate is a library. It reads bytes its caller gives it and writes bytes to a sink its caller
 gives it. It opens no files and no sockets, starts no processes, holds no credentials and keeps no
@@ -19,6 +21,7 @@ state between calls. It contains no `unsafe` code and has one dependency, `quick
 | **A feed publisher**, or anyone who can alter a feed in transit | Choose every byte of a document the caller reads |
 | **A data source** of the caller: an operator's free-text field, another feed that was read | Choose values the caller places in a publication it writes |
 | **The schema host**, or anyone between it and the maintainer | Serve an altered schema when the typed model is generated |
+| **The profile host**, the repository that publishes the Mobilithek profile, or anyone between it and the maintainer | Serve an altered profile schema when the profile table is generated |
 
 None of them can run code in the caller's process or choose the caller's limits.
 
@@ -28,24 +31,26 @@ None of them can run code in the caller's process or choose the caller's limits.
 |---|---|
 | **The caller's availability** | Memory and processing time while a document is read |
 | **The data handed to the caller** | That it is what the document says: what road users are told, what a driver is charged |
-| **The document the caller publishes** | That it holds what the caller set and nothing else, and that it is valid |
+| **The document the caller publishes** | That it holds what the caller set and nothing else, and that it is valid: against the 3.7 schemas, or against the profile's when written for the Mobilithek |
 | **The generated model and the published crate** | That they are what the official schemas produce |
 
 ## Trusted
 
 - The caller: its code, the limits it sets, the sink it writes to, and what it does with warnings.
 - The Rust toolchain, the standard library and `quick-xml`.
-- The pinned SHA-256 values of the schema files, which are committed to the repository.
+- The pinned SHA-256 values of the schema and profile files, which are committed to the
+  repository.
 - The maintainer's machine and the CI that build and release the crate.
 
 ## In scope
 
-- Any input to `v3::read`, `v3::read_with`, `v3::stream` and `v3::stream_with`, whatever its
-  size or content.
-- Any value written with `v3::write` and `v3::to_string`, including text, identifiers, extended
-  enumeration values and extension content that came from an untrusted source.
+- Any input to `v3::read`, `v3::read_with`, `v3::stream`, `v3::stream_with`, `v3::json::read`
+  and `v3::json::read_with`, whatever its size or content.
+- Any value written with `v3::write`, `v3::to_string` and the writers of `v3::json` and
+  `v3::json::mobilithek`, including text, identifiers, numbers, extended enumeration values and
+  extension content that came from an untrusted source.
 - The text of every `Error` and `Warning`, which callers log.
-- The schema files the generator reads.
+- The schema and profile files the generator reads.
 
 ## Out of scope
 
@@ -81,10 +86,16 @@ suite fails when one of them does not exist.
 | T-10 | Markup in a text, an identifier or an extended enumeration value adds elements or attributes to a written document, or breaks it | mitigated | Every text and attribute value passes through one escaping routine; characters XML 1.0 cannot carry are an error; element, attribute and type names are constants | `tests/write.rs::write_sr001_markup_in_values_is_escaped_and_reads_back_identical` `tests/write.rs::write_sr001_characters_xml_cannot_carry_are_refused` |
 | T-11 | Extension content, which is written as raw XML, breaks out of its element or brings a document type declaration or entity to the consumers of the feed | mitigated | Extension content is parsed before it is copied and refused unless it is well-formed, balanced, elements only at its top level, and free of document type declarations and custom entities; namespace bindings are written as checked attribute text | `tests/write.rs::write_sr002_extension_content_that_is_not_safe_is_refused` `tests/write.rs::write_sr002_well_formed_extension_content_survives` |
 | T-12 | Data that lacks required content or breaks schema rules is written as if it were valid | mitigated | The writer fails on absent required content, list bounds and value rules; an independent validator checks what the tests write | `tests/write.rs::write_sr003_each_rule_is_named_in_the_error` `tests/write.rs::list_with_more_entries_than_allowed_is_refused` `tests/write.rs::write_sr003_publications_built_in_code_are_accepted_by_the_official_schema` |
+| T-13 | A JSON document with extreme nesting, very long strings or numbers, or millions of deviations makes the reader use memory or time far beyond its size | mitigated | The XML limits apply to JSON: depth, token length and the warning cap, while reading and for skipped members | `tests/json.rs::json_sr001_limits_hold_while_reading` `tests/json.rs::json_sr001_limits_apply_to_skipped_content_and_warnings` |
+| T-14 | A JSON document with a member twice, a member in both spellings, a number as text or a `null` makes the reader pick one meaning without telling | mitigated | The first value is kept and every other case is reported as a warning | `tests/json.rs::json_sr002_null_and_duplicate_members_are_reported` `tests/json.rs::json_sr002_number_as_text_and_both_spellings_are_reported` |
+| T-15 | A text or extension content adds members to a written JSON document, or breaks it | mitigated | Every string passes through one escaping routine; extension content is written only when it is exactly one well-formed JSON object, and never when it was read from XML | `tests/json.rs::json_sr003_strings_are_escaped_and_read_back_identical` `tests/json.rs::json_sr003_extension_content_that_is_not_one_object_is_refused` `tests/json.rs::json_sr003_extension_content_does_not_cross_encodings` |
+| T-16 | A price or a measurement changes its value on the way through JSON, so a driver is charged or told something else | mitigated | Decimals keep their digits and never pass through binary floating point; single precision values are written as the shortest text that reads back to the same value; no process-wide JSON setting is involved, because there is no JSON dependency | `tests/json.rs::json_sr004_money_and_measurements_keep_their_exact_value` `tests/json.rs::json_sr004_json_support_adds_no_dependency` |
+| T-17 | A publication written for the Mobilithek is rejected there, or carries content the profile does not allow | mitigated | The profile writer checks every member, enumeration value and required member against a table generated from the profile's schemas; an independent validator checks what the tests write against those schemas | `tests/json.rs::json_sr005_profile_refusals_name_the_place_the_rule_and_the_choices` `tests/json.rs::json_sr005_regulated_characteristics_the_profile_cannot_express_are_refused` `tests/json.rs::json_sr005_table_built_in_code_is_accepted_by_the_mobilithek_profile` |
+| T-18 | An altered or changed profile makes the generator emit a profile table that lets invalid output through, or blocks valid output | mitigated | Every profile and JSON schema file is checked against a committed SHA-256 before it is read; the generator stops on any difference from 3.7 that its lists of known differences do not explain | `xtask/src/main.rs::sr008_schema_that_fails_its_pin_is_refused` `xtask/src/main.rs::sr006_unexplained_profile_difference_stops_the_generator` |
 
-Beyond the tests, three fuzz targets (`read`, `stream`, `roundtrip`) assert that no input makes
-the crate crash, hang or return unsafe text, and that whatever the writer accepts reads back as
-the same value. Fuzzing found the two gaps that the last two tests of T-05 now cover.
+Beyond the tests, four fuzz targets (`read`, `stream`, `roundtrip`, `json`) assert that no input
+makes the crate crash, hang or return unsafe text, and that whatever a writer accepts reads back
+as the same value.
 
 ## Limits of the controls
 
@@ -94,6 +105,8 @@ the same value. Fuzzing found the two gaps that the last two tests of T-05 now c
   reported. A caller that needs strictness should treat `WrongNamespace` and `LevelCNamespace`
   warnings as failures.
 - **T-12 does not cover identity constraints.** Two objects with the same identifier are written.
+- **T-17 covers the profile's revision 2.** A later revision is a new pinned file set; until the
+  generator is run on it, its differences are unknown to the writer.
 - **Warnings are advice.** The controls of T-04 report; acting on the report is the caller's.
 
 ## Non-goals

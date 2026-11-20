@@ -47,6 +47,7 @@ pub struct Stream<'a, T> {
     pub(super) soap: bool,
     /// Whether any payload was seen; a SOAP message without one is not DATEX II.
     pub(super) payloads: usize,
+    exchange_information: Option<Box<super::exchange_information::ExchangeInformation>>,
     record: PhantomData<fn() -> T>,
 }
 
@@ -110,6 +111,7 @@ impl<'a, T: Record> Stream<'a, T> {
             envelope: Envelope::Payload,
             soap: false,
             payloads: 0,
+            exchange_information: None,
             record: PhantomData,
         };
         // The root element is read now, so that input which is not DATEX II fails here.
@@ -130,6 +132,22 @@ impl<'a, T: Record> Stream<'a, T> {
     /// which warnings are only counted.
     pub fn take_warnings(&mut self) -> Vec<Warning> {
         self.xml.take_warnings()
+    }
+
+    /// The exchange information of a message container, once the stream has read it. It says,
+    /// among other things, whether a delivery is a complete snapshot or a delta
+    /// (`exchange_context.coded_exchange_protocol`). In a container that puts it after its payloads,
+    /// it is available after the last record.
+    pub fn exchange_information(
+        &self,
+    ) -> Option<&super::exchange_information::ExchangeInformation> {
+        self.exchange_information.as_deref()
+    }
+
+    pub(super) fn take_exchange_information(
+        &mut self,
+    ) -> Option<Box<super::exchange_information::ExchangeInformation>> {
+        self.exchange_information.take()
     }
 
     /// How many warnings were not kept because the list was full.
@@ -296,6 +314,13 @@ impl<'a, T: Record> Stream<'a, T> {
                 Level::Container => {
                     if is_payload(&self.xml, key, NS_MESSAGE_CONTAINER) {
                         self.open_publication(None, false)?;
+                    } else if ns == NS_MESSAGE_CONTAINER
+                        && self.xml.local() == "exchangeInformation"
+                    {
+                        // Kept for the caller: it says whether a delivery is complete or a delta.
+                        let info =
+                            super::exchange_information::ExchangeInformation::read(&mut self.xml)?;
+                        self.exchange_information = Some(Box::new(info));
                     } else if matches!(
                         ns,
                         NS_MESSAGE_CONTAINER
@@ -303,7 +328,7 @@ impl<'a, T: Record> Stream<'a, T> {
                             | NS_INFORMATION_MANAGEMENT
                             | NS_CIS_INFORMATION
                     ) {
-                        // Exchange metadata is not interpreted.
+                        // Other exchange metadata is not interpreted.
                         self.xml.skip_silently()?;
                     } else {
                         self.xml.skip_unknown(key)?;

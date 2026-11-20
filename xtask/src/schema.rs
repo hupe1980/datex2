@@ -292,3 +292,74 @@ pub fn parse(schema: &mut Schema, file: &Path, text: &str, base: &str) -> Result
     }
     Ok(())
 }
+
+/// One definition of a JSON schema, reduced to what the generator compares and enforces.
+#[derive(Debug, Clone, Default)]
+pub struct JsonDef {
+    /// Member names, in schema order.
+    pub members: Vec<String>,
+    pub required: Vec<String>,
+    /// The literals, when the definition is an enumeration.
+    pub literals: Option<Vec<String>>,
+    /// Whether members other than the listed ones are allowed (`additionalProperties` is not
+    /// `false`).
+    pub open: bool,
+}
+
+/// Definitions by (namespace, name), from JSON schema files named `DATEXII_3_{Namespace}.json`.
+/// The same definition in several files of one set is merged: members, required members and
+/// literals are united.
+pub type JsonDefs = BTreeMap<(String, String), JsonDef>;
+
+pub fn json_definitions(files: &[(String, String)]) -> Result<JsonDefs, String> {
+    let mut out = JsonDefs::new();
+    for (name, text) in files {
+        let stem = name.rsplit('/').next().unwrap_or(name);
+        let ns = stem
+            .strip_prefix("DATEXII_3_")
+            .and_then(|s| s.strip_suffix(".json"))
+            .ok_or_else(|| format!("{name}: not a DATEX II JSON schema file name"))?;
+        let ns = format!("{}{}", ns[..1].to_lowercase(), &ns[1..]);
+        let doc: serde_json::Value =
+            serde_json::from_str(text).map_err(|e| format!("{name}: {e}"))?;
+        let defs = doc
+            .get("$defs")
+            .or_else(|| doc.get("definitions"))
+            .and_then(|d| d.as_object())
+            .ok_or_else(|| format!("{name}: no definitions"))?;
+        let strings = |v: Option<&serde_json::Value>| -> Vec<String> {
+            v.and_then(|v| v.as_array())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|x| x.as_str().map(str::to_owned))
+                        .collect()
+                })
+                .unwrap_or_default()
+        };
+        for (def_name, def) in defs {
+            let entry = out.entry((ns.clone(), def_name.clone())).or_default();
+            entry.open |= def.get("additionalProperties").and_then(|v| v.as_bool()) != Some(false);
+            if let Some(props) = def.get("properties").and_then(|p| p.as_object()) {
+                for member in props.keys() {
+                    if !entry.members.contains(member) {
+                        entry.members.push(member.clone());
+                    }
+                }
+            }
+            for member in strings(def.get("required")) {
+                if !entry.required.contains(&member) {
+                    entry.required.push(member);
+                }
+            }
+            if def.get("enum").is_some() {
+                let literals = entry.literals.get_or_insert_with(Vec::new);
+                for literal in strings(def.get("enum")) {
+                    if !literals.contains(&literal) {
+                        literals.push(literal);
+                    }
+                }
+            }
+        }
+    }
+    Ok(out)
+}

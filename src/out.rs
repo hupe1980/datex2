@@ -125,7 +125,7 @@ fn is_number(s: &str) -> bool {
 }
 
 impl Pattern {
-    fn describe(self) -> &'static str {
+    pub(crate) fn describe(self) -> &'static str {
         match self {
             Self::AdrClass => "an ADR class such as 3 or 4.1",
             Self::IpAddress => "an IPv4 address such as 192.0.2.1",
@@ -137,7 +137,7 @@ impl Pattern {
         }
     }
 
-    fn matches(self, s: &str) -> bool {
+    pub(crate) fn matches(self, s: &str) -> bool {
         let b = s.as_bytes();
         match self {
             Self::AdrClass => {
@@ -201,6 +201,125 @@ impl Pattern {
                 }
             }
         }
+    }
+}
+
+/// The schema rules both writers enforce. A writer supplies how an error is placed; the rules
+/// and their wording are shared, so XML and JSON refuse the same values with the same text.
+pub trait Rules {
+    /// An error at the writer's current place.
+    fn fail(&self, kind: ErrorKind, expected: String, found: String) -> Error;
+    /// What the format calls a named part: "element" in XML, "member" in JSON.
+    fn noun(&self) -> &'static str;
+
+    /// The error for required content that is absent.
+    fn missing(&self, name: &'static str) -> Error {
+        self.fail(
+            ErrorKind::MissingRequired,
+            format!("required {} {}", self.noun(), quote(name)),
+            "none".to_owned(),
+        )
+    }
+
+    /// The error for a required attribute that is absent.
+    fn missing_attr(&self, name: &'static str) -> Error {
+        let noun = if self.noun() == "element" {
+            "attribute"
+        } else {
+            "member"
+        };
+        self.fail(
+            ErrorKind::MissingRequired,
+            format!("required {noun} {}", quote(name)),
+            "none".to_owned(),
+        )
+    }
+
+    fn count(&self, name: &'static str, len: usize, min: usize, max: usize) -> Result<(), Error> {
+        if (min..=max).contains(&len) {
+            return Ok(());
+        }
+        let bounds = if max == usize::MAX {
+            format!("at least {min}")
+        } else {
+            format!("{min} to {max}")
+        };
+        Err(self.fail(
+            ErrorKind::InvalidCount,
+            format!("{bounds} of {} {}", self.noun(), quote(name)),
+            len.to_string(),
+        ))
+    }
+
+    fn max_len(&self, name: &'static str, value: &str, max: usize) -> Result<(), Error> {
+        if value.chars().count() <= max {
+            return Ok(());
+        }
+        Err(self.fail(
+            ErrorKind::InvalidValue,
+            format!("at most {max} characters in {}", quote(name)),
+            quote(value),
+        ))
+    }
+
+    fn range(&self, name: &'static str, value: u64, min: u64, max: u64) -> Result<(), Error> {
+        if (min..=max).contains(&value) {
+            return Ok(());
+        }
+        let bounds = if max == u64::MAX {
+            format!("at least {min}")
+        } else {
+            format!("{min} to {max}")
+        };
+        Err(self.fail(
+            ErrorKind::InvalidValue,
+            format!("{bounds} in {}", quote(name)),
+            value.to_string(),
+        ))
+    }
+
+    fn digits(
+        &self,
+        name: &'static str,
+        value: &Decimal,
+        total: usize,
+        fraction: usize,
+    ) -> Result<(), Error> {
+        let text = value.as_str().trim_start_matches(['+', '-']);
+        let (int, frac) = text.split_once('.').unwrap_or((text, ""));
+        let (int, frac) = (int.trim_start_matches('0'), frac.trim_end_matches('0'));
+        if int.len() + frac.len() <= total && frac.len() <= fraction {
+            return Ok(());
+        }
+        Err(self.fail(
+            ErrorKind::InvalidValue,
+            format!(
+                "at most {total} digits, {fraction} of them after the point, in {}",
+                quote(name)
+            ),
+            quote(value.as_str()),
+        ))
+    }
+
+    fn pattern(&self, name: &'static str, value: &str, pattern: Pattern) -> Result<(), Error> {
+        if pattern.matches(value) {
+            return Ok(());
+        }
+        Err(self.fail(
+            ErrorKind::InvalidValue,
+            format!("{} in {}", pattern.describe(), quote(name)),
+            quote(value),
+        ))
+    }
+}
+
+impl Rules for Out<'_> {
+    fn fail(&self, kind: ErrorKind, expected: String, found: String) -> Error {
+        self.error(kind, expected, found)
+    }
+
+    fn noun(&self) -> &'static str {
+        "element"
     }
 }
 
@@ -407,109 +526,6 @@ impl<'a> Out<'a> {
         self.end(tag)
     }
 
-    // ---- the rules -----------------------------------------------------------------------------
-
-    /// The error for a required element that is absent.
-    pub fn missing(&self, tag: &'static str) -> Error {
-        self.error(
-            ErrorKind::MissingRequired,
-            format!("required element {}", quote(tag)),
-            "none",
-        )
-    }
-
-    /// The error for a required attribute that is absent.
-    pub fn missing_attr(&self, name: &'static str) -> Error {
-        self.error(
-            ErrorKind::MissingRequired,
-            format!("required attribute {}", quote(name)),
-            "none",
-        )
-    }
-
-    pub fn count(
-        &self,
-        tag: &'static str,
-        len: usize,
-        min: usize,
-        max: usize,
-    ) -> Result<(), Error> {
-        if (min..=max).contains(&len) {
-            return Ok(());
-        }
-        let bounds = if max == usize::MAX {
-            format!("at least {min}")
-        } else {
-            format!("{min} to {max}")
-        };
-        Err(self.error(
-            ErrorKind::InvalidCount,
-            format!("{bounds} of element {}", quote(tag)),
-            len.to_string(),
-        ))
-    }
-
-    pub fn max_len(&self, name: &'static str, value: &str, max: usize) -> Result<(), Error> {
-        if value.chars().count() <= max {
-            return Ok(());
-        }
-        Err(self.error(
-            ErrorKind::InvalidValue,
-            format!("at most {max} characters in {}", quote(name)),
-            quote(value),
-        ))
-    }
-
-    pub fn range(&self, name: &'static str, value: u64, min: u64, max: u64) -> Result<(), Error> {
-        if (min..=max).contains(&value) {
-            return Ok(());
-        }
-        let bounds = if max == u64::MAX {
-            format!("at least {min}")
-        } else {
-            format!("{min} to {max}")
-        };
-        Err(self.error(
-            ErrorKind::InvalidValue,
-            format!("{bounds} in {}", quote(name)),
-            value.to_string(),
-        ))
-    }
-
-    pub fn digits(
-        &self,
-        name: &'static str,
-        value: &Decimal,
-        total: usize,
-        fraction: usize,
-    ) -> Result<(), Error> {
-        let text = value.as_str().trim_start_matches(['+', '-']);
-        let (int, frac) = text.split_once('.').unwrap_or((text, ""));
-        let (int, frac) = (int.trim_start_matches('0'), frac.trim_end_matches('0'));
-        if int.len() + frac.len() <= total && frac.len() <= fraction {
-            return Ok(());
-        }
-        Err(self.error(
-            ErrorKind::InvalidValue,
-            format!(
-                "at most {total} digits, {fraction} of them after the point, in {}",
-                quote(name)
-            ),
-            quote(value.as_str()),
-        ))
-    }
-
-    pub fn pattern(&self, name: &'static str, value: &str, pattern: Pattern) -> Result<(), Error> {
-        if pattern.matches(value) {
-            return Ok(());
-        }
-        Err(self.error(
-            ErrorKind::InvalidValue,
-            format!("{} in {}", pattern.describe(), quote(name)),
-            quote(value),
-        ))
-    }
-
     // ---- extension content -----------------------------------------------------------------------
 
     /// Checks that `xml`, placed inside an element that declares `declarations`, is well-formed,
@@ -590,6 +606,13 @@ impl<'a> Out<'a> {
     /// Writes an extension slot: the slot element, the bindings its content needs, the content.
     pub fn extension(&mut self, tag: &'static str, ext: &Extension) -> Result<(), Error> {
         self.begin(tag)?;
+        if ext.xml.is_empty() && !ext.json.is_empty() {
+            return Err(self.error(
+                ErrorKind::InvalidExtension,
+                "extension content read from XML",
+                "content read from JSON, which cannot be written as XML",
+            ));
+        }
         let declarations = ext.declarations(|_| false);
         self.check_raw(&ext.xml, &declarations)?;
         self.put(&declarations)?;
@@ -603,6 +626,13 @@ impl<'a> Out<'a> {
     /// Writes an element from another namespace that was kept whole, with its own declarations.
     pub fn foreign_element(&mut self, ext: &Extension) -> Result<(), Error> {
         self.close_start()?;
+        if ext.xml.is_empty() && !ext.json.is_empty() {
+            return Err(self.error(
+                ErrorKind::InvalidExtension,
+                "extension content read from XML",
+                "content read from JSON, which cannot be written as XML",
+            ));
+        }
         self.check_raw(&ext.xml, &ext.declarations(|_| false))?;
         if !ext.xml.starts_with('<') || !ext.namespaces.is_empty() {
             return Err(self.error(

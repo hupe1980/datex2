@@ -480,6 +480,7 @@ fn with_extension(xml: &str, namespaces: &[(&str, &str)]) -> Accident {
             .iter()
             .map(|(p, u)| ((*p).to_owned(), (*u).to_owned()))
             .collect(),
+        ..Default::default()
     }));
     record
 }

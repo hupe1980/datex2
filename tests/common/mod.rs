@@ -137,8 +137,160 @@ pub fn assert_valid(xml: &str) {
     match xmllint(xml) {
         Some(Ok(())) => {}
         Some(Err(e)) => panic!("the official schema rejects the written document: {e}\n{xml}"),
-        None => {
-            eprintln!("skipped: xmllint or the schemas are not available (run `cargo xtask fetch`)")
+        None => skipped("xmllint or the schemas are not available (run `cargo xtask fetch`)"),
+    }
+}
+
+/// A JSON schema set the writer's output is checked against.
+#[derive(Clone, Copy, Debug)]
+pub enum JsonSchema {
+    /// The official DATEX II 3.7 JSON schemas, entry `{"payload": …}`.
+    Official,
+    /// The Mobilithek AFIR profile, table publication: `{"payload": …}`.
+    MobilithekTable,
+    /// The Mobilithek AFIR profile, status publication: `{"messageContainer": …}`.
+    MobilithekStatus,
+}
+
+impl JsonSchema {
+    fn location(self) -> (std::path::PathBuf, &'static str) {
+        let root = schema_dir()
+            .parent()
+            .map(std::path::Path::to_path_buf)
+            .unwrap_or_default();
+        let profile = root.join("afir-mobilithek-01-00-00");
+        match self {
+            Self::Official => (root.join("3.7-json"), "DATEXII_3_D2Payload.json"),
+            Self::MobilithekTable => (
+                profile.join("EnergyInfrastructureTablePublication"),
+                "DATEXII_3_D2Payload.json",
+            ),
+            Self::MobilithekStatus => (
+                profile.join("EnergyInfrastructureStatusPublication"),
+                "DATEXII_3_MessageContainer.json",
+            ),
         }
+    }
+}
+
+/// The command that runs Python with `jsonschema`: a plain `python3` that has it, or `uv`.
+fn python() -> Option<&'static [&'static str]> {
+    use std::process::{Command, Stdio};
+    static FOUND: std::sync::OnceLock<Option<&'static [&'static str]>> = std::sync::OnceLock::new();
+    *FOUND.get_or_init(|| {
+        const CANDIDATES: [&[&str]; 2] = [
+            &["python3", "-I"],
+            &[
+                "uv",
+                "run",
+                "--quiet",
+                "--with",
+                "jsonschema",
+                "python3",
+                "-I",
+            ],
+        ];
+        CANDIDATES.into_iter().find(|command| {
+            Command::new(command[0])
+                .args(&command[1..])
+                .args(["-c", "import jsonschema, referencing"])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status()
+                .is_ok_and(|s| s.success())
+        })
+    })
+}
+
+/// Validates JSON with Python `jsonschema` against a schema set this project did not write.
+/// `None` when Python with `jsonschema` or the fetched schemas are not available.
+pub fn jsonschema(json: &str, schema: JsonSchema) -> Option<Result<(), String>> {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let (folder, entry) = schema.location();
+    if !folder.join(entry).is_file() {
+        return None;
+    }
+    let command = python()?;
+    let script =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/support/validate_json.py");
+    let mut child = Command::new(command[0])
+        .args(&command[1..])
+        .arg(script)
+        .arg(folder)
+        .arg(entry)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .ok()?;
+    let mut stdin = child.stdin.take()?;
+    let json = json.to_owned();
+    let feeder = std::thread::spawn(move || stdin.write_all(json.as_bytes()));
+    let out = child.wait_with_output().ok()?;
+    let _ = feeder.join();
+    Some(if out.status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "{}{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        ))
+    })
+}
+
+/// Asserts that the schema set accepts the JSON; says so when it could not be checked.
+pub fn assert_json_valid(json: &str, schema: JsonSchema) {
+    match jsonschema(json, schema) {
+        Some(Ok(())) => {}
+        Some(Err(e)) => {
+            panic!("the {schema:?} JSON schema rejects the written document:\n{e}\n{json}")
+        }
+        None => skipped(
+            "Python with jsonschema or the schemas are not available (run `cargo xtask fetch`)",
+        ),
+    }
+}
+
+/// A validation that could not run: a note locally, a failure where `DATEX2_REQUIRE_VALIDATORS`
+/// is set, as in CI, so that a missing validator cannot pass for a successful one.
+pub fn skipped(why: &str) {
+    assert!(
+        std::env::var_os("DATEX2_REQUIRE_VALIDATORS").is_none(),
+        "validation required, but {why}"
+    );
+    eprintln!("skipped: {why}");
+}
+
+/// Asserts that `written` is the JSON document at `original` as the writer writes it back: equal
+/// apart from `targetClass`, empty arrays and the spelling of equal numbers (see
+/// `tests/support/same_json.py`).
+pub fn assert_same_json(original: &std::path::Path, written: &str) {
+    use std::process::Command;
+    let file = std::env::temp_dir().join(format!(
+        "datex2-same-json-{}-{:?}.json",
+        std::process::id(),
+        std::thread::current().id()
+    ));
+    std::fs::write(&file, written).unwrap();
+    let script =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/support/same_json.py");
+    let out = Command::new("python3")
+        .arg("-I")
+        .arg(script)
+        .arg(original)
+        .arg(&file)
+        .output();
+    let _ = std::fs::remove_file(&file);
+    match out {
+        Ok(out) if out.status.success() => {}
+        Ok(out) => panic!(
+            "{} is not written back as it was:\n{}{}",
+            original.display(),
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        ),
+        Err(_) => skipped("python3 is not available"),
     }
 }

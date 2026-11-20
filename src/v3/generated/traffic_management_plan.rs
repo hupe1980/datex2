@@ -4,9 +4,13 @@
 //! Names follow the standard; see <https://docs.datex2.eu/> for what each one means.
 
 #[allow(unused_imports)]
-use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst};
+use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst, message_container as con, exchange_information as ex, information_management as inf, cis_information as cis};
 #[allow(unused_imports)]
-use crate::out::{Out, Pattern};
+use crate::out::{Out, Pattern, Rules};
+#[allow(unused_imports)]
+use crate::json::{JsonReader, JsonWriter};
+#[allow(unused_imports)]
+use crate::{ErrorKind, WarningKind};
 #[allow(unused_imports)]
 use crate::xml::{Enumeration, Xml};
 #[allow(unused_imports)]
@@ -245,10 +249,10 @@ pub struct ActionByReference {
 }
 
 impl ActionByReference {
-    const FIELDS: &'static [u32] = &[0x100c4e, 0x1003fb, 0x100679, 0x1003f9];
+    const FIELDS: &'static [u32] = &[0x140caf, 0x140415, 0x1406a2, 0x140413];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10000c);
+        r.expect_type(0x14000c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -257,10 +261,10 @@ impl ActionByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e0, v, 3150); }
-                    0x1003fb => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1019); }
-                    0x100679 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 1657); }
-                    0x1003f9 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1017); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e0, v, 3247); }
+                    0x140415 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1045); }
+                    0x1406a2 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 1698); }
+                    0x140413 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1043); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -269,8 +273,8 @@ impl ActionByReference {
                 break;
             }
         }
-        r.required(&e0, 3150);
-        r.required(&e2, 1657);
+        r.required(&e0, 3247);
+        r.required(&e2, 1698);
         let v = Self {
             version_time: e0,
             action_extension: e1,
@@ -301,6 +305,79 @@ impl ActionByReference {
     }
 }
 
+impl ActionByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2580 => if r.first(&mut seen[0])? { f0 = r.date_time()?; },
+                2270 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                38 => if r.first(&mut seen[2])? { f2 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                2267 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2580);
+        r.required(&f2, 38);
+        Ok(Self {
+            version_time: f0,
+            action_extension: f1,
+            action_reference: f2,
+            action_by_reference_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(909)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.action_extension {
+            w.key(2270)?;
+            w.extension(v)?;
+        }
+        match &self.action_reference {
+            Some(v) => {
+                w.key(38)?;
+                v.write_json(w, Some("ActionDefinition"))?;
+            }
+            None => w.absent(38, w.missing("actionReference"))?,
+        }
+        if let Some(v) = &self.action_by_reference_extension {
+            w.key(2267)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:ActionDefinition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ActionDefinition {
@@ -327,12 +404,12 @@ pub struct ActionDefinition {
 }
 
 impl ActionDefinition {
-    const FIELDS: &'static [u32] = &[0x100c4e, 0x1003fb, 0x100804, 0x100777, 0x100675, 0x1009d3, 0x10067c, 0x1003fa];
+    const FIELDS: &'static [u32] = &[0x140caf, 0x140415, 0x14083f, 0x1407a8, 0x14069e, 0x140a18, 0x1406a5, 0x140414];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10000d);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x14000d);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -345,14 +422,14 @@ impl ActionDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e0, v, 3150); }
-                    0x1003fb => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1019); }
-                    0x100804 => { let v = r.string()?; r.set(&mut e2, v, 2052); }
-                    0x100777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x100675 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e4, v.map(Box::new), 1653); }
-                    0x1009d3 => { let v = OperatorActionDefinition::read(r)?; r.set(&mut e5, v, 2515); }
-                    0x10067c => { let v = Some(ActivationDelay::read(r)?); r.set(&mut e6, v.map(Box::new), 1660); }
-                    0x1003fa => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1018); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e0, v, 3247); }
+                    0x140415 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1045); }
+                    0x14083f => { let v = r.string()?; r.set(&mut e2, v, 2111); }
+                    0x1407a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x14069e => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e4, v.map(Box::new), 1694); }
+                    0x140a18 => { let v = OperatorActionDefinition::read(r)?; r.set(&mut e5, v, 2584); }
+                    0x1406a5 => { let v = Some(ActivationDelay::read(r)?); r.set(&mut e6, v.map(Box::new), 1701); }
+                    0x140414 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1044); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -361,8 +438,8 @@ impl ActionDefinition {
                 break;
             }
         }
-        r.required(&e0, 3150);
-        r.required(&e3, 1911);
+        r.required(&e0, 3247);
+        r.required(&e3, 1960);
         let v = Self {
             id: a0,
             version: a1,
@@ -411,6 +488,129 @@ impl ActionDefinition {
     }
 }
 
+impl ActionDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 10];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                2580 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                2270 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                738 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                34 => if r.first(&mut seen[6])? { f6 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                1484 => if r.first(&mut seen[7])? { f7 = OperatorActionDefinition::read_json(r)?; },
+                41 => if r.first(&mut seen[8])? { f8 = ActivationDelay::read_json(r)?.map(Box::new); },
+                2269 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 2580);
+        r.required(&f5, 545);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            version_time: f2,
+            action_extension: f3,
+            external_identification: f4,
+            description: f5,
+            action_implementer: f6,
+            operator_action_definition: f7,
+            activation_delay: f8,
+            action_definition_extension: f9,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(910)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.action_extension {
+            w.key(2270)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.external_identification {
+            w.key(738)?;
+            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+        }
+        match &self.description {
+            Some(v) => {
+                w.key(545)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(545, w.missing("description"))?,
+        }
+        if let Some(v) = &self.action_implementer {
+            w.key(34)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.operator_action_definition {
+            w.key(1484)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.activation_delay {
+            w.key(41)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.action_definition_extension {
+            w.key(2269)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:ActivationConditions`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ActivationConditions {
@@ -431,10 +631,10 @@ pub struct ActivationConditions {
 }
 
 impl ActivationConditions {
-    const FIELDS: &'static [u32] = &[0x1006d8, 0x1006da, 0x1006d9, 0x10067c, 0x100680, 0x100761, 0x1003fd];
+    const FIELDS: &'static [u32] = &[0x140701, 0x140703, 0x140702, 0x1406a5, 0x1406a9, 0x140791, 0x140417];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10000f);
+        r.expect_type(0x14000f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -446,13 +646,13 @@ impl ActivationConditions {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x1006d8 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 1752); }
-                    0x1006da => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1754); }
-                    0x1006d9 => { let v = r.value::<bool>()?; r.set(&mut e2, v, 1753); }
-                    0x10067c => { let v = Some(ActivationDelay::read(r)?); r.set(&mut e3, v.map(Box::new), 1660); }
-                    0x100680 => { let v = Condition::read(r)?; r.set(&mut e4, v, 1664); }
-                    0x100761 => { let v = Condition::read(r)?; r.set(&mut e5, v, 1889); }
-                    0x1003fd => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1021); }
+                    0x140701 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 1793); }
+                    0x140703 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 1795); }
+                    0x140702 => { let v = r.value::<bool>()?; r.set(&mut e2, v, 1794); }
+                    0x1406a5 => { let v = Some(ActivationDelay::read(r)?); r.set(&mut e3, v.map(Box::new), 1701); }
+                    0x1406a9 => { let v = Condition::read(r)?; r.set(&mut e4, v, 1705); }
+                    0x140791 => { let v = Condition::read(r)?; r.set(&mut e5, v, 1937); }
+                    0x140417 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1047); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -491,6 +691,92 @@ impl ActivationConditions {
     }
 }
 
+impl ActivationConditions {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                268 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                270 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                269 => if r.first(&mut seen[2])? { f2 = r.boolean()?; },
+                41 => if r.first(&mut seen[3])? { f3 = ActivationDelay::read_json(r)?.map(Box::new); },
+                45 => if r.first(&mut seen[4])? { f4 = Condition::read_json(r)?; },
+                522 => if r.first(&mut seen[5])? { f5 = Condition::read_json(r)?; },
+                2271 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            automatically_approved: f0,
+            automatically_implemented: f1,
+            automatically_deactivated: f2,
+            activation_delay: f3,
+            activation_trigger: f4,
+            deactivation_trigger: f5,
+            activation_conditions_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(912)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.automatically_approved {
+            w.key(268)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.automatically_implemented {
+            w.key(270)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.automatically_deactivated {
+            w.key(269)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.activation_delay {
+            w.key(41)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.activation_trigger {
+            w.key(45)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.deactivation_trigger {
+            w.key(522)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.activation_conditions_extension {
+            w.key(2271)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:ActivationDelay`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ActivationDelay {
@@ -503,10 +789,10 @@ pub struct ActivationDelay {
 }
 
 impl ActivationDelay {
-    const FIELDS: &'static [u32] = &[0x10067c, 0x100760, 0x1003fe];
+    const FIELDS: &'static [u32] = &[0x1406a5, 0x140790, 0x140418];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100010);
+        r.expect_type(0x140010);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -514,9 +800,9 @@ impl ActivationDelay {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10067c => { let v = r.value::<f32>()?; r.set(&mut e0, v, 1660); }
-                    0x100760 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1888); }
-                    0x1003fe => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1022); }
+                    0x1406a5 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 1701); }
+                    0x140790 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1936); }
+                    0x140418 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1048); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -525,8 +811,8 @@ impl ActivationDelay {
                 break;
             }
         }
-        r.required(&e0, 1660);
-        r.required(&e1, 1888);
+        r.required(&e0, 1701);
+        r.required(&e1, 1936);
         let v = Self {
             activation_delay: e0,
             deactivation_delay: e1,
@@ -555,6 +841,72 @@ impl ActivationDelay {
     }
 }
 
+impl ActivationDelay {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                41 => if r.first(&mut seen[0])? { f0 = r.number::<f32>()?; },
+                521 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                2272 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 41);
+        r.required(&f1, 521);
+        Ok(Self {
+            activation_delay: f0,
+            deactivation_delay: f1,
+            activation_delay_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(913)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.activation_delay {
+            Some(v) => {
+                w.key(41)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(41, w.missing("activationDelay"))?,
+        }
+        match &self.deactivation_delay {
+            Some(v) => {
+                w.key(521)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(521, w.missing("deactivationDelay"))?,
+        }
+        if let Some(v) = &self.activation_delay_extension {
+            w.key(2272)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:CompositeMeasure`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct CompositeMeasure {
@@ -573,12 +925,12 @@ pub struct CompositeMeasure {
 }
 
 impl CompositeMeasure {
-    const FIELDS: &'static [u32] = &[0x100c4e, 0x1004ed, 0x100913, 0x10043f];
+    const FIELDS: &'static [u32] = &[0x140caf, 0x14050f, 0x140952, 0x14045b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100053);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x140055);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -587,10 +939,10 @@ impl CompositeMeasure {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e0, v, 3150); }
-                    0x1004ed => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1261); }
-                    0x100913 => { let v = Measure::read(r)?; e2.extend(v); }
-                    0x10043f => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1087); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e0, v, 3247); }
+                    0x14050f => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1295); }
+                    0x140952 => { let v = Measure::read(r)?; e2.extend(v); }
+                    0x14045b => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1115); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -599,7 +951,7 @@ impl CompositeMeasure {
                 break;
             }
         }
-        r.required(&e0, 3150);
+        r.required(&e0, 3247);
         let v = Self {
             id: a0,
             version: a1,
@@ -638,6 +990,103 @@ impl CompositeMeasure {
     }
 }
 
+impl CompositeMeasure {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = Vec::new();
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                2580 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                2287 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                1287 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Measure::read_json(r)? { f4.push(v); } } },
+                2274 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 2580);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            version_time: f2,
+            measure_extension: f3,
+            measure: f4,
+            composite_measure_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(914)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.measure_extension {
+            w.key(2287)?;
+            w.extension(v)?;
+        }
+        w.count("measure", self.measure.len(), 2, usize::MAX)?;
+        if !self.measure.is_empty() {
+            w.key(1287)?;
+            w.begin_array()?;
+            for v in &self.measure {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.composite_measure_extension {
+            w.key(2274)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:ConditionSet`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ConditionSet {
@@ -654,10 +1103,10 @@ pub struct ConditionSet {
 }
 
 impl ConditionSet {
-    const FIELDS: &'static [u32] = &[0x100955, 0x100442, 0x1009d2, 0x100731, 0x100444];
+    const FIELDS: &'static [u32] = &[0x140997, 0x14045e, 0x140a17, 0x14075f, 0x140460];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100058);
+        r.expect_type(0x14005a);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -667,11 +1116,11 @@ impl ConditionSet {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100955 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2389); }
-                    0x100442 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1090); }
-                    0x1009d2 => { let v = r.enumeration::<ConditionOperator>()?; r.set(&mut e2, v, 2514); }
-                    0x100731 => { let v = Condition::read(r)?; e3.extend(v); }
-                    0x100444 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1092); }
+                    0x140997 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2455); }
+                    0x14045e => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1118); }
+                    0x140a17 => { let v = r.enumeration::<ConditionOperator>()?; r.set(&mut e2, v, 2583); }
+                    0x14075f => { let v = Condition::read(r)?; e3.extend(v); }
+                    0x140460 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1120); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -680,7 +1129,7 @@ impl ConditionSet {
                 break;
             }
         }
-        r.required(&e2, 2514);
+        r.required(&e2, 2583);
         let v = Self {
             negate: e0,
             condition_extension: e1,
@@ -708,6 +1157,88 @@ impl ConditionSet {
         for v in &self.condition { v.write(w, "tmp:condition")?; }
         if let Some(v) = &self.condition_set_extension { w.extension("tmp:_conditionSetExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl ConditionSet {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1356 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                2275 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1483 => if r.first(&mut seen[2])? { f2 = r.enumeration::<ConditionOperator>()?; },
+                445 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Condition::read_json(r)? { f3.push(v); } } },
+                2277 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 1483);
+        Ok(Self {
+            negate: f0,
+            condition_extension: f1,
+            operator: f2,
+            condition: f3,
+            condition_set_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(917)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.negate {
+            w.key(1356)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.condition_extension {
+            w.key(2275)?;
+            w.extension(v)?;
+        }
+        match &self.operator {
+            Some(v) => {
+                w.key(1483)?;
+                w.enumeration(916, v.literal())?;
+            }
+            None => w.absent(1483, w.missing("operator"))?,
+        }
+        w.count("condition", self.condition.len(), 1, usize::MAX)?;
+        if !self.condition.is_empty() {
+            w.key(445)?;
+            w.begin_array()?;
+            for v in &self.condition {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.condition_set_extension {
+            w.key(2277)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -741,10 +1272,10 @@ pub struct GeneralInstructionOrMessageToRoadUsersDefinition {
 }
 
 impl GeneralInstructionOrMessageToRoadUsersDefinition {
-    const FIELDS: &'static [u32] = &[0x100b9e, 0x100532, 0x10072b, 0x1006c3, 0x1006c4, 0x100a41, 0x1006db, 0x100827, 0x1004fc, 0x10083b, 0x10083c, 0x1004a6];
+    const FIELDS: &'static [u32] = &[0x140bfd, 0x140555, 0x140759, 0x1406ec, 0x1406ed, 0x140a87, 0x140704, 0x140863, 0x14051f, 0x140877, 0x140878, 0x1404c6];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1000bd);
+        r.expect_type(0x1400c3);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -761,18 +1292,18 @@ impl GeneralInstructionOrMessageToRoadUsersDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b9e => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
-                    0x100532 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1330); }
-                    0x10072b => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1835); }
-                    0x1006c3 => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
-                    0x1006c4 => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
-                    0x100a41 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
-                    0x1006db => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1755); }
-                    0x100827 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
-                    0x1004fc => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1276); }
-                    0x10083b => { let v = r.enumeration::<sit::GeneralInstructionToRoadUsersTypeEnum>()?; r.set(&mut e9, v, 2107); }
-                    0x10083c => { let v = r.multilingual()?; r.set(&mut e10, v, 2108); }
-                    0x1004a6 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1190); }
+                    0x140bfd => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
+                    0x140555 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1365); }
+                    0x140759 => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1881); }
+                    0x1406ec => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
+                    0x1406ed => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
+                    0x140a87 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
+                    0x140704 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1796); }
+                    0x140863 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
+                    0x14051f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1311); }
+                    0x140877 => { let v = r.enumeration::<sit::GeneralInstructionToRoadUsersTypeEnum>()?; r.set(&mut e9, v, 2167); }
+                    0x140878 => { let v = r.multilingual()?; r.set(&mut e10, v, 2168); }
+                    0x1404c6 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1222); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -781,7 +1312,7 @@ impl GeneralInstructionOrMessageToRoadUsersDefinition {
                 break;
             }
         }
-        r.required(&e2, 1835);
+        r.required(&e2, 1881);
         let v = Self {
             target_location: e0,
             operator_action_definition_extension: e1,
@@ -825,6 +1356,156 @@ impl GeneralInstructionOrMessageToRoadUsersDefinition {
     }
 }
 
+impl GeneralInstructionOrMessageToRoadUsersDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2232 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::LocationReference::read_json(r)? { f0.push(v); } } },
+                2292 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                423 => if r.first(&mut seen[2])? { f2 = r.enumeration::<sit::ComplianceOptionEnum>()?; },
+                247 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<loc::DirectionEnum>()? { f3.push(v); } } },
+                248 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::TrafficTypeEnum>()? { f4.push(v); } } },
+                1593 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::PlacesEnum>()? { f5.push(v); } } },
+                271 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                857 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f7.push(v); } } },
+                2288 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                912 => if r.first(&mut seen[9])? { f9 = r.enumeration::<sit::GeneralInstructionToRoadUsersTypeEnum>()?; },
+                913 => if r.first(&mut seen[10])? { f10 = r.multilingual()?; },
+                2279 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 423);
+        Ok(Self {
+            target_location: f0,
+            operator_action_definition_extension: f1,
+            compliance_option: f2,
+            applicable_for_traffic_direction: f3,
+            applicable_for_traffic_type: f4,
+            places_at_which_applicable: f5,
+            automatically_initiated: f6,
+            for_vehicles_with_characteristics_of: f7,
+            network_management_definition_extension: f8,
+            general_instruction_to_road_users_type: f9,
+            general_message_to_road_users: f10,
+            general_instruction_or_message_to_road_users_definition_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(918)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.target_location.is_empty() {
+            w.key(2232)?;
+            w.begin_array()?;
+            for v in &self.target_location {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operator_action_definition_extension {
+            w.key(2292)?;
+            w.extension(v)?;
+        }
+        match &self.compliance_option {
+            Some(v) => {
+                w.key(423)?;
+                w.enumeration(826, v.literal())?;
+            }
+            None => w.absent(423, w.missing("complianceOption"))?,
+        }
+        if !self.applicable_for_traffic_direction.is_empty() {
+            w.key(247)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_direction {
+                w.item()?;
+                w.enumeration(503, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.applicable_for_traffic_type.is_empty() {
+            w.key(248)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_type {
+                w.item()?;
+                w.enumeration(900, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.places_at_which_applicable.is_empty() {
+            w.key(1593)?;
+            w.begin_array()?;
+            for v in &self.places_at_which_applicable {
+                w.item()?;
+                w.enumeration(868, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.automatically_initiated {
+            w.key(271)?;
+            w.boolean(*v)?;
+        }
+        if !self.for_vehicles_with_characteristics_of.is_empty() {
+            w.key(857)?;
+            w.begin_array()?;
+            for v in &self.for_vehicles_with_characteristics_of {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.network_management_definition_extension {
+            w.key(2288)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.general_instruction_to_road_users_type {
+            w.key(912)?;
+            w.enumeration(843, v.literal())?;
+        }
+        if let Some(v) = &self.general_message_to_road_users {
+            w.key(913)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.general_instruction_or_message_to_road_users_definition_extension {
+            w.key(2279)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:GeneralNetworkManagementDefinition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GeneralNetworkManagementDefinition {
@@ -855,10 +1536,10 @@ pub struct GeneralNetworkManagementDefinition {
 }
 
 impl GeneralNetworkManagementDefinition {
-    const FIELDS: &'static [u32] = &[0x100b9e, 0x100532, 0x10072b, 0x1006c3, 0x1006c4, 0x100a41, 0x1006db, 0x100827, 0x1004fc, 0x10083d, 0x100bdf, 0x1004a8];
+    const FIELDS: &'static [u32] = &[0x140bfd, 0x140555, 0x140759, 0x1406ec, 0x1406ed, 0x140a87, 0x140704, 0x140863, 0x14051f, 0x140879, 0x140c3e, 0x1404c8];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1000bf);
+        r.expect_type(0x1400c5);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -875,18 +1556,18 @@ impl GeneralNetworkManagementDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b9e => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
-                    0x100532 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1330); }
-                    0x10072b => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1835); }
-                    0x1006c3 => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
-                    0x1006c4 => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
-                    0x100a41 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
-                    0x1006db => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1755); }
-                    0x100827 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
-                    0x1004fc => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1276); }
-                    0x10083d => { let v = r.enumeration::<sit::GeneralNetworkManagementTypeEnum>()?; r.set(&mut e9, v, 2109); }
-                    0x100bdf => { let v = r.enumeration::<sit::PersonCategoryEnum>()?; r.set(&mut e10, v, 3039); }
-                    0x1004a8 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1192); }
+                    0x140bfd => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
+                    0x140555 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1365); }
+                    0x140759 => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1881); }
+                    0x1406ec => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
+                    0x1406ed => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
+                    0x140a87 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
+                    0x140704 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1796); }
+                    0x140863 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
+                    0x14051f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1311); }
+                    0x140879 => { let v = r.enumeration::<sit::GeneralNetworkManagementTypeEnum>()?; r.set(&mut e9, v, 2169); }
+                    0x140c3e => { let v = r.enumeration::<sit::PersonCategoryEnum>()?; r.set(&mut e10, v, 3134); }
+                    0x1404c8 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1224); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -895,8 +1576,8 @@ impl GeneralNetworkManagementDefinition {
                 break;
             }
         }
-        r.required(&e2, 1835);
-        r.required(&e9, 2109);
+        r.required(&e2, 1881);
+        r.required(&e9, 2169);
         let v = Self {
             target_location: e0,
             operator_action_definition_extension: e1,
@@ -943,6 +1624,160 @@ impl GeneralNetworkManagementDefinition {
     }
 }
 
+impl GeneralNetworkManagementDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2232 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::LocationReference::read_json(r)? { f0.push(v); } } },
+                2292 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                423 => if r.first(&mut seen[2])? { f2 = r.enumeration::<sit::ComplianceOptionEnum>()?; },
+                247 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<loc::DirectionEnum>()? { f3.push(v); } } },
+                248 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::TrafficTypeEnum>()? { f4.push(v); } } },
+                1593 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::PlacesEnum>()? { f5.push(v); } } },
+                271 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                857 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f7.push(v); } } },
+                2288 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                914 => if r.first(&mut seen[9])? { f9 = r.enumeration::<sit::GeneralNetworkManagementTypeEnum>()?; },
+                2359 => if r.first(&mut seen[10])? { f10 = r.enumeration::<sit::PersonCategoryEnum>()?; },
+                2281 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 423);
+        r.required(&f9, 914);
+        Ok(Self {
+            target_location: f0,
+            operator_action_definition_extension: f1,
+            compliance_option: f2,
+            applicable_for_traffic_direction: f3,
+            applicable_for_traffic_type: f4,
+            places_at_which_applicable: f5,
+            automatically_initiated: f6,
+            for_vehicles_with_characteristics_of: f7,
+            network_management_definition_extension: f8,
+            general_network_management_type: f9,
+            traffic_manually_directed_by: f10,
+            general_network_management_definition_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(919)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.target_location.is_empty() {
+            w.key(2232)?;
+            w.begin_array()?;
+            for v in &self.target_location {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operator_action_definition_extension {
+            w.key(2292)?;
+            w.extension(v)?;
+        }
+        match &self.compliance_option {
+            Some(v) => {
+                w.key(423)?;
+                w.enumeration(826, v.literal())?;
+            }
+            None => w.absent(423, w.missing("complianceOption"))?,
+        }
+        if !self.applicable_for_traffic_direction.is_empty() {
+            w.key(247)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_direction {
+                w.item()?;
+                w.enumeration(503, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.applicable_for_traffic_type.is_empty() {
+            w.key(248)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_type {
+                w.item()?;
+                w.enumeration(900, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.places_at_which_applicable.is_empty() {
+            w.key(1593)?;
+            w.begin_array()?;
+            for v in &self.places_at_which_applicable {
+                w.item()?;
+                w.enumeration(868, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.automatically_initiated {
+            w.key(271)?;
+            w.boolean(*v)?;
+        }
+        if !self.for_vehicles_with_characteristics_of.is_empty() {
+            w.key(857)?;
+            w.begin_array()?;
+            for v in &self.for_vehicles_with_characteristics_of {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.network_management_definition_extension {
+            w.key(2288)?;
+            w.extension(v)?;
+        }
+        match &self.general_network_management_type {
+            Some(v) => {
+                w.key(914)?;
+                w.enumeration(845, v.literal())?;
+            }
+            None => w.absent(914, w.missing("generalNetworkManagementType"))?,
+        }
+        if let Some(v) = &self.traffic_manually_directed_by {
+            w.key(2359)?;
+            w.enumeration(867, v.literal())?;
+        }
+        if let Some(v) = &self.general_network_management_definition_extension {
+            w.key(2281)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:ImpactKind`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ImpactKind {
@@ -955,10 +1790,10 @@ pub struct ImpactKind {
 }
 
 impl ImpactKind {
-    const FIELDS: &'static [u32] = &[0x100705, 0x10087a, 0x1004c7];
+    const FIELDS: &'static [u32] = &[0x14072e, 0x1408b6, 0x1404e7];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1000de);
+        r.expect_type(0x1400e4);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -966,9 +1801,9 @@ impl ImpactKind {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100705 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 1797); }
-                    0x10087a => { let v = Some(sit::Impact::read(r)?); r.set(&mut e1, v.map(Box::new), 2170); }
-                    0x1004c7 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1223); }
+                    0x14072e => { let v = r.value::<bool>()?; r.set(&mut e0, v, 1838); }
+                    0x1408b6 => { let v = Some(sit::Impact::read(r)?); r.set(&mut e1, v.map(Box::new), 2230); }
+                    0x1404e7 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1255); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -999,6 +1834,64 @@ impl ImpactKind {
     }
 }
 
+impl ImpactKind {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                312 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                975 => if r.first(&mut seen[1])? { f1 = sit::Impact::read_json(r)?.map(Box::new); },
+                2282 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            capacity_reduced: f0,
+            impact_detail: f1,
+            impact_kind_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(920)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.capacity_reduced {
+            w.key(312)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.impact_detail {
+            w.key(975)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.impact_kind_extension {
+            w.key(2282)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:MeasureByReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct MeasureByReference {
@@ -1013,10 +1906,10 @@ pub struct MeasureByReference {
 }
 
 impl MeasureByReference {
-    const FIELDS: &'static [u32] = &[0x100c4e, 0x1004ed, 0x100914, 0x1004eb];
+    const FIELDS: &'static [u32] = &[0x140caf, 0x14050f, 0x140953, 0x14050d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100103);
+        r.expect_type(0x14010b);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1025,10 +1918,10 @@ impl MeasureByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e0, v, 3150); }
-                    0x1004ed => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1261); }
-                    0x100914 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2324); }
-                    0x1004eb => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1259); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e0, v, 3247); }
+                    0x14050f => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1295); }
+                    0x140953 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2387); }
+                    0x14050d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1293); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1037,8 +1930,8 @@ impl MeasureByReference {
                 break;
             }
         }
-        r.required(&e0, 3150);
-        r.required(&e2, 2324);
+        r.required(&e0, 3247);
+        r.required(&e2, 2387);
         let v = Self {
             version_time: e0,
             measure_extension: e1,
@@ -1066,6 +1959,79 @@ impl MeasureByReference {
         }
         if let Some(v) = &self.measure_by_reference_extension { w.extension("tmp:_measureByReferenceExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl MeasureByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2580 => if r.first(&mut seen[0])? { f0 = r.date_time()?; },
+                2287 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1288 => if r.first(&mut seen[2])? { f2 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                2284 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2580);
+        r.required(&f2, 1288);
+        Ok(Self {
+            version_time: f0,
+            measure_extension: f1,
+            measure_reference: f2,
+            measure_by_reference_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(921)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.measure_extension {
+            w.key(2287)?;
+            w.extension(v)?;
+        }
+        match &self.measure_reference {
+            Some(v) => {
+                w.key(1288)?;
+                v.write_json(w, Some("MeasureDefinition"))?;
+            }
+            None => w.absent(1288, w.missing("measureReference"))?,
+        }
+        if let Some(v) = &self.measure_by_reference_extension {
+            w.key(2284)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -1099,12 +2065,12 @@ pub struct MeasureDefinition {
 }
 
 impl MeasureDefinition {
-    const FIELDS: &'static [u32] = &[0x100c4e, 0x1004ed, 0x100804, 0x100777, 0x100aef, 0x100b38, 0x100674, 0x100aec, 0x10067b, 0x1004ec];
+    const FIELDS: &'static [u32] = &[0x140caf, 0x14050f, 0x14083f, 0x1407a8, 0x140b39, 0x140b92, 0x14069d, 0x140b36, 0x1406a4, 0x14050e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100104);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x14010c);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1119,16 +2085,16 @@ impl MeasureDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e0, v, 3150); }
-                    0x1004ed => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1261); }
-                    0x100804 => { let v = r.string()?; r.set(&mut e2, v, 2052); }
-                    0x100777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x100aef => { let v = Some(com::Reference::read(r)?); r.set(&mut e4, v.map(Box::new), 2799); }
-                    0x100b38 => { let v = r.string()?; r.set(&mut e5, v, 2872); }
-                    0x100674 => { let v = Action::read(r)?; e6.extend(v); }
-                    0x100aec => { let v = Some(ResponseType::read(r)?); r.set(&mut e7, v.map(Box::new), 2796); }
-                    0x10067b => { let v = Some(ActivationConditions::read(r)?); r.set(&mut e8, v.map(Box::new), 1659); }
-                    0x1004ec => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1260); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e0, v, 3247); }
+                    0x14050f => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1295); }
+                    0x14083f => { let v = r.string()?; r.set(&mut e2, v, 2111); }
+                    0x1407a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x140b39 => { let v = Some(com::Reference::read(r)?); r.set(&mut e4, v.map(Box::new), 2873); }
+                    0x140b92 => { let v = r.string()?; r.set(&mut e5, v, 2962); }
+                    0x14069d => { let v = Action::read(r)?; e6.extend(v); }
+                    0x140b36 => { let v = Some(ResponseType::read(r)?); r.set(&mut e7, v.map(Box::new), 2870); }
+                    0x1406a4 => { let v = Some(ActivationConditions::read(r)?); r.set(&mut e8, v.map(Box::new), 1700); }
+                    0x14050e => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1294); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1137,9 +2103,9 @@ impl MeasureDefinition {
                 break;
             }
         }
-        r.required(&e0, 3150);
-        r.required(&e3, 1911);
-        r.required(&e4, 2799);
+        r.required(&e0, 3247);
+        r.required(&e3, 1960);
+        r.required(&e4, 2873);
         let v = Self {
             id: a0,
             version: a1,
@@ -1196,6 +2162,153 @@ impl MeasureDefinition {
     }
 }
 
+impl MeasureDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = Vec::new();
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                2580 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                2287 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                738 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1896 => if r.first(&mut seen[6])? { f6 = com::Reference::read_json(r)?.map(Box::new); },
+                2049 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                33 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Action::read_json(r)? { f8.push(v); } } },
+                1893 => if r.first(&mut seen[9])? { f9 = ResponseType::read_json(r)?.map(Box::new); },
+                40 => if r.first(&mut seen[10])? { f10 = ActivationConditions::read_json(r)?.map(Box::new); },
+                2286 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 2580);
+        r.required(&f5, 545);
+        r.required(&f6, 1896);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            version_time: f2,
+            measure_extension: f3,
+            external_identification: f4,
+            description: f5,
+            responsible_road_operator: f6,
+            short_name: f7,
+            action: f8,
+            response_type: f9,
+            activation_conditions: f10,
+            measure_definition_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(922)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.measure_extension {
+            w.key(2287)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.external_identification {
+            w.key(738)?;
+            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+        }
+        match &self.description {
+            Some(v) => {
+                w.key(545)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(545, w.missing("description"))?,
+        }
+        match &self.responsible_road_operator {
+            Some(v) => {
+                w.key(1896)?;
+                v.write_json(w, Some("Organisation"))?;
+            }
+            None => w.absent(1896, w.missing("responsibleRoadOperator"))?,
+        }
+        if let Some(v) = &self.short_name {
+            w.key(2049)?;
+            w.max_len("shortName", v, 1024)?; w.string(v)?;
+        }
+        w.count("action", self.action.len(), 1, usize::MAX)?;
+        if !self.action.is_empty() {
+            w.key(33)?;
+            w.begin_array()?;
+            for v in &self.action {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.response_type {
+            w.key(1893)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.activation_conditions {
+            w.key(40)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.measure_definition_extension {
+            w.key(2286)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:NonPredefinedAction`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NonPredefinedAction {
@@ -1214,10 +2327,10 @@ pub struct NonPredefinedAction {
 }
 
 impl NonPredefinedAction {
-    const FIELDS: &'static [u32] = &[0x100960, 0x100961, 0x100676, 0x100890, 0x1009d3, 0x100500];
+    const FIELDS: &'static [u32] = &[0x1409a3, 0x1409a4, 0x14069f, 0x1408ce, 0x140a18, 0x140523];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10011b);
+        r.expect_type(0x140124);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1228,12 +2341,12 @@ impl NonPredefinedAction {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100960 => { let v = r.multilingual()?; r.set(&mut e0, v, 2400); }
-                    0x100961 => { let v = r.string()?; r.set(&mut e1, v, 2401); }
-                    0x100676 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 1654); }
-                    0x100890 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2192); }
-                    0x1009d3 => { let v = OperatorActionDefinition::read(r)?; r.set(&mut e4, v, 2515); }
-                    0x100500 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1280); }
+                    0x1409a3 => { let v = r.multilingual()?; r.set(&mut e0, v, 2467); }
+                    0x1409a4 => { let v = r.string()?; r.set(&mut e1, v, 2468); }
+                    0x14069f => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 1695); }
+                    0x1408ce => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2254); }
+                    0x140a18 => { let v = OperatorActionDefinition::read(r)?; r.set(&mut e4, v, 2584); }
+                    0x140523 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1315); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1242,8 +2355,8 @@ impl NonPredefinedAction {
                 break;
             }
         }
-        r.required(&e0, 2400);
-        r.required(&e3, 2192);
+        r.required(&e0, 2467);
+        r.required(&e3, 2254);
         let v = Self {
             non_predefined_action_description: e0,
             non_predefined_action_id: e1,
@@ -1275,6 +2388,93 @@ impl NonPredefinedAction {
         if let Some(v) = &self.operator_action_definition { v.write(w, "tmp:operatorActionDefinition")?; }
         if let Some(v) = &self.non_predefined_action_extension { w.extension("tmp:_nonPredefinedActionExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl NonPredefinedAction {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1367 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1368 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                35 => if r.first(&mut seen[2])? { f2 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1001 => if r.first(&mut seen[3])? { f3 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                1484 => if r.first(&mut seen[4])? { f4 = OperatorActionDefinition::read_json(r)?; },
+                2289 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1367);
+        r.required(&f3, 1001);
+        Ok(Self {
+            non_predefined_action_description: f0,
+            non_predefined_action_id: f1,
+            action_implementing_situation_record: f2,
+            international_identifier: f3,
+            operator_action_definition: f4,
+            non_predefined_action_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(924)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.non_predefined_action_description {
+            Some(v) => {
+                w.key(1367)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(1367, w.missing("nonPredefinedActionDescription"))?,
+        }
+        if let Some(v) = &self.non_predefined_action_id {
+            w.key(1368)?;
+            w.max_len("nonPredefinedActionId", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.action_implementing_situation_record {
+            w.key(35)?;
+            v.write_json(w, Some("SituationRecord"))?;
+        }
+        match &self.international_identifier {
+            Some(v) => {
+                w.key(1001)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1001, w.missing("internationalIdentifier"))?,
+        }
+        if let Some(v) = &self.operator_action_definition {
+            w.key(1484)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.non_predefined_action_extension {
+            w.key(2289)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -1316,12 +2516,12 @@ pub struct NonPredefinedTmplanOperation {
 }
 
 impl NonPredefinedTmplanOperation {
-    const FIELDS: &'static [u32] = &[0x10074d, 0x1007fd, 0x100b73, 0x100b79, 0x100c4e, 0x100894, 0x100857, 0x1005f9, 0x100963, 0x100964, 0x100965, 0x100966, 0x10095f, 0x100502];
+    const FIELDS: &'static [u32] = &[0x14077c, 0x140837, 0x140bce, 0x140bd4, 0x140caf, 0x1408d2, 0x140893, 0x140622, 0x1409a6, 0x1409a7, 0x1409a8, 0x1409a9, 0x1409a2, 0x140525];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10011d);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x140126);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1340,20 +2540,20 @@ impl NonPredefinedTmplanOperation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10074d => { let v = r.date_time()?; r.set(&mut e0, v, 1869); }
-                    0x1007fd => { let v = r.date_time()?; r.set(&mut e1, v, 2045); }
-                    0x100b73 => { let v = r.enumeration::<TmplanOperationStatusEnum>()?; r.set(&mut e2, v, 2931); }
-                    0x100b79 => { let v = r.multilingual()?; r.set(&mut e3, v, 2937); }
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e4, v, 3150); }
-                    0x100894 => { let v = r.value::<f32>()?; r.set(&mut e5, v, 2196); }
-                    0x100857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2135); }
-                    0x1005f9 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1529); }
-                    0x100963 => { let v = r.multilingual()?; r.set(&mut e8, v, 2403); }
-                    0x100964 => { let v = r.string()?; r.set(&mut e9, v, 2404); }
-                    0x100965 => { let v = r.multilingual()?; r.set(&mut e10, v, 2405); }
-                    0x100966 => { let v = r.string()?; r.set(&mut e11, v, 2406); }
-                    0x10095f => { let v = Some(NonPredefinedAction::read(r)?); e12.extend(v); }
-                    0x100502 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1282); }
+                    0x14077c => { let v = r.date_time()?; r.set(&mut e0, v, 1916); }
+                    0x140837 => { let v = r.date_time()?; r.set(&mut e1, v, 2103); }
+                    0x140bce => { let v = r.enumeration::<TmplanOperationStatusEnum>()?; r.set(&mut e2, v, 3022); }
+                    0x140bd4 => { let v = r.multilingual()?; r.set(&mut e3, v, 3028); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e4, v, 3247); }
+                    0x1408d2 => { let v = r.value::<f32>()?; r.set(&mut e5, v, 2258); }
+                    0x140893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2195); }
+                    0x140622 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1570); }
+                    0x1409a6 => { let v = r.multilingual()?; r.set(&mut e8, v, 2470); }
+                    0x1409a7 => { let v = r.string()?; r.set(&mut e9, v, 2471); }
+                    0x1409a8 => { let v = r.multilingual()?; r.set(&mut e10, v, 2472); }
+                    0x1409a9 => { let v = r.string()?; r.set(&mut e11, v, 2473); }
+                    0x1409a2 => { let v = Some(NonPredefinedAction::read(r)?); e12.extend(v); }
+                    0x140525 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1317); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1362,12 +2562,12 @@ impl NonPredefinedTmplanOperation {
                 break;
             }
         }
-        r.required(&e0, 1869);
-        r.required(&e2, 2931);
-        r.required(&e4, 3150);
-        r.required(&e6, 2135);
-        r.required(&e8, 2403);
-        r.required(&e10, 2405);
+        r.required(&e0, 1916);
+        r.required(&e2, 3022);
+        r.required(&e4, 3247);
+        r.required(&e6, 2195);
+        r.required(&e8, 2470);
+        r.required(&e10, 2472);
         let v = Self {
             id: a0,
             version: a1,
@@ -1441,6 +2641,193 @@ impl NonPredefinedTmplanOperation {
     }
 }
 
+impl NonPredefinedTmplanOperation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 16];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = Vec::new();
+        let mut f15 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                474 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                729 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                2187 => if r.first(&mut seen[4])? { f4 = r.enumeration::<TmplanOperationStatusEnum>()?; },
+                2193 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                2580 => if r.first(&mut seen[6])? { f6 = r.date_time()?; },
+                1005 => if r.first(&mut seen[7])? { f7 = r.number::<f32>()?; },
+                940 => if r.first(&mut seen[8])? { f8 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                2316 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                1370 => if r.first(&mut seen[10])? { f10 = r.multilingual()?; },
+                1371 => if r.first(&mut seen[11])? { f11 = r.string()?; },
+                1372 => if r.first(&mut seen[12])? { f12 = r.multilingual()?; },
+                1373 => if r.first(&mut seen[13])? { f13 = r.string()?; },
+                1366 => if r.first(&mut seen[14])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = NonPredefinedAction::read_json(r)? { f14.push(v); } } },
+                2291 => if r.first(&mut seen[15])? { f15 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 474);
+        r.required(&f4, 2187);
+        r.required(&f6, 2580);
+        r.required(&f8, 940);
+        r.required(&f10, 1370);
+        r.required(&f12, 1372);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            creation_time: f2,
+            expiry_time: f3,
+            status: f4,
+            status_reason: f5,
+            version_time: f6,
+            involved_road_operator_consensus_rate: f7,
+            header_information: f8,
+            tmplan_operation_extension: f9,
+            non_predefined_scenario_description: f10,
+            non_predefined_scenario_id: f11,
+            non_predefined_strategy_description: f12,
+            non_predefined_strategy_id: f13,
+            non_predefined_action: f14,
+            non_predefined_tmplan_operation_extension: f15,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(925)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.creation_time {
+            Some(v) => {
+                w.key(474)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(474, w.missing("creationTime"))?,
+        }
+        if let Some(v) = &self.expiry_time {
+            w.key(729)?;
+            w.date_time(v)?;
+        }
+        match &self.status {
+            Some(v) => {
+                w.key(2187)?;
+                w.enumeration(948, v.literal())?;
+            }
+            None => w.absent(2187, w.missing("status"))?,
+        }
+        if let Some(v) = &self.status_reason {
+            w.key(2193)?;
+            w.multilingual(v)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.involved_road_operator_consensus_rate {
+            w.key(1005)?;
+            w.float32(*v)?;
+        }
+        match &self.header_information {
+            Some(v) => {
+                w.key(940)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(940, w.missing("headerInformation"))?,
+        }
+        if let Some(v) = &self.tmplan_operation_extension {
+            w.key(2316)?;
+            w.extension(v)?;
+        }
+        match &self.non_predefined_scenario_description {
+            Some(v) => {
+                w.key(1370)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(1370, w.missing("nonPredefinedScenarioDescription"))?,
+        }
+        if let Some(v) = &self.non_predefined_scenario_id {
+            w.key(1371)?;
+            w.max_len("nonPredefinedScenarioId", v, 1024)?; w.string(v)?;
+        }
+        match &self.non_predefined_strategy_description {
+            Some(v) => {
+                w.key(1372)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(1372, w.missing("nonPredefinedStrategyDescription"))?,
+        }
+        if let Some(v) = &self.non_predefined_strategy_id {
+            w.key(1373)?;
+            w.max_len("nonPredefinedStrategyId", v, 1024)?; w.string(v)?;
+        }
+        w.count("nonPredefinedAction", self.non_predefined_action.len(), 1, usize::MAX)?;
+        if !self.non_predefined_action.is_empty() {
+            w.key(1366)?;
+            w.begin_array()?;
+            for v in &self.non_predefined_action {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.non_predefined_tmplan_operation_extension {
+            w.key(2291)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:OperatorActionExtendedTmplan`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OperatorActionExtendedTmplan {
@@ -1449,16 +2836,16 @@ pub struct OperatorActionExtendedTmplan {
 }
 
 impl OperatorActionExtendedTmplan {
-    const FIELDS: &'static [u32] = &[0x100bc0];
+    const FIELDS: &'static [u32] = &[0x140c1f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10014f);
+        r.expect_type(0x140158);
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100bc0 => { let v = Some(TmplanImplementingAction::read(r)?); r.set(&mut e0, v.map(Box::new), 3008); }
+                    0x140c1f => { let v = Some(TmplanImplementingAction::read(r)?); r.set(&mut e0, v.map(Box::new), 3103); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1485,6 +2872,50 @@ impl OperatorActionExtendedTmplan {
     }
 }
 
+impl OperatorActionExtendedTmplan {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2328 => if r.first(&mut seen[0])? { f0 = TmplanImplementingAction::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            tmplan_implementing_action: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(927)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.tmplan_implementing_action {
+            w.key(2328)?;
+            v.write_json(w, None)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:PredefinedAction`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PredefinedAction {
@@ -1497,10 +2928,10 @@ pub struct PredefinedAction {
 }
 
 impl PredefinedAction {
-    const FIELDS: &'static [u32] = &[0x100676, 0x100a5d, 0x10056d];
+    const FIELDS: &'static [u32] = &[0x14069f, 0x140aa3, 0x140590];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10018a);
+        r.expect_type(0x140193);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1508,9 +2939,9 @@ impl PredefinedAction {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100676 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 1654); }
-                    0x100a5d => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2653); }
-                    0x10056d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1389); }
+                    0x14069f => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 1695); }
+                    0x140aa3 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2723); }
+                    0x140590 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1424); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1519,7 +2950,7 @@ impl PredefinedAction {
                 break;
             }
         }
-        r.required(&e1, 2653);
+        r.required(&e1, 2723);
         let v = Self {
             action_implementing_situation_record: e0,
             predefined_action_reference: e1,
@@ -1545,6 +2976,68 @@ impl PredefinedAction {
     }
 }
 
+impl PredefinedAction {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                35 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1621 => if r.first(&mut seen[1])? { f1 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                2293 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1621);
+        Ok(Self {
+            action_implementing_situation_record: f0,
+            predefined_action_reference: f1,
+            predefined_action_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(928)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.action_implementing_situation_record {
+            w.key(35)?;
+            v.write_json(w, Some("SituationRecord"))?;
+        }
+        match &self.predefined_action_reference {
+            Some(v) => {
+                w.key(1621)?;
+                v.write_json(w, Some("ActionDefinition"))?;
+            }
+            None => w.absent(1621, w.missing("predefinedActionReference"))?,
+        }
+        if let Some(v) = &self.predefined_action_extension {
+            w.key(2293)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:PredefinedMeasureSelected`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PredefinedMeasureSelected {
@@ -1557,10 +3050,10 @@ pub struct PredefinedMeasureSelected {
 }
 
 impl PredefinedMeasureSelected {
-    const FIELDS: &'static [u32] = &[0x100a68, 0x100a5c, 0x100576];
+    const FIELDS: &'static [u32] = &[0x140aae, 0x140aa2, 0x140599];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100193);
+        r.expect_type(0x14019c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -1568,9 +3061,9 @@ impl PredefinedMeasureSelected {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100a68 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2664); }
-                    0x100a5c => { let v = Some(PredefinedAction::read(r)?); e1.extend(v); }
-                    0x100576 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1398); }
+                    0x140aae => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2734); }
+                    0x140aa2 => { let v = Some(PredefinedAction::read(r)?); e1.extend(v); }
+                    0x140599 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1433); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1579,7 +3072,7 @@ impl PredefinedMeasureSelected {
                 break;
             }
         }
-        r.required(&e0, 2664);
+        r.required(&e0, 2734);
         let v = Self {
             predefined_measure_reference: e0,
             predefined_action: e1,
@@ -1602,6 +3095,73 @@ impl PredefinedMeasureSelected {
         for v in &self.predefined_action { v.write(w, "tmp:predefinedAction", "", "")?; }
         if let Some(v) = &self.predefined_measure_selected_extension { w.extension("tmp:_predefinedMeasureSelectedExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl PredefinedMeasureSelected {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1632 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1620 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = PredefinedAction::read_json(r)? { f1.push(v); } } },
+                2294 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1632);
+        Ok(Self {
+            predefined_measure_reference: f0,
+            predefined_action: f1,
+            predefined_measure_selected_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(929)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.predefined_measure_reference {
+            Some(v) => {
+                w.key(1632)?;
+                v.write_json(w, Some("MeasureDefinition"))?;
+            }
+            None => w.absent(1632, w.missing("predefinedMeasureReference"))?,
+        }
+        if !self.predefined_action.is_empty() {
+            w.key(1620)?;
+            w.begin_array()?;
+            for v in &self.predefined_action {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.predefined_measure_selected_extension {
+            w.key(2294)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -1643,12 +3203,12 @@ pub struct PredefinedTmplanOperation {
 }
 
 impl PredefinedTmplanOperation {
-    const FIELDS: &'static [u32] = &[0x10074d, 0x1007fd, 0x100b73, 0x100b79, 0x100c4e, 0x100894, 0x100857, 0x1005f9, 0x100bc3, 0x100a6a, 0x100a6b, 0x100a69, 0x100a7e, 0x100577];
+    const FIELDS: &'static [u32] = &[0x14077c, 0x140837, 0x140bce, 0x140bd4, 0x140caf, 0x1408d2, 0x140893, 0x140622, 0x140c22, 0x140ab0, 0x140ab2, 0x140aaf, 0x140ac5, 0x14059a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100194);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x14019d);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1667,20 +3227,20 @@ impl PredefinedTmplanOperation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10074d => { let v = r.date_time()?; r.set(&mut e0, v, 1869); }
-                    0x1007fd => { let v = r.date_time()?; r.set(&mut e1, v, 2045); }
-                    0x100b73 => { let v = r.enumeration::<TmplanOperationStatusEnum>()?; r.set(&mut e2, v, 2931); }
-                    0x100b79 => { let v = r.multilingual()?; r.set(&mut e3, v, 2937); }
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e4, v, 3150); }
-                    0x100894 => { let v = r.value::<f32>()?; r.set(&mut e5, v, 2196); }
-                    0x100857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2135); }
-                    0x1005f9 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1529); }
-                    0x100bc3 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e8, v.map(Box::new), 3011); }
-                    0x100a6a => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e9, v.map(Box::new), 2666); }
-                    0x100a6b => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e10, v.map(Box::new), 2667); }
-                    0x100a69 => { let v = Some(PredefinedMeasureSelected::read(r)?); r.set(&mut e11, v.map(Box::new), 2665); }
-                    0x100a7e => { let v = loc::LocationReference::read(r)?; r.set(&mut e12, v, 2686); }
-                    0x100577 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1399); }
+                    0x14077c => { let v = r.date_time()?; r.set(&mut e0, v, 1916); }
+                    0x140837 => { let v = r.date_time()?; r.set(&mut e1, v, 2103); }
+                    0x140bce => { let v = r.enumeration::<TmplanOperationStatusEnum>()?; r.set(&mut e2, v, 3022); }
+                    0x140bd4 => { let v = r.multilingual()?; r.set(&mut e3, v, 3028); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e4, v, 3247); }
+                    0x1408d2 => { let v = r.value::<f32>()?; r.set(&mut e5, v, 2258); }
+                    0x140893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2195); }
+                    0x140622 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1570); }
+                    0x140c22 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e8, v.map(Box::new), 3106); }
+                    0x140ab0 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e9, v.map(Box::new), 2736); }
+                    0x140ab2 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e10, v.map(Box::new), 2738); }
+                    0x140aaf => { let v = Some(PredefinedMeasureSelected::read(r)?); r.set(&mut e11, v.map(Box::new), 2735); }
+                    0x140ac5 => { let v = loc::LocationReference::read(r)?; r.set(&mut e12, v, 2757); }
+                    0x14059a => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1434); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1689,11 +3249,11 @@ impl PredefinedTmplanOperation {
                 break;
             }
         }
-        r.required(&e0, 1869);
-        r.required(&e2, 2931);
-        r.required(&e4, 3150);
-        r.required(&e6, 2135);
-        r.required(&e8, 3011);
+        r.required(&e0, 1916);
+        r.required(&e2, 3022);
+        r.required(&e4, 3247);
+        r.required(&e6, 2195);
+        r.required(&e8, 3106);
         let v = Self {
             id: a0,
             version: a1,
@@ -1763,6 +3323,183 @@ impl PredefinedTmplanOperation {
     }
 }
 
+impl PredefinedTmplanOperation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 16];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                474 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                729 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                2187 => if r.first(&mut seen[4])? { f4 = r.enumeration::<TmplanOperationStatusEnum>()?; },
+                2193 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                2580 => if r.first(&mut seen[6])? { f6 = r.date_time()?; },
+                1005 => if r.first(&mut seen[7])? { f7 = r.number::<f32>()?; },
+                940 => if r.first(&mut seen[8])? { f8 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                2316 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                2331 => if r.first(&mut seen[10])? { f10 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1634 => if r.first(&mut seen[11])? { f11 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1636 => if r.first(&mut seen[12])? { f12 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1633 => if r.first(&mut seen[13])? { f13 = PredefinedMeasureSelected::read_json(r)?.map(Box::new); },
+                1757 => if r.first(&mut seen[14])? { f14 = loc::LocationReference::read_json(r)?; },
+                2296 => if r.first(&mut seen[15])? { f15 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 474);
+        r.required(&f4, 2187);
+        r.required(&f6, 2580);
+        r.required(&f8, 940);
+        r.required(&f10, 2331);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            creation_time: f2,
+            expiry_time: f3,
+            status: f4,
+            status_reason: f5,
+            version_time: f6,
+            involved_road_operator_consensus_rate: f7,
+            header_information: f8,
+            tmplan_operation_extension: f9,
+            tmplan_table_reference: f10,
+            predefined_scenario_reference: f11,
+            predefined_strategy_reference: f12,
+            predefined_measure_selected: f13,
+            problem_location_override: f14,
+            predefined_tmplan_operation_extension: f15,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(930)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.creation_time {
+            Some(v) => {
+                w.key(474)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(474, w.missing("creationTime"))?,
+        }
+        if let Some(v) = &self.expiry_time {
+            w.key(729)?;
+            w.date_time(v)?;
+        }
+        match &self.status {
+            Some(v) => {
+                w.key(2187)?;
+                w.enumeration(948, v.literal())?;
+            }
+            None => w.absent(2187, w.missing("status"))?,
+        }
+        if let Some(v) = &self.status_reason {
+            w.key(2193)?;
+            w.multilingual(v)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.involved_road_operator_consensus_rate {
+            w.key(1005)?;
+            w.float32(*v)?;
+        }
+        match &self.header_information {
+            Some(v) => {
+                w.key(940)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(940, w.missing("headerInformation"))?,
+        }
+        if let Some(v) = &self.tmplan_operation_extension {
+            w.key(2316)?;
+            w.extension(v)?;
+        }
+        match &self.tmplan_table_reference {
+            Some(v) => {
+                w.key(2331)?;
+                v.write_json(w, Some("TmplanTable"))?;
+            }
+            None => w.absent(2331, w.missing("tmplanTableReference"))?,
+        }
+        if let Some(v) = &self.predefined_scenario_reference {
+            w.key(1634)?;
+            v.write_json(w, Some("Scenario"))?;
+        }
+        if let Some(v) = &self.predefined_strategy_reference {
+            w.key(1636)?;
+            v.write_json(w, Some("Strategy"))?;
+        }
+        if let Some(v) = &self.predefined_measure_selected {
+            w.key(1633)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.problem_location_override {
+            w.key(1757)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.predefined_tmplan_operation_extension {
+            w.key(2296)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:ReroutingManagementDefinition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ReroutingManagementDefinition {
@@ -1807,10 +3544,10 @@ pub struct ReroutingManagementDefinition {
 }
 
 impl ReroutingManagementDefinition {
-    const FIELDS: &'static [u32] = &[0x100b9e, 0x100532, 0x10072b, 0x1006c3, 0x1006c4, 0x100a41, 0x1006db, 0x100827, 0x1004fc, 0x100949, 0x100bfe, 0x1006f5, 0x100a71, 0x100b15, 0x100b16, 0x100b14, 0x1009e3, 0x1006b2, 0x10059b];
+    const FIELDS: &'static [u32] = &[0x140bfd, 0x140555, 0x140759, 0x1406ec, 0x1406ed, 0x140a87, 0x140704, 0x140863, 0x14051f, 0x14098b, 0x140c5d, 0x14071e, 0x140ab8, 0x140b62, 0x140b63, 0x140b61, 0x140a28, 0x1406db, 0x1405be];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001ba);
+        r.expect_type(0x1401c3);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -1834,25 +3571,25 @@ impl ReroutingManagementDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b9e => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
-                    0x100532 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1330); }
-                    0x10072b => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1835); }
-                    0x1006c3 => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
-                    0x1006c4 => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
-                    0x100a41 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
-                    0x1006db => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1755); }
-                    0x100827 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
-                    0x1004fc => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1276); }
-                    0x100949 => { let v = r.multilingual()?; r.set(&mut e9, v, 2377); }
-                    0x100bfe => { let v = r.enumeration::<rer::ReroutingTypeEnum>()?; r.set(&mut e10, v, 3070); }
-                    0x1006f5 => { let v = r.value::<bool>()?; r.set(&mut e11, v, 1781); }
-                    0x100a71 => { let v = r.value::<bool>()?; r.set(&mut e12, v, 2673); }
-                    0x100b15 => { let v = loc::Location::read(r)?; e13.extend(v); }
-                    0x100b16 => { let v = loc::Location::read(r)?; e14.extend(v); }
-                    0x100b14 => { let v = loc::Location::read(r)?; e15.extend(v); }
-                    0x1009e3 => { let v = Some(rer::RouteDescription::read(r)?); r.set(&mut e16, v.map(Box::new), 2531); }
-                    0x1006b2 => { let v = Some(rer::RouteDescription::read(r)?); e17.extend(v); }
-                    0x10059b => { let v = r.raw()?; r.set(&mut e18, v.map(Box::new), 1435); }
+                    0x140bfd => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
+                    0x140555 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1365); }
+                    0x140759 => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1881); }
+                    0x1406ec => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
+                    0x1406ed => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
+                    0x140a87 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
+                    0x140704 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1796); }
+                    0x140863 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
+                    0x14051f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1311); }
+                    0x14098b => { let v = r.multilingual()?; r.set(&mut e9, v, 2443); }
+                    0x140c5d => { let v = r.enumeration::<rer::ReroutingTypeEnum>()?; r.set(&mut e10, v, 3165); }
+                    0x14071e => { let v = r.value::<bool>()?; r.set(&mut e11, v, 1822); }
+                    0x140ab8 => { let v = r.value::<bool>()?; r.set(&mut e12, v, 2744); }
+                    0x140b62 => { let v = loc::Location::read(r)?; e13.extend(v); }
+                    0x140b63 => { let v = loc::Location::read(r)?; e14.extend(v); }
+                    0x140b61 => { let v = loc::Location::read(r)?; e15.extend(v); }
+                    0x140a28 => { let v = Some(rer::RouteDescription::read(r)?); r.set(&mut e16, v.map(Box::new), 2600); }
+                    0x1406db => { let v = Some(rer::RouteDescription::read(r)?); e17.extend(v); }
+                    0x1405be => { let v = r.raw()?; r.set(&mut e18, v.map(Box::new), 1470); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1861,7 +3598,7 @@ impl ReroutingManagementDefinition {
                 break;
             }
         }
-        r.required(&e2, 1835);
+        r.required(&e2, 1881);
         let v = Self {
             target_location: e0,
             operator_action_definition_extension: e1,
@@ -1919,6 +3656,225 @@ impl ReroutingManagementDefinition {
     }
 }
 
+impl ReroutingManagementDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 19];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = Vec::new();
+        let mut f14 = Vec::new();
+        let mut f15 = Vec::new();
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2232 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::LocationReference::read_json(r)? { f0.push(v); } } },
+                2292 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                423 => if r.first(&mut seen[2])? { f2 = r.enumeration::<sit::ComplianceOptionEnum>()?; },
+                247 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<loc::DirectionEnum>()? { f3.push(v); } } },
+                248 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::TrafficTypeEnum>()? { f4.push(v); } } },
+                1593 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::PlacesEnum>()? { f5.push(v); } } },
+                271 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                857 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f7.push(v); } } },
+                2288 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                1345 => if r.first(&mut seen[9])? { f9 = r.multilingual()?; },
+                2495 => if r.first(&mut seen[10])? { f10 = r.enumeration::<rer::ReroutingTypeEnum>()?; },
+                297 => if r.first(&mut seen[11])? { f11 = r.boolean()?; },
+                1642 => if r.first(&mut seen[12])? { f12 = r.boolean()?; },
+                2001 => if r.first(&mut seen[13])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::Location::read_json(r)? { f13.push(v); } } },
+                2002 => if r.first(&mut seen[14])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::Location::read_json(r)? { f14.push(v); } } },
+                2000 => if r.first(&mut seen[15])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::Location::read_json(r)? { f15.push(v); } } },
+                1499 => if r.first(&mut seen[16])? { f16 = rer::RouteDescription::read_json(r)?.map(Box::new); },
+                230 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = rer::RouteDescription::read_json(r)? { f17.push(v); } } },
+                2298 => if r.first(&mut seen[18])? { f18 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 423);
+        Ok(Self {
+            target_location: f0,
+            operator_action_definition_extension: f1,
+            compliance_option: f2,
+            applicable_for_traffic_direction: f3,
+            applicable_for_traffic_type: f4,
+            places_at_which_applicable: f5,
+            automatically_initiated: f6,
+            for_vehicles_with_characteristics_of: f7,
+            network_management_definition_extension: f8,
+            name: f9,
+            r#type: f10,
+            binding_traffic_regulation: f11,
+            preventive_measure: f12,
+            routing_origin: f13,
+            routing_through: f14,
+            routing_destination: f15,
+            original_route: f16,
+            alternative_route: f17,
+            rerouting_management_definition_extension: f18,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(931)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.target_location.is_empty() {
+            w.key(2232)?;
+            w.begin_array()?;
+            for v in &self.target_location {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operator_action_definition_extension {
+            w.key(2292)?;
+            w.extension(v)?;
+        }
+        match &self.compliance_option {
+            Some(v) => {
+                w.key(423)?;
+                w.enumeration(826, v.literal())?;
+            }
+            None => w.absent(423, w.missing("complianceOption"))?,
+        }
+        if !self.applicable_for_traffic_direction.is_empty() {
+            w.key(247)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_direction {
+                w.item()?;
+                w.enumeration(503, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.applicable_for_traffic_type.is_empty() {
+            w.key(248)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_type {
+                w.item()?;
+                w.enumeration(900, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.places_at_which_applicable.is_empty() {
+            w.key(1593)?;
+            w.begin_array()?;
+            for v in &self.places_at_which_applicable {
+                w.item()?;
+                w.enumeration(868, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.automatically_initiated {
+            w.key(271)?;
+            w.boolean(*v)?;
+        }
+        if !self.for_vehicles_with_characteristics_of.is_empty() {
+            w.key(857)?;
+            w.begin_array()?;
+            for v in &self.for_vehicles_with_characteristics_of {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.network_management_definition_extension {
+            w.key(2288)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.r#type {
+            w.key(2495)?;
+            w.enumeration(754, v.literal())?;
+        }
+        if let Some(v) = &self.binding_traffic_regulation {
+            w.key(297)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.preventive_measure {
+            w.key(1642)?;
+            w.boolean(*v)?;
+        }
+        if !self.routing_origin.is_empty() {
+            w.key(2001)?;
+            w.begin_array()?;
+            for v in &self.routing_origin {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.routing_through.is_empty() {
+            w.key(2002)?;
+            w.begin_array()?;
+            for v in &self.routing_through {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.routing_destination.is_empty() {
+            w.key(2000)?;
+            w.begin_array()?;
+            for v in &self.routing_destination {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.original_route {
+            w.key(1499)?;
+            v.write_json(w, None)?;
+        }
+        if !self.alternative_route.is_empty() {
+            w.key(230)?;
+            w.begin_array()?;
+            for v in &self.alternative_route {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rerouting_management_definition_extension {
+            w.key(2298)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:ResponseType`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ResponseType {
@@ -1931,10 +3887,10 @@ pub struct ResponseType {
 }
 
 impl ResponseType {
-    const FIELDS: &'static [u32] = &[0x1007b7, 0x100b69, 0x10059d];
+    const FIELDS: &'static [u32] = &[0x1407e9, 0x140bc3, 0x1405c0];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001bc);
+        r.expect_type(0x1401c5);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1942,9 +3898,9 @@ impl ResponseType {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x1007b7 => { let v = r.enumeration::<ResponseEffectTypeEnum>()?; r.set(&mut e0, v, 1975); }
-                    0x100b69 => { let v = r.enumeration::<ResponseStageEnum>()?; r.set(&mut e1, v, 2921); }
-                    0x10059d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1437); }
+                    0x1407e9 => { let v = r.enumeration::<ResponseEffectTypeEnum>()?; r.set(&mut e0, v, 2025); }
+                    0x140bc3 => { let v = r.enumeration::<ResponseStageEnum>()?; r.set(&mut e1, v, 3011); }
+                    0x1405c0 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1472); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1953,7 +3909,7 @@ impl ResponseType {
                 break;
             }
         }
-        r.required(&e0, 1975);
+        r.required(&e0, 2025);
         let v = Self {
             effect: e0,
             stage: e1,
@@ -1976,6 +3932,68 @@ impl ResponseType {
         if let Some(v) = &self.stage { w.enumeration("tmp:stage", v.literal())?; }
         if let Some(v) = &self.response_type_extension { w.extension("tmp:_responseTypeExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl ResponseType {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                610 => if r.first(&mut seen[0])? { f0 = r.enumeration::<ResponseEffectTypeEnum>()?; },
+                2176 => if r.first(&mut seen[1])? { f1 = r.enumeration::<ResponseStageEnum>()?; },
+                2299 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 610);
+        Ok(Self {
+            effect: f0,
+            stage: f1,
+            response_type_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(934)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.effect {
+            Some(v) => {
+                w.key(610)?;
+                w.enumeration(932, v.literal())?;
+            }
+            None => w.absent(610, w.missing("effect"))?,
+        }
+        if let Some(v) = &self.stage {
+            w.key(2176)?;
+            w.enumeration(933, v.literal())?;
+        }
+        if let Some(v) = &self.response_type_extension {
+            w.key(2299)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -2009,10 +4027,10 @@ pub struct RoadOrCarriagewayOrLaneManagementDefinition {
 }
 
 impl RoadOrCarriagewayOrLaneManagementDefinition {
-    const FIELDS: &'static [u32] = &[0x100b9e, 0x100532, 0x10072b, 0x1006c3, 0x1006c4, 0x100a41, 0x1006db, 0x100827, 0x1004fc, 0x100afb, 0x100935, 0x1005a6];
+    const FIELDS: &'static [u32] = &[0x140bfd, 0x140555, 0x140759, 0x1406ec, 0x1406ed, 0x140a87, 0x140704, 0x140863, 0x14051f, 0x140b48, 0x140977, 0x1405ca];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001c6);
+        r.expect_type(0x1401d0);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -2029,18 +4047,18 @@ impl RoadOrCarriagewayOrLaneManagementDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b9e => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
-                    0x100532 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1330); }
-                    0x10072b => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1835); }
-                    0x1006c3 => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
-                    0x1006c4 => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
-                    0x100a41 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
-                    0x1006db => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1755); }
-                    0x100827 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
-                    0x1004fc => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1276); }
-                    0x100afb => { let v = r.enumeration::<sit::RoadOrCarriagewayOrLaneManagementTypeEnum>()?; r.set(&mut e9, v, 2811); }
-                    0x100935 => { let v = r.value::<u64>()?; r.set(&mut e10, v, 2357); }
-                    0x1005a6 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1446); }
+                    0x140bfd => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
+                    0x140555 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1365); }
+                    0x140759 => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1881); }
+                    0x1406ec => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
+                    0x1406ed => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
+                    0x140a87 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
+                    0x140704 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1796); }
+                    0x140863 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
+                    0x14051f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1311); }
+                    0x140b48 => { let v = r.enumeration::<sit::RoadOrCarriagewayOrLaneManagementTypeEnum>()?; r.set(&mut e9, v, 2888); }
+                    0x140977 => { let v = r.value::<u64>()?; r.set(&mut e10, v, 2423); }
+                    0x1405ca => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1482); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2049,8 +4067,8 @@ impl RoadOrCarriagewayOrLaneManagementDefinition {
                 break;
             }
         }
-        r.required(&e2, 1835);
-        r.required(&e9, 2811);
+        r.required(&e2, 1881);
+        r.required(&e9, 2888);
         let v = Self {
             target_location: e0,
             operator_action_definition_extension: e1,
@@ -2097,6 +4115,160 @@ impl RoadOrCarriagewayOrLaneManagementDefinition {
     }
 }
 
+impl RoadOrCarriagewayOrLaneManagementDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2232 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::LocationReference::read_json(r)? { f0.push(v); } } },
+                2292 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                423 => if r.first(&mut seen[2])? { f2 = r.enumeration::<sit::ComplianceOptionEnum>()?; },
+                247 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<loc::DirectionEnum>()? { f3.push(v); } } },
+                248 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::TrafficTypeEnum>()? { f4.push(v); } } },
+                1593 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::PlacesEnum>()? { f5.push(v); } } },
+                271 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                857 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f7.push(v); } } },
+                2288 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                1974 => if r.first(&mut seen[9])? { f9 = r.enumeration::<sit::RoadOrCarriagewayOrLaneManagementTypeEnum>()?; },
+                1325 => if r.first(&mut seen[10])? { f10 = r.number::<u64>()?; },
+                2301 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 423);
+        r.required(&f9, 1974);
+        Ok(Self {
+            target_location: f0,
+            operator_action_definition_extension: f1,
+            compliance_option: f2,
+            applicable_for_traffic_direction: f3,
+            applicable_for_traffic_type: f4,
+            places_at_which_applicable: f5,
+            automatically_initiated: f6,
+            for_vehicles_with_characteristics_of: f7,
+            network_management_definition_extension: f8,
+            road_or_carriageway_or_lane_management_type: f9,
+            minimum_car_occupancy: f10,
+            road_or_carriageway_or_lane_management_definition_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(935)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.target_location.is_empty() {
+            w.key(2232)?;
+            w.begin_array()?;
+            for v in &self.target_location {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operator_action_definition_extension {
+            w.key(2292)?;
+            w.extension(v)?;
+        }
+        match &self.compliance_option {
+            Some(v) => {
+                w.key(423)?;
+                w.enumeration(826, v.literal())?;
+            }
+            None => w.absent(423, w.missing("complianceOption"))?,
+        }
+        if !self.applicable_for_traffic_direction.is_empty() {
+            w.key(247)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_direction {
+                w.item()?;
+                w.enumeration(503, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.applicable_for_traffic_type.is_empty() {
+            w.key(248)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_type {
+                w.item()?;
+                w.enumeration(900, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.places_at_which_applicable.is_empty() {
+            w.key(1593)?;
+            w.begin_array()?;
+            for v in &self.places_at_which_applicable {
+                w.item()?;
+                w.enumeration(868, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.automatically_initiated {
+            w.key(271)?;
+            w.boolean(*v)?;
+        }
+        if !self.for_vehicles_with_characteristics_of.is_empty() {
+            w.key(857)?;
+            w.begin_array()?;
+            for v in &self.for_vehicles_with_characteristics_of {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.network_management_definition_extension {
+            w.key(2288)?;
+            w.extension(v)?;
+        }
+        match &self.road_or_carriageway_or_lane_management_type {
+            Some(v) => {
+                w.key(1974)?;
+                w.enumeration(880, v.literal())?;
+            }
+            None => w.absent(1974, w.missing("roadOrCarriagewayOrLaneManagementType"))?,
+        }
+        if let Some(v) = &self.minimum_car_occupancy {
+            w.key(1325)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.road_or_carriageway_or_lane_management_definition_extension {
+            w.key(2301)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:RoadsideAssistanceDefinition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RoadsideAssistanceDefinition {
@@ -2111,10 +4283,10 @@ pub struct RoadsideAssistanceDefinition {
 }
 
 impl RoadsideAssistanceDefinition {
-    const FIELDS: &'static [u32] = &[0x100b9e, 0x100532, 0x100b04, 0x1005ad];
+    const FIELDS: &'static [u32] = &[0x140bfd, 0x140555, 0x140b51, 0x1405d1];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001cd);
+        r.expect_type(0x1401d7);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -2123,10 +4295,10 @@ impl RoadsideAssistanceDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b9e => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
-                    0x100532 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1330); }
-                    0x100b04 => { let v = r.enumeration::<sit::RoadsideAssistanceTypeEnum>()?; r.set(&mut e2, v, 2820); }
-                    0x1005ad => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1453); }
+                    0x140bfd => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
+                    0x140555 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1365); }
+                    0x140b51 => { let v = r.enumeration::<sit::RoadsideAssistanceTypeEnum>()?; r.set(&mut e2, v, 2897); }
+                    0x1405d1 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1489); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2135,7 +4307,7 @@ impl RoadsideAssistanceDefinition {
                 break;
             }
         }
-        r.required(&e2, 2820);
+        r.required(&e2, 2897);
         let v = Self {
             target_location: e0,
             operator_action_definition_extension: e1,
@@ -2160,6 +4332,80 @@ impl RoadsideAssistanceDefinition {
         }
         if let Some(v) = &self.roadside_assistance_definition_extension { w.extension("tmp:_roadsideAssistanceDefinitionExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl RoadsideAssistanceDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2232 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::LocationReference::read_json(r)? { f0.push(v); } } },
+                2292 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1983 => if r.first(&mut seen[2])? { f2 = r.enumeration::<sit::RoadsideAssistanceTypeEnum>()?; },
+                2303 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 1983);
+        Ok(Self {
+            target_location: f0,
+            operator_action_definition_extension: f1,
+            roadside_assistance_type: f2,
+            roadside_assistance_definition_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(936)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.target_location.is_empty() {
+            w.key(2232)?;
+            w.begin_array()?;
+            for v in &self.target_location {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operator_action_definition_extension {
+            w.key(2292)?;
+            w.extension(v)?;
+        }
+        match &self.roadside_assistance_type {
+            Some(v) => {
+                w.key(1983)?;
+                w.enumeration(882, v.literal())?;
+            }
+            None => w.absent(1983, w.missing("roadsideAssistanceType"))?,
+        }
+        if let Some(v) = &self.roadside_assistance_definition_extension {
+            w.key(2303)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -2201,12 +4447,12 @@ pub struct Scenario {
 }
 
 impl Scenario {
-    const FIELDS: &'static [u32] = &[0x100804, 0x100c4e, 0x100777, 0x100b47, 0x1007bf, 0x100949, 0x100b1c, 0x100b3f, 0x100b80, 0x10087c, 0x100a7d, 0x100b1e, 0x100b48, 0x1005b4];
+    const FIELDS: &'static [u32] = &[0x14083f, 0x140caf, 0x1407a8, 0x140ba1, 0x1407f4, 0x14098b, 0x140b69, 0x140b99, 0x140bdb, 0x1408b8, 0x140ac4, 0x140b6b, 0x140ba2, 0x1405d8];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001d3);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x1401dd);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2225,20 +4471,20 @@ impl Scenario {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100804 => { let v = r.string()?; r.set(&mut e0, v, 2052); }
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e1, v, 3150); }
-                    0x100777 => { let v = r.multilingual()?; r.set(&mut e2, v, 1911); }
-                    0x100b47 => { let v = r.enumeration::<sit::CauseTypeEnum>()?; e3.extend(v); }
-                    0x1007bf => { let v = r.multilingual()?; r.set(&mut e4, v, 1983); }
-                    0x100949 => { let v = r.string()?; r.set(&mut e5, v, 2377); }
-                    0x100b1c => { let v = Some(com::Reference::read(r)?); r.set(&mut e6, v.map(Box::new), 2844); }
-                    0x100b3f => { let v = r.string()?; e7.extend(v); }
-                    0x100b80 => { let v = Strategy::read(r)?; e8.extend(v); }
-                    0x10087c => { let v = Some(ImpactKind::read(r)?); r.set(&mut e9, v.map(Box::new), 2172); }
-                    0x100a7d => { let v = loc::LocationReference::read(r)?; r.set(&mut e10, v, 2685); }
-                    0x100b1e => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e11, v.map(Box::new), 2846); }
-                    0x100b48 => { let v = Some(sit::DetailedCauseType::read(r)?); e12.extend(v); }
-                    0x1005b4 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1460); }
+                    0x14083f => { let v = r.string()?; r.set(&mut e0, v, 2111); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e1, v, 3247); }
+                    0x1407a8 => { let v = r.multilingual()?; r.set(&mut e2, v, 1960); }
+                    0x140ba1 => { let v = r.enumeration::<sit::CauseTypeEnum>()?; e3.extend(v); }
+                    0x1407f4 => { let v = r.multilingual()?; r.set(&mut e4, v, 2036); }
+                    0x14098b => { let v = r.string()?; r.set(&mut e5, v, 2443); }
+                    0x140b69 => { let v = Some(com::Reference::read(r)?); r.set(&mut e6, v.map(Box::new), 2921); }
+                    0x140b99 => { let v = r.string()?; e7.extend(v); }
+                    0x140bdb => { let v = Strategy::read(r)?; e8.extend(v); }
+                    0x1408b8 => { let v = Some(ImpactKind::read(r)?); r.set(&mut e9, v.map(Box::new), 2232); }
+                    0x140ac4 => { let v = loc::LocationReference::read(r)?; r.set(&mut e10, v, 2756); }
+                    0x140b6b => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e11, v.map(Box::new), 2923); }
+                    0x140ba2 => { let v = Some(sit::DetailedCauseType::read(r)?); e12.extend(v); }
+                    0x1405d8 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1496); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2247,7 +4493,7 @@ impl Scenario {
                 break;
             }
         }
-        r.required(&e1, 3150);
+        r.required(&e1, 3247);
         let v = Self {
             id: a0,
             version: a1,
@@ -2305,6 +4551,187 @@ impl Scenario {
     }
 }
 
+impl Scenario {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 16];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = Vec::new();
+        let mut f15 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                738 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                2580 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                545 => if r.first(&mut seen[4])? { f4 = r.multilingual()?; },
+                2142 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::CauseTypeEnum>()? { f5.push(v); } } },
+                656 => if r.first(&mut seen[6])? { f6 = r.multilingual()?; },
+                1345 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                2008 => if r.first(&mut seen[8])? { f8 = com::Reference::read_json(r)?.map(Box::new); },
+                2134 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f9.push(v); } } },
+                2200 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Strategy::read_json(r)? { f10.push(v); } } },
+                976 => if r.first(&mut seen[11])? { f11 = ImpactKind::read_json(r)?.map(Box::new); },
+                1756 => if r.first(&mut seen[12])? { f12 = loc::LocationReference::read_json(r)?; },
+                2010 => if r.first(&mut seen[13])? { f13 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                2143 => if r.first(&mut seen[14])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = sit::DetailedCauseType::read_json(r)? { f14.push(v); } } },
+                2304 => if r.first(&mut seen[15])? { f15 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f3, 2580);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            external_identification: f2,
+            version_time: f3,
+            description: f4,
+            situation_type: f5,
+            emergency_services_accessibility: f6,
+            name: f7,
+            scenario_director: f8,
+            situation_filter: f9,
+            strategy: f10,
+            impact_kind: f11,
+            problem_location: f12,
+            scheduled_scenario_validity: f13,
+            situation_type_detail: f14,
+            scenario_extension: f15,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(937)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.external_identification {
+            w.key(738)?;
+            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.situation_type.is_empty() {
+            w.key(2142)?;
+            w.begin_array()?;
+            for v in &self.situation_type {
+                w.item()?;
+                w.enumeration(822, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.emergency_services_accessibility {
+            w.key(656)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.max_len("name", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.scenario_director {
+            w.key(2008)?;
+            v.write_json(w, Some("Organisation"))?;
+        }
+        if !self.situation_filter.is_empty() {
+            w.key(2134)?;
+            w.begin_array()?;
+            for v in &self.situation_filter {
+                w.item()?;
+                w.max_len("situationFilter", v, 1024)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.strategy.is_empty() {
+            w.key(2200)?;
+            w.begin_array()?;
+            for v in &self.strategy {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.impact_kind {
+            w.key(976)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.problem_location {
+            w.key(1756)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.scheduled_scenario_validity {
+            w.key(2010)?;
+            v.write_json(w, None)?;
+        }
+        if !self.situation_type_detail.is_empty() {
+            w.key(2143)?;
+            w.begin_array()?;
+            for v in &self.situation_type_detail {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.scenario_extension {
+            w.key(2304)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:SignSetting`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SignSetting {
@@ -2313,16 +4740,16 @@ pub struct SignSetting {
 }
 
 impl SignSetting {
-    const FIELDS: &'static [u32] = &[0x100b3a];
+    const FIELDS: &'static [u32] = &[0x140b94];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001d7);
+        r.expect_type(0x1401e5);
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b3a => { let v = Some(SignSettingDefinition::read(r)?); r.set(&mut e0, v.map(Box::new), 2874); }
+                    0x140b94 => { let v = Some(SignSettingDefinition::read(r)?); r.set(&mut e0, v.map(Box::new), 2964); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2331,7 +4758,7 @@ impl SignSetting {
                 break;
             }
         }
-        r.required(&e0, 2874);
+        r.required(&e0, 2964);
         let v = Self {
             sign_setting_definition: e0,
         };
@@ -2350,6 +4777,54 @@ impl SignSetting {
             None => return Err(w.missing("tmp:signSettingDefinition")),
         }
         w.end(tag)
+    }
+}
+
+impl SignSetting {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 1];
+        let mut f0 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2050 => if r.first(&mut seen[0])? { f0 = SignSettingDefinition::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2050);
+        Ok(Self {
+            sign_setting_definition: f0,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(938)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.sign_setting_definition {
+            Some(v) => {
+                w.key(2050)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2050, w.missing("signSettingDefinition"))?,
+        }
+        w.end_object()
     }
 }
 
@@ -2381,10 +4856,10 @@ pub struct SignSettingDefinition {
 }
 
 impl SignSettingDefinition {
-    const FIELDS: &'static [u32] = &[0x100b9e, 0x100532, 0x10072b, 0x1006c3, 0x1006c4, 0x100a41, 0x1006db, 0x100827, 0x1004fc, 0x100b36, 0x1005b8];
+    const FIELDS: &'static [u32] = &[0x140bfd, 0x140555, 0x140759, 0x1406ec, 0x1406ed, 0x140a87, 0x140704, 0x140863, 0x14051f, 0x140b90, 0x1405e0];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001d8);
+        r.expect_type(0x1401e6);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -2400,17 +4875,17 @@ impl SignSettingDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b9e => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
-                    0x100532 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1330); }
-                    0x10072b => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1835); }
-                    0x1006c3 => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
-                    0x1006c4 => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
-                    0x100a41 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
-                    0x1006db => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1755); }
-                    0x100827 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
-                    0x1004fc => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1276); }
-                    0x100b36 => { let v = Some(vms::VmsControllerStatus::read(r)?); e9.extend(v); }
-                    0x1005b8 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1464); }
+                    0x140bfd => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
+                    0x140555 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1365); }
+                    0x140759 => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1881); }
+                    0x1406ec => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
+                    0x1406ed => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
+                    0x140a87 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
+                    0x140704 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1796); }
+                    0x140863 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
+                    0x14051f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1311); }
+                    0x140b90 => { let v = Some(vms::VmsControllerStatus::read(r)?); e9.extend(v); }
+                    0x1405e0 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1504); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2419,7 +4894,7 @@ impl SignSettingDefinition {
                 break;
             }
         }
-        r.required(&e2, 1835);
+        r.required(&e2, 1881);
         let v = Self {
             target_location: e0,
             operator_action_definition_extension: e1,
@@ -2461,6 +4936,154 @@ impl SignSettingDefinition {
     }
 }
 
+impl SignSettingDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = Vec::new();
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2232 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::LocationReference::read_json(r)? { f0.push(v); } } },
+                2292 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                423 => if r.first(&mut seen[2])? { f2 = r.enumeration::<sit::ComplianceOptionEnum>()?; },
+                247 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<loc::DirectionEnum>()? { f3.push(v); } } },
+                248 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::TrafficTypeEnum>()? { f4.push(v); } } },
+                1593 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::PlacesEnum>()? { f5.push(v); } } },
+                271 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                857 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f7.push(v); } } },
+                2288 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                2047 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = vms::VmsControllerStatus::read_json(r)? { f9.push(v); } } },
+                2306 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 423);
+        Ok(Self {
+            target_location: f0,
+            operator_action_definition_extension: f1,
+            compliance_option: f2,
+            applicable_for_traffic_direction: f3,
+            applicable_for_traffic_type: f4,
+            places_at_which_applicable: f5,
+            automatically_initiated: f6,
+            for_vehicles_with_characteristics_of: f7,
+            network_management_definition_extension: f8,
+            setting: f9,
+            sign_setting_definition_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(939)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.target_location.is_empty() {
+            w.key(2232)?;
+            w.begin_array()?;
+            for v in &self.target_location {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operator_action_definition_extension {
+            w.key(2292)?;
+            w.extension(v)?;
+        }
+        match &self.compliance_option {
+            Some(v) => {
+                w.key(423)?;
+                w.enumeration(826, v.literal())?;
+            }
+            None => w.absent(423, w.missing("complianceOption"))?,
+        }
+        if !self.applicable_for_traffic_direction.is_empty() {
+            w.key(247)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_direction {
+                w.item()?;
+                w.enumeration(503, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.applicable_for_traffic_type.is_empty() {
+            w.key(248)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_type {
+                w.item()?;
+                w.enumeration(900, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.places_at_which_applicable.is_empty() {
+            w.key(1593)?;
+            w.begin_array()?;
+            for v in &self.places_at_which_applicable {
+                w.item()?;
+                w.enumeration(868, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.automatically_initiated {
+            w.key(271)?;
+            w.boolean(*v)?;
+        }
+        if !self.for_vehicles_with_characteristics_of.is_empty() {
+            w.key(857)?;
+            w.begin_array()?;
+            for v in &self.for_vehicles_with_characteristics_of {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.network_management_definition_extension {
+            w.key(2288)?;
+            w.extension(v)?;
+        }
+        if !self.setting.is_empty() {
+            w.key(2047)?;
+            w.begin_array()?;
+            for v in &self.setting {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.sign_setting_definition_extension {
+            w.key(2306)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:SpeedManagementDefinition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SpeedManagementDefinition {
@@ -2491,10 +5114,10 @@ pub struct SpeedManagementDefinition {
 }
 
 impl SpeedManagementDefinition {
-    const FIELDS: &'static [u32] = &[0x100b9e, 0x100532, 0x10072b, 0x1006c3, 0x1006c4, 0x100a41, 0x1006db, 0x100827, 0x1004fc, 0x100b64, 0x100bab, 0x1005c9];
+    const FIELDS: &'static [u32] = &[0x140bfd, 0x140555, 0x140759, 0x1406ec, 0x1406ed, 0x140a87, 0x140704, 0x140863, 0x14051f, 0x140bbe, 0x140c0a, 0x1405f1];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001ea);
+        r.expect_type(0x1401f8);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -2511,18 +5134,18 @@ impl SpeedManagementDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b9e => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
-                    0x100532 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1330); }
-                    0x10072b => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1835); }
-                    0x1006c3 => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
-                    0x1006c4 => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
-                    0x100a41 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
-                    0x1006db => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1755); }
-                    0x100827 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
-                    0x1004fc => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1276); }
-                    0x100b64 => { let v = r.enumeration::<sit::SpeedManagementTypeEnum>()?; r.set(&mut e9, v, 2916); }
-                    0x100bab => { let v = r.value::<f32>()?; r.set(&mut e10, v, 2987); }
-                    0x1005c9 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1481); }
+                    0x140bfd => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
+                    0x140555 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1365); }
+                    0x140759 => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1881); }
+                    0x1406ec => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
+                    0x1406ed => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
+                    0x140a87 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
+                    0x140704 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1796); }
+                    0x140863 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
+                    0x14051f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1311); }
+                    0x140bbe => { let v = r.enumeration::<sit::SpeedManagementTypeEnum>()?; r.set(&mut e9, v, 3006); }
+                    0x140c0a => { let v = r.value::<f32>()?; r.set(&mut e10, v, 3082); }
+                    0x1405f1 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1521); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2531,8 +5154,8 @@ impl SpeedManagementDefinition {
                 break;
             }
         }
-        r.required(&e2, 1835);
-        r.required(&e9, 2916);
+        r.required(&e2, 1881);
+        r.required(&e9, 3006);
         let v = Self {
             target_location: e0,
             operator_action_definition_extension: e1,
@@ -2579,6 +5202,160 @@ impl SpeedManagementDefinition {
     }
 }
 
+impl SpeedManagementDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2232 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::LocationReference::read_json(r)? { f0.push(v); } } },
+                2292 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                423 => if r.first(&mut seen[2])? { f2 = r.enumeration::<sit::ComplianceOptionEnum>()?; },
+                247 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<loc::DirectionEnum>()? { f3.push(v); } } },
+                248 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::TrafficTypeEnum>()? { f4.push(v); } } },
+                1593 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::PlacesEnum>()? { f5.push(v); } } },
+                271 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                857 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f7.push(v); } } },
+                2288 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                2171 => if r.first(&mut seen[9])? { f9 = r.enumeration::<sit::SpeedManagementTypeEnum>()?; },
+                2245 => if r.first(&mut seen[10])? { f10 = r.number::<f32>()?; },
+                2308 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 423);
+        r.required(&f9, 2171);
+        Ok(Self {
+            target_location: f0,
+            operator_action_definition_extension: f1,
+            compliance_option: f2,
+            applicable_for_traffic_direction: f3,
+            applicable_for_traffic_type: f4,
+            places_at_which_applicable: f5,
+            automatically_initiated: f6,
+            for_vehicles_with_characteristics_of: f7,
+            network_management_definition_extension: f8,
+            speed_management_type: f9,
+            temporary_speed_limit: f10,
+            speed_management_definition_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(940)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.target_location.is_empty() {
+            w.key(2232)?;
+            w.begin_array()?;
+            for v in &self.target_location {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operator_action_definition_extension {
+            w.key(2292)?;
+            w.extension(v)?;
+        }
+        match &self.compliance_option {
+            Some(v) => {
+                w.key(423)?;
+                w.enumeration(826, v.literal())?;
+            }
+            None => w.absent(423, w.missing("complianceOption"))?,
+        }
+        if !self.applicable_for_traffic_direction.is_empty() {
+            w.key(247)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_direction {
+                w.item()?;
+                w.enumeration(503, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.applicable_for_traffic_type.is_empty() {
+            w.key(248)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_type {
+                w.item()?;
+                w.enumeration(900, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.places_at_which_applicable.is_empty() {
+            w.key(1593)?;
+            w.begin_array()?;
+            for v in &self.places_at_which_applicable {
+                w.item()?;
+                w.enumeration(868, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.automatically_initiated {
+            w.key(271)?;
+            w.boolean(*v)?;
+        }
+        if !self.for_vehicles_with_characteristics_of.is_empty() {
+            w.key(857)?;
+            w.begin_array()?;
+            for v in &self.for_vehicles_with_characteristics_of {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.network_management_definition_extension {
+            w.key(2288)?;
+            w.extension(v)?;
+        }
+        match &self.speed_management_type {
+            Some(v) => {
+                w.key(2171)?;
+                w.enumeration(895, v.literal())?;
+            }
+            None => w.absent(2171, w.missing("speedManagementType"))?,
+        }
+        if let Some(v) = &self.temporary_speed_limit {
+            w.key(2245)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.speed_management_definition_extension {
+            w.key(2308)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:StrategyByReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct StrategyByReference {
@@ -2593,10 +5370,10 @@ pub struct StrategyByReference {
 }
 
 impl StrategyByReference {
-    const FIELDS: &'static [u32] = &[0x100c4e, 0x1005d7, 0x100b82, 0x1005d5];
+    const FIELDS: &'static [u32] = &[0x140caf, 0x1405ff, 0x140bdd, 0x1405fd];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001f6);
+        r.expect_type(0x140204);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2605,10 +5382,10 @@ impl StrategyByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e0, v, 3150); }
-                    0x1005d7 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1495); }
-                    0x100b82 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2946); }
-                    0x1005d5 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1493); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e0, v, 3247); }
+                    0x1405ff => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1535); }
+                    0x140bdd => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 3037); }
+                    0x1405fd => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1533); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2617,8 +5394,8 @@ impl StrategyByReference {
                 break;
             }
         }
-        r.required(&e0, 3150);
-        r.required(&e2, 2946);
+        r.required(&e0, 3247);
+        r.required(&e2, 3037);
         let v = Self {
             version_time: e0,
             strategy_extension: e1,
@@ -2646,6 +5423,79 @@ impl StrategyByReference {
         }
         if let Some(v) = &self.strategy_by_reference_extension { w.extension("tmp:_strategyByReferenceExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl StrategyByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2580 => if r.first(&mut seen[0])? { f0 = r.date_time()?; },
+                2313 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                2202 => if r.first(&mut seen[2])? { f2 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                2310 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2580);
+        r.required(&f2, 2202);
+        Ok(Self {
+            version_time: f0,
+            strategy_extension: f1,
+            strategy_reference: f2,
+            strategy_by_reference_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(941)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.strategy_extension {
+            w.key(2313)?;
+            w.extension(v)?;
+        }
+        match &self.strategy_reference {
+            Some(v) => {
+                w.key(2202)?;
+                v.write_json(w, Some("StrategyDefinition"))?;
+            }
+            None => w.absent(2202, w.missing("strategyReference"))?,
+        }
+        if let Some(v) = &self.strategy_by_reference_extension {
+            w.key(2310)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -2679,12 +5529,12 @@ pub struct StrategyDefinition {
 }
 
 impl StrategyDefinition {
-    const FIELDS: &'static [u32] = &[0x100c4e, 0x1005d7, 0x100804, 0x100777, 0x100b38, 0x100a78, 0x100b81, 0x100aec, 0x1009ef, 0x1005d6];
+    const FIELDS: &'static [u32] = &[0x140caf, 0x1405ff, 0x14083f, 0x1407a8, 0x140b92, 0x140abf, 0x140bdc, 0x140b36, 0x140a34, 0x1405fe];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001f7);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x140205);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2699,16 +5549,16 @@ impl StrategyDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e0, v, 3150); }
-                    0x1005d7 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1495); }
-                    0x100804 => { let v = r.string()?; r.set(&mut e2, v, 2052); }
-                    0x100777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x100b38 => { let v = r.string()?; r.set(&mut e4, v, 2872); }
-                    0x100a78 => { let v = r.value::<i64>()?; r.set(&mut e5, v, 2680); }
-                    0x100b81 => { let v = Some(StrategyMeasure::read(r)?); e6.extend(v); }
-                    0x100aec => { let v = Some(ResponseType::read(r)?); r.set(&mut e7, v.map(Box::new), 2796); }
-                    0x1009ef => { let v = Some(ActivationConditions::read(r)?); r.set(&mut e8, v.map(Box::new), 2543); }
-                    0x1005d6 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1494); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e0, v, 3247); }
+                    0x1405ff => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1535); }
+                    0x14083f => { let v = r.string()?; r.set(&mut e2, v, 2111); }
+                    0x1407a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x140b92 => { let v = r.string()?; r.set(&mut e4, v, 2962); }
+                    0x140abf => { let v = r.value::<i64>()?; r.set(&mut e5, v, 2751); }
+                    0x140bdc => { let v = Some(StrategyMeasure::read(r)?); e6.extend(v); }
+                    0x140b36 => { let v = Some(ResponseType::read(r)?); r.set(&mut e7, v.map(Box::new), 2870); }
+                    0x140a34 => { let v = Some(ActivationConditions::read(r)?); r.set(&mut e8, v.map(Box::new), 2612); }
+                    0x1405fe => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1534); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2717,8 +5567,8 @@ impl StrategyDefinition {
                 break;
             }
         }
-        r.required(&e0, 3150);
-        r.required(&e3, 1911);
+        r.required(&e0, 3247);
+        r.required(&e3, 1960);
         let v = Self {
             id: a0,
             version: a1,
@@ -2772,6 +5622,149 @@ impl StrategyDefinition {
     }
 }
 
+impl StrategyDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = Vec::new();
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                2580 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                2313 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                738 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                2049 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1649 => if r.first(&mut seen[7])? { f7 = r.number::<i64>()?; },
+                2201 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = StrategyMeasure::read_json(r)? { f8.push(v); } } },
+                1893 => if r.first(&mut seen[9])? { f9 = ResponseType::read_json(r)?.map(Box::new); },
+                1511 => if r.first(&mut seen[10])? { f10 = ActivationConditions::read_json(r)?.map(Box::new); },
+                2312 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f2, 2580);
+        r.required(&f5, 545);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            version_time: f2,
+            strategy_extension: f3,
+            external_identification: f4,
+            description: f5,
+            short_name: f6,
+            priority: f7,
+            strategy_measure: f8,
+            response_type: f9,
+            overall_activation: f10,
+            strategy_definition_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(942)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.strategy_extension {
+            w.key(2313)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.external_identification {
+            w.key(738)?;
+            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+        }
+        match &self.description {
+            Some(v) => {
+                w.key(545)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(545, w.missing("description"))?,
+        }
+        if let Some(v) = &self.short_name {
+            w.key(2049)?;
+            w.max_len("shortName", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.priority {
+            w.key(1649)?;
+            w.integer(*v)?;
+        }
+        w.count("strategyMeasure", self.strategy_measure.len(), 1, usize::MAX)?;
+        if !self.strategy_measure.is_empty() {
+            w.key(2201)?;
+            w.begin_array()?;
+            for v in &self.strategy_measure {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.response_type {
+            w.key(1893)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.overall_activation {
+            w.key(1511)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.strategy_definition_extension {
+            w.key(2312)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:StrategyMeasure`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct StrategyMeasure {
@@ -2788,10 +5781,10 @@ pub struct StrategyMeasure {
 }
 
 impl StrategyMeasure {
-    const FIELDS: &'static [u32] = &[0x100a80, 0x1007eb, 0x10067b, 0x100913, 0x1005d8];
+    const FIELDS: &'static [u32] = &[0x140ac7, 0x140820, 0x1406a4, 0x140952, 0x140600];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1001f8);
+        r.expect_type(0x140206);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2801,11 +5794,11 @@ impl StrategyMeasure {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100a80 => { let v = r.value::<i64>()?; r.set(&mut e0, v, 2688); }
-                    0x1007eb => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2027); }
-                    0x10067b => { let v = Some(ActivationConditions::read(r)?); r.set(&mut e2, v.map(Box::new), 1659); }
-                    0x100913 => { let v = Measure::read(r)?; r.set(&mut e3, v, 2323); }
-                    0x1005d8 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1496); }
+                    0x140ac7 => { let v = r.value::<i64>()?; r.set(&mut e0, v, 2759); }
+                    0x140820 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2080); }
+                    0x1406a4 => { let v = Some(ActivationConditions::read(r)?); r.set(&mut e2, v.map(Box::new), 1700); }
+                    0x140952 => { let v = Measure::read(r)?; r.set(&mut e3, v, 2386); }
+                    0x140600 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1536); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2814,7 +5807,7 @@ impl StrategyMeasure {
                 break;
             }
         }
-        r.required(&e3, 2323);
+        r.required(&e3, 2386);
         let v = Self {
             processing_index: e0,
             essential_for_strategy: e1,
@@ -2844,6 +5837,82 @@ impl StrategyMeasure {
     }
 }
 
+impl StrategyMeasure {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1759 => if r.first(&mut seen[0])? { f0 = r.number::<i64>()?; },
+                699 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                40 => if r.first(&mut seen[2])? { f2 = ActivationConditions::read_json(r)?.map(Box::new); },
+                1287 => if r.first(&mut seen[3])? { f3 = Measure::read_json(r)?; },
+                2314 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f3, 1287);
+        Ok(Self {
+            processing_index: f0,
+            essential_for_strategy: f1,
+            activation_conditions: f2,
+            measure: f3,
+            strategy_measure_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(944)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.processing_index {
+            w.key(1759)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.essential_for_strategy {
+            w.key(699)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.activation_conditions {
+            w.key(40)?;
+            v.write_json(w, None)?;
+        }
+        match &self.measure {
+            Some(v) => {
+                w.key(1287)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(1287, w.missing("measure"))?,
+        }
+        if let Some(v) = &self.strategy_measure_extension {
+            w.key(2314)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:TmplanImplementingAction`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TmplanImplementingAction {
@@ -2860,10 +5929,10 @@ pub struct TmplanImplementingAction {
 }
 
 impl TmplanImplementingAction {
-    const FIELDS: &'static [u32] = &[0x100962, 0x100a5d, 0x100a68, 0x100a6b, 0x1005f8];
+    const FIELDS: &'static [u32] = &[0x1409a5, 0x140aa3, 0x140aae, 0x140ab2, 0x140621];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10021a);
+        r.expect_type(0x140229);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2873,11 +5942,11 @@ impl TmplanImplementingAction {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100962 => { let v = r.string()?; r.set(&mut e0, v, 2402); }
-                    0x100a5d => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2653); }
-                    0x100a68 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2664); }
-                    0x100a6b => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2667); }
-                    0x1005f8 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1528); }
+                    0x1409a5 => { let v = r.string()?; r.set(&mut e0, v, 2469); }
+                    0x140aa3 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2723); }
+                    0x140aae => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2734); }
+                    0x140ab2 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2738); }
+                    0x140621 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1569); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2912,6 +5981,78 @@ impl TmplanImplementingAction {
     }
 }
 
+impl TmplanImplementingAction {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1369 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                1621 => if r.first(&mut seen[1])? { f1 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1632 => if r.first(&mut seen[2])? { f2 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1636 => if r.first(&mut seen[3])? { f3 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                2315 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            non_predefined_action_id_reference: f0,
+            predefined_action_reference: f1,
+            predefined_measure_reference: f2,
+            predefined_strategy_reference: f3,
+            tmplan_implementing_action_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(945)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.non_predefined_action_id_reference {
+            w.key(1369)?;
+            w.max_len("nonPredefinedActionIdReference", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.predefined_action_reference {
+            w.key(1621)?;
+            v.write_json(w, Some("ActionDefinition"))?;
+        }
+        if let Some(v) = &self.predefined_measure_reference {
+            w.key(1632)?;
+            v.write_json(w, Some("MeasureDefinition"))?;
+        }
+        if let Some(v) = &self.predefined_strategy_reference {
+            w.key(1636)?;
+            v.write_json(w, Some("StrategyDefinition"))?;
+        }
+        if let Some(v) = &self.tmplan_implementing_action_extension {
+            w.key(2315)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:TmplanOperationPublication`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TmplanOperationPublication {
@@ -2942,16 +6083,16 @@ pub struct TmplanOperationPublication {
 }
 
 impl TmplanOperationPublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x100bc1, 0x1005fa];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x140c20, 0x140623];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10021c);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0x14022b);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2963,13 +6104,13 @@ impl TmplanOperationPublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x100bc1 => { let v = TmplanOperation::read(r)?; e5.extend(v); }
-                    0x1005fa => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1530); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x140c20 => { let v = TmplanOperation::read(r)?; e5.extend(v); }
+                    0x140623 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1571); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2978,8 +6119,8 @@ impl TmplanOperationPublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -3031,6 +6172,125 @@ impl TmplanOperationPublication {
     }
 }
 
+impl TmplanOperationPublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                2329 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = TmplanOperation::read_json(r)? { f10.push(v); } } },
+                2318 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            tmplan_operation: f10,
+            tmplan_operation_publication_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(947)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        w.count("tmplanOperation", self.tmplan_operation.len(), 1, usize::MAX)?;
+        if !self.tmplan_operation.is_empty() {
+            w.key(2329)?;
+            w.begin_array()?;
+            for v in &self.tmplan_operation {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.tmplan_operation_publication_extension {
+            w.key(2318)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:TmplanTable`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TmplanTable {
@@ -3055,12 +6315,12 @@ pub struct TmplanTable {
 }
 
 impl TmplanTable {
-    const FIELDS: &'static [u32] = &[0x100804, 0x100c4e, 0x100777, 0x100b1b, 0x100913, 0x100674, 0x1005fb];
+    const FIELDS: &'static [u32] = &[0x14083f, 0x140caf, 0x1407a8, 0x140b68, 0x140952, 0x14069d, 0x140624];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10021d);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x14022c);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3072,13 +6332,13 @@ impl TmplanTable {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100804 => { let v = r.string()?; r.set(&mut e0, v, 2052); }
-                    0x100c4e => { let v = r.date_time()?; r.set(&mut e1, v, 3150); }
-                    0x100777 => { let v = r.multilingual()?; r.set(&mut e2, v, 1911); }
-                    0x100b1b => { let v = Some(Scenario::read(r)?); e3.extend(v); }
-                    0x100913 => { let v = Measure::read(r)?; e4.extend(v); }
-                    0x100674 => { let v = Action::read(r)?; e5.extend(v); }
-                    0x1005fb => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1531); }
+                    0x14083f => { let v = r.string()?; r.set(&mut e0, v, 2111); }
+                    0x140caf => { let v = r.date_time()?; r.set(&mut e1, v, 3247); }
+                    0x1407a8 => { let v = r.multilingual()?; r.set(&mut e2, v, 1960); }
+                    0x140b68 => { let v = Some(Scenario::read(r)?); e3.extend(v); }
+                    0x140952 => { let v = Measure::read(r)?; e4.extend(v); }
+                    0x14069d => { let v = Action::read(r)?; e5.extend(v); }
+                    0x140624 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1572); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3087,7 +6347,7 @@ impl TmplanTable {
                 break;
             }
         }
-        r.required(&e1, 3150);
+        r.required(&e1, 3247);
         let v = Self {
             id: a0,
             version: a1,
@@ -3131,6 +6391,133 @@ impl TmplanTable {
     }
 }
 
+impl TmplanTable {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 9];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                738 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                2580 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                545 => if r.first(&mut seen[4])? { f4 = r.multilingual()?; },
+                2007 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Scenario::read_json(r)? { f5.push(v); } } },
+                1287 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Measure::read_json(r)? { f6.push(v); } } },
+                33 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Action::read_json(r)? { f7.push(v); } } },
+                2319 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f3, 2580);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            external_identification: f2,
+            version_time: f3,
+            description: f4,
+            scenario: f5,
+            measure: f6,
+            action: f7,
+            tmplan_table_extension: f8,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(949)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.external_identification {
+            w.key(738)?;
+            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.scenario.is_empty() {
+            w.key(2007)?;
+            w.begin_array()?;
+            for v in &self.scenario {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.measure.is_empty() {
+            w.key(1287)?;
+            w.begin_array()?;
+            for v in &self.measure {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.action.is_empty() {
+            w.key(33)?;
+            w.begin_array()?;
+            for v in &self.action {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.tmplan_table_extension {
+            w.key(2319)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:TmplanTablePublication`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TmplanTablePublication {
@@ -3163,16 +6550,16 @@ pub struct TmplanTablePublication {
 }
 
 impl TmplanTablePublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x100857, 0x100bc2, 0x1005fc];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x140893, 0x140c21, 0x140625];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10021e);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0x14022d);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3185,14 +6572,14 @@ impl TmplanTablePublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x100857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2135); }
-                    0x100bc2 => { let v = Some(TmplanTable::read(r)?); e6.extend(v); }
-                    0x1005fc => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1532); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x140893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2195); }
+                    0x140c21 => { let v = Some(TmplanTable::read(r)?); e6.extend(v); }
+                    0x140625 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1573); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3201,9 +6588,9 @@ impl TmplanTablePublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
-        r.required(&e5, 2135);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
+        r.required(&e5, 2195);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -3260,6 +6647,136 @@ impl TmplanTablePublication {
     }
 }
 
+impl TmplanTablePublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                940 => if r.first(&mut seen[10])? { f10 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                2330 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = TmplanTable::read_json(r)? { f11.push(v); } } },
+                2321 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        r.required(&f10, 940);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            header_information: f10,
+            tmplan_table: f11,
+            tmplan_table_publication_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(950)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        match &self.header_information {
+            Some(v) => {
+                w.key(940)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(940, w.missing("headerInformation"))?,
+        }
+        w.count("tmplanTable", self.tmplan_table.len(), 1, usize::MAX)?;
+        if !self.tmplan_table.is_empty() {
+            w.key(2330)?;
+            w.begin_array()?;
+            for v in &self.tmplan_table {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.tmplan_table_publication_extension {
+            w.key(2321)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:TrafficSignalSettingDefinition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TrafficSignalSettingDefinition {
@@ -3288,10 +6805,10 @@ pub struct TrafficSignalSettingDefinition {
 }
 
 impl TrafficSignalSettingDefinition {
-    const FIELDS: &'static [u32] = &[0x100b9e, 0x100532, 0x10072b, 0x1006c3, 0x1006c4, 0x100a41, 0x1006db, 0x100827, 0x1004fc, 0x100b36, 0x10061e];
+    const FIELDS: &'static [u32] = &[0x140bfd, 0x140555, 0x140759, 0x1406ec, 0x1406ed, 0x140a87, 0x140704, 0x140863, 0x14051f, 0x140b90, 0x140647];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100240);
+        r.expect_type(0x14024f);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -3307,17 +6824,17 @@ impl TrafficSignalSettingDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b9e => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
-                    0x100532 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1330); }
-                    0x10072b => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1835); }
-                    0x1006c3 => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
-                    0x1006c4 => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
-                    0x100a41 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
-                    0x1006db => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1755); }
-                    0x100827 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
-                    0x1004fc => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1276); }
-                    0x100b36 => { let v = r.string()?; r.set(&mut e9, v, 2870); }
-                    0x10061e => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1566); }
+                    0x140bfd => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
+                    0x140555 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1365); }
+                    0x140759 => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1881); }
+                    0x1406ec => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
+                    0x1406ed => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
+                    0x140a87 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
+                    0x140704 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1796); }
+                    0x140863 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
+                    0x14051f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1311); }
+                    0x140b90 => { let v = r.string()?; r.set(&mut e9, v, 2960); }
+                    0x140647 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1607); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3326,8 +6843,8 @@ impl TrafficSignalSettingDefinition {
                 break;
             }
         }
-        r.required(&e2, 1835);
-        r.required(&e9, 2870);
+        r.required(&e2, 1881);
+        r.required(&e9, 2960);
         let v = Self {
             target_location: e0,
             operator_action_definition_extension: e1,
@@ -3372,6 +6889,153 @@ impl TrafficSignalSettingDefinition {
     }
 }
 
+impl TrafficSignalSettingDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2232 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::LocationReference::read_json(r)? { f0.push(v); } } },
+                2292 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                423 => if r.first(&mut seen[2])? { f2 = r.enumeration::<sit::ComplianceOptionEnum>()?; },
+                247 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<loc::DirectionEnum>()? { f3.push(v); } } },
+                248 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::TrafficTypeEnum>()? { f4.push(v); } } },
+                1593 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::PlacesEnum>()? { f5.push(v); } } },
+                271 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                857 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f7.push(v); } } },
+                2288 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                2047 => if r.first(&mut seen[9])? { f9 = r.string()?; },
+                2323 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 423);
+        r.required(&f9, 2047);
+        Ok(Self {
+            target_location: f0,
+            operator_action_definition_extension: f1,
+            compliance_option: f2,
+            applicable_for_traffic_direction: f3,
+            applicable_for_traffic_type: f4,
+            places_at_which_applicable: f5,
+            automatically_initiated: f6,
+            for_vehicles_with_characteristics_of: f7,
+            network_management_definition_extension: f8,
+            setting: f9,
+            traffic_signal_setting_definition_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(951)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.target_location.is_empty() {
+            w.key(2232)?;
+            w.begin_array()?;
+            for v in &self.target_location {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operator_action_definition_extension {
+            w.key(2292)?;
+            w.extension(v)?;
+        }
+        match &self.compliance_option {
+            Some(v) => {
+                w.key(423)?;
+                w.enumeration(826, v.literal())?;
+            }
+            None => w.absent(423, w.missing("complianceOption"))?,
+        }
+        if !self.applicable_for_traffic_direction.is_empty() {
+            w.key(247)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_direction {
+                w.item()?;
+                w.enumeration(503, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.applicable_for_traffic_type.is_empty() {
+            w.key(248)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_type {
+                w.item()?;
+                w.enumeration(900, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.places_at_which_applicable.is_empty() {
+            w.key(1593)?;
+            w.begin_array()?;
+            for v in &self.places_at_which_applicable {
+                w.item()?;
+                w.enumeration(868, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.automatically_initiated {
+            w.key(271)?;
+            w.boolean(*v)?;
+        }
+        if !self.for_vehicles_with_characteristics_of.is_empty() {
+            w.key(857)?;
+            w.begin_array()?;
+            for v in &self.for_vehicles_with_characteristics_of {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.network_management_definition_extension {
+            w.key(2288)?;
+            w.extension(v)?;
+        }
+        match &self.setting {
+            Some(v) => {
+                w.key(2047)?;
+                w.max_len("setting", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(2047, w.missing("setting"))?,
+        }
+        if let Some(v) = &self.traffic_signal_setting_definition_extension {
+            w.key(2323)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `tmp:TriggerCondition`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TriggerCondition {
@@ -3388,10 +7052,10 @@ pub struct TriggerCondition {
 }
 
 impl TriggerCondition {
-    const FIELDS: &'static [u32] = &[0x100955, 0x100442, 0x100bf9, 0x100777, 0x100627];
+    const FIELDS: &'static [u32] = &[0x140997, 0x14045e, 0x140c58, 0x1407a8, 0x140650];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100249);
+        r.expect_type(0x140258);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3401,11 +7065,11 @@ impl TriggerCondition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100955 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2389); }
-                    0x100442 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1090); }
-                    0x100bf9 => { let v = r.string()?; r.set(&mut e2, v, 3065); }
-                    0x100777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x100627 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1575); }
+                    0x140997 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2455); }
+                    0x14045e => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1118); }
+                    0x140c58 => { let v = r.string()?; r.set(&mut e2, v, 3160); }
+                    0x1407a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x140650 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1616); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3414,7 +7078,7 @@ impl TriggerCondition {
                 break;
             }
         }
-        r.required(&e2, 3065);
+        r.required(&e2, 3160);
         let v = Self {
             negate: e0,
             condition_extension: e1,
@@ -3441,6 +7105,82 @@ impl TriggerCondition {
         if let Some(v) = &self.description { w.multilingual("tmp:description", v)?; }
         if let Some(v) = &self.trigger_condition_extension { w.extension("tmp:_triggerConditionExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl TriggerCondition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1356 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                2275 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                2385 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                545 => if r.first(&mut seen[3])? { f3 = r.multilingual()?; },
+                2325 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 2385);
+        Ok(Self {
+            negate: f0,
+            condition_extension: f1,
+            trigger_definition: f2,
+            description: f3,
+            trigger_condition_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(952)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.negate {
+            w.key(1356)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.condition_extension {
+            w.key(2275)?;
+            w.extension(v)?;
+        }
+        match &self.trigger_definition {
+            Some(v) => {
+                w.key(2385)?;
+                w.max_len("triggerDefinition", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(2385, w.missing("triggerDefinition"))?,
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.trigger_condition_extension {
+            w.key(2325)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -3472,10 +7212,10 @@ pub struct WinterDrivingManagementDefinition {
 }
 
 impl WinterDrivingManagementDefinition {
-    const FIELDS: &'static [u32] = &[0x100b9e, 0x100532, 0x10072b, 0x1006c3, 0x1006c4, 0x100a41, 0x1006db, 0x100827, 0x1004fc, 0x100c7c, 0x100660];
+    const FIELDS: &'static [u32] = &[0x140bfd, 0x140555, 0x140759, 0x1406ec, 0x1406ed, 0x140a87, 0x140704, 0x140863, 0x14051f, 0x140cde, 0x140689];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100285);
+        r.expect_type(0x140294);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -3491,17 +7231,17 @@ impl WinterDrivingManagementDefinition {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x100b9e => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
-                    0x100532 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1330); }
-                    0x10072b => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1835); }
-                    0x1006c3 => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
-                    0x1006c4 => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
-                    0x100a41 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
-                    0x1006db => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1755); }
-                    0x100827 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
-                    0x1004fc => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1276); }
-                    0x100c7c => { let v = r.enumeration::<com::WinterEquipmentManagementTypeEnum>()?; r.set(&mut e9, v, 3196); }
-                    0x100660 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1632); }
+                    0x140bfd => { let v = loc::LocationReference::read(r)?; e0.extend(v); }
+                    0x140555 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1365); }
+                    0x140759 => { let v = r.enumeration::<sit::ComplianceOptionEnum>()?; r.set(&mut e2, v, 1881); }
+                    0x1406ec => { let v = r.enumeration::<loc::DirectionEnum>()?; e3.extend(v); }
+                    0x1406ed => { let v = r.enumeration::<sit::TrafficTypeEnum>()?; e4.extend(v); }
+                    0x140a87 => { let v = r.enumeration::<sit::PlacesEnum>()?; e5.extend(v); }
+                    0x140704 => { let v = r.value::<bool>()?; r.set(&mut e6, v, 1796); }
+                    0x140863 => { let v = Some(com::VehicleCharacteristics::read(r)?); e7.extend(v); }
+                    0x14051f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1311); }
+                    0x140cde => { let v = r.enumeration::<com::WinterEquipmentManagementTypeEnum>()?; r.set(&mut e9, v, 3294); }
+                    0x140689 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1673); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3510,8 +7250,8 @@ impl WinterDrivingManagementDefinition {
                 break;
             }
         }
-        r.required(&e2, 1835);
-        r.required(&e9, 3196);
+        r.required(&e2, 1881);
+        r.required(&e9, 3294);
         let v = Self {
             target_location: e0,
             operator_action_definition_extension: e1,
@@ -3556,6 +7296,153 @@ impl WinterDrivingManagementDefinition {
     }
 }
 
+impl WinterDrivingManagementDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2232 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::LocationReference::read_json(r)? { f0.push(v); } } },
+                2292 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                423 => if r.first(&mut seen[2])? { f2 = r.enumeration::<sit::ComplianceOptionEnum>()?; },
+                247 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<loc::DirectionEnum>()? { f3.push(v); } } },
+                248 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::TrafficTypeEnum>()? { f4.push(v); } } },
+                1593 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<sit::PlacesEnum>()? { f5.push(v); } } },
+                271 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                857 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f7.push(v); } } },
+                2288 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                2675 => if r.first(&mut seen[9])? { f9 = r.enumeration::<com::WinterEquipmentManagementTypeEnum>()?; },
+                2327 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 423);
+        r.required(&f9, 2675);
+        Ok(Self {
+            target_location: f0,
+            operator_action_definition_extension: f1,
+            compliance_option: f2,
+            applicable_for_traffic_direction: f3,
+            applicable_for_traffic_type: f4,
+            places_at_which_applicable: f5,
+            automatically_initiated: f6,
+            for_vehicles_with_characteristics_of: f7,
+            network_management_definition_extension: f8,
+            winter_equipment_management_type: f9,
+            winter_driving_management_definition_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(953)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.target_location.is_empty() {
+            w.key(2232)?;
+            w.begin_array()?;
+            for v in &self.target_location {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operator_action_definition_extension {
+            w.key(2292)?;
+            w.extension(v)?;
+        }
+        match &self.compliance_option {
+            Some(v) => {
+                w.key(423)?;
+                w.enumeration(826, v.literal())?;
+            }
+            None => w.absent(423, w.missing("complianceOption"))?,
+        }
+        if !self.applicable_for_traffic_direction.is_empty() {
+            w.key(247)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_direction {
+                w.item()?;
+                w.enumeration(503, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.applicable_for_traffic_type.is_empty() {
+            w.key(248)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_traffic_type {
+                w.item()?;
+                w.enumeration(900, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.places_at_which_applicable.is_empty() {
+            w.key(1593)?;
+            w.begin_array()?;
+            for v in &self.places_at_which_applicable {
+                w.item()?;
+                w.enumeration(868, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.automatically_initiated {
+            w.key(271)?;
+            w.boolean(*v)?;
+        }
+        if !self.for_vehicles_with_characteristics_of.is_empty() {
+            w.key(857)?;
+            w.begin_array()?;
+            for v in &self.for_vehicles_with_characteristics_of {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.network_management_definition_extension {
+            w.key(2288)?;
+            w.extension(v)?;
+        }
+        match &self.winter_equipment_management_type {
+            Some(v) => {
+                w.key(2675)?;
+                w.enumeration(249, v.literal())?;
+            }
+            None => w.absent(2675, w.missing("winterEquipmentManagementType"))?,
+        }
+        if let Some(v) = &self.winter_driving_management_definition_extension {
+            w.key(2327)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// Any concrete kind of XML type `tmp:Action`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
@@ -3572,8 +7459,8 @@ impl Action {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x10000c) => Self::ActionByReference(Box::new(ActionByReference::read(r)?)),
-            Some(0x10000d) => Self::ActionDefinition(Box::new(ActionDefinition::read(r)?)),
+            Some(0x14000c) => Self::ActionByReference(Box::new(ActionByReference::read(r)?)),
+            Some(0x14000d) => Self::ActionDefinition(Box::new(ActionDefinition::read(r)?)),
             _ => {
                 r.unknown_type("Action")?;
                 return Ok(None);
@@ -3607,6 +7494,60 @@ impl Action {
     }
 }
 
+impl Action {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2266 => if r.first(&mut seen)? { value = ActionByReference::read_json(r)?.map(|v| Self::ActionByReference(Box::new(v))); },
+                2268 => if r.first(&mut seen)? { value = ActionDefinition::read_json(r)?.map(|v| Self::ActionDefinition(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Action in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::ActionByReference(v) => {
+                if w.wrapper(2266)? {
+                    w.begin_object(911)?;
+                    w.key(2266)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ActionDefinition(v) => {
+                if w.wrapper(2268)? {
+                    w.begin_object(911)?;
+                    w.key(2268)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `tmp:Condition`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Condition {
@@ -3623,8 +7564,8 @@ impl Condition {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x100058) => Self::ConditionSet(Box::new(ConditionSet::read(r)?)),
-            Some(0x100249) => Self::TriggerCondition(Box::new(TriggerCondition::read(r)?)),
+            Some(0x14005a) => Self::ConditionSet(Box::new(ConditionSet::read(r)?)),
+            Some(0x140258) => Self::TriggerCondition(Box::new(TriggerCondition::read(r)?)),
             _ => {
                 r.unknown_type("Condition")?;
                 return Ok(None);
@@ -3658,6 +7599,60 @@ impl Condition {
     }
 }
 
+impl Condition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2276 => if r.first(&mut seen)? { value = ConditionSet::read_json(r)?.map(|v| Self::ConditionSet(Box::new(v))); },
+                2324 => if r.first(&mut seen)? { value = TriggerCondition::read_json(r)?.map(|v| Self::TriggerCondition(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Condition in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::ConditionSet(v) => {
+                if w.wrapper(2276)? {
+                    w.begin_object(915)?;
+                    w.key(2276)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::TriggerCondition(v) => {
+                if w.wrapper(2324)? {
+                    w.begin_object(915)?;
+                    w.key(2324)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `tmp:Measure`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Measure {
@@ -3676,9 +7671,9 @@ impl Measure {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x100053) => Self::CompositeMeasure(Box::new(CompositeMeasure::read(r)?)),
-            Some(0x100103) => Self::MeasureByReference(Box::new(MeasureByReference::read(r)?)),
-            Some(0x100104) => Self::MeasureDefinition(Box::new(MeasureDefinition::read(r)?)),
+            Some(0x140055) => Self::CompositeMeasure(Box::new(CompositeMeasure::read(r)?)),
+            Some(0x14010b) => Self::MeasureByReference(Box::new(MeasureByReference::read(r)?)),
+            Some(0x14010c) => Self::MeasureDefinition(Box::new(MeasureDefinition::read(r)?)),
             _ => {
                 r.unknown_type("Measure")?;
                 return Ok(None);
@@ -3715,6 +7710,71 @@ impl Measure {
     }
 }
 
+impl Measure {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2273 => if r.first(&mut seen)? { value = CompositeMeasure::read_json(r)?.map(|v| Self::CompositeMeasure(Box::new(v))); },
+                2283 => if r.first(&mut seen)? { value = MeasureByReference::read_json(r)?.map(|v| Self::MeasureByReference(Box::new(v))); },
+                2285 => if r.first(&mut seen)? { value = MeasureDefinition::read_json(r)?.map(|v| Self::MeasureDefinition(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Measure in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::CompositeMeasure(v) => {
+                if w.wrapper(2273)? {
+                    w.begin_object(923)?;
+                    w.key(2273)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::MeasureByReference(v) => {
+                if w.wrapper(2283)? {
+                    w.begin_object(923)?;
+                    w.key(2283)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::MeasureDefinition(v) => {
+                if w.wrapper(2285)? {
+                    w.begin_object(923)?;
+                    w.key(2285)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `tmp:OperatorActionDefinition`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum OperatorActionDefinition {
@@ -3745,15 +7805,15 @@ impl OperatorActionDefinition {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x1000bd) => Self::GeneralInstructionOrMessageToRoadUsersDefinition(Box::new(GeneralInstructionOrMessageToRoadUsersDefinition::read(r)?)),
-            Some(0x1000bf) => Self::GeneralNetworkManagementDefinition(Box::new(GeneralNetworkManagementDefinition::read(r)?)),
-            Some(0x1001ba) => Self::ReroutingManagementDefinition(Box::new(ReroutingManagementDefinition::read(r)?)),
-            Some(0x1001c6) => Self::RoadOrCarriagewayOrLaneManagementDefinition(Box::new(RoadOrCarriagewayOrLaneManagementDefinition::read(r)?)),
-            Some(0x1001d8) => Self::SignSettingDefinition(Box::new(SignSettingDefinition::read(r)?)),
-            Some(0x1001ea) => Self::SpeedManagementDefinition(Box::new(SpeedManagementDefinition::read(r)?)),
-            Some(0x100240) => Self::TrafficSignalSettingDefinition(Box::new(TrafficSignalSettingDefinition::read(r)?)),
-            Some(0x100285) => Self::WinterDrivingManagementDefinition(Box::new(WinterDrivingManagementDefinition::read(r)?)),
-            Some(0x1001cd) => Self::RoadsideAssistanceDefinition(Box::new(RoadsideAssistanceDefinition::read(r)?)),
+            Some(0x1400c3) => Self::GeneralInstructionOrMessageToRoadUsersDefinition(Box::new(GeneralInstructionOrMessageToRoadUsersDefinition::read(r)?)),
+            Some(0x1400c5) => Self::GeneralNetworkManagementDefinition(Box::new(GeneralNetworkManagementDefinition::read(r)?)),
+            Some(0x1401c3) => Self::ReroutingManagementDefinition(Box::new(ReroutingManagementDefinition::read(r)?)),
+            Some(0x1401d0) => Self::RoadOrCarriagewayOrLaneManagementDefinition(Box::new(RoadOrCarriagewayOrLaneManagementDefinition::read(r)?)),
+            Some(0x1401e6) => Self::SignSettingDefinition(Box::new(SignSettingDefinition::read(r)?)),
+            Some(0x1401f8) => Self::SpeedManagementDefinition(Box::new(SpeedManagementDefinition::read(r)?)),
+            Some(0x14024f) => Self::TrafficSignalSettingDefinition(Box::new(TrafficSignalSettingDefinition::read(r)?)),
+            Some(0x140294) => Self::WinterDrivingManagementDefinition(Box::new(WinterDrivingManagementDefinition::read(r)?)),
+            Some(0x1401d7) => Self::RoadsideAssistanceDefinition(Box::new(RoadsideAssistanceDefinition::read(r)?)),
             _ => {
                 r.unknown_type("OperatorActionDefinition")?;
                 return Ok(None);
@@ -3808,6 +7868,137 @@ impl OperatorActionDefinition {
     }
 }
 
+impl OperatorActionDefinition {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2278 => if r.first(&mut seen)? { value = GeneralInstructionOrMessageToRoadUsersDefinition::read_json(r)?.map(|v| Self::GeneralInstructionOrMessageToRoadUsersDefinition(Box::new(v))); },
+                2280 => if r.first(&mut seen)? { value = GeneralNetworkManagementDefinition::read_json(r)?.map(|v| Self::GeneralNetworkManagementDefinition(Box::new(v))); },
+                2297 => if r.first(&mut seen)? { value = ReroutingManagementDefinition::read_json(r)?.map(|v| Self::ReroutingManagementDefinition(Box::new(v))); },
+                2300 => if r.first(&mut seen)? { value = RoadOrCarriagewayOrLaneManagementDefinition::read_json(r)?.map(|v| Self::RoadOrCarriagewayOrLaneManagementDefinition(Box::new(v))); },
+                2305 => if r.first(&mut seen)? { value = SignSettingDefinition::read_json(r)?.map(|v| Self::SignSettingDefinition(Box::new(v))); },
+                2307 => if r.first(&mut seen)? { value = SpeedManagementDefinition::read_json(r)?.map(|v| Self::SpeedManagementDefinition(Box::new(v))); },
+                2322 => if r.first(&mut seen)? { value = TrafficSignalSettingDefinition::read_json(r)?.map(|v| Self::TrafficSignalSettingDefinition(Box::new(v))); },
+                2326 => if r.first(&mut seen)? { value = WinterDrivingManagementDefinition::read_json(r)?.map(|v| Self::WinterDrivingManagementDefinition(Box::new(v))); },
+                2302 => if r.first(&mut seen)? { value = RoadsideAssistanceDefinition::read_json(r)?.map(|v| Self::RoadsideAssistanceDefinition(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of OperatorActionDefinition in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::GeneralInstructionOrMessageToRoadUsersDefinition(v) => {
+                if w.wrapper(2278)? {
+                    w.begin_object(926)?;
+                    w.key(2278)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::GeneralNetworkManagementDefinition(v) => {
+                if w.wrapper(2280)? {
+                    w.begin_object(926)?;
+                    w.key(2280)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ReroutingManagementDefinition(v) => {
+                if w.wrapper(2297)? {
+                    w.begin_object(926)?;
+                    w.key(2297)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::RoadOrCarriagewayOrLaneManagementDefinition(v) => {
+                if w.wrapper(2300)? {
+                    w.begin_object(926)?;
+                    w.key(2300)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SignSettingDefinition(v) => {
+                if w.wrapper(2305)? {
+                    w.begin_object(926)?;
+                    w.key(2305)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SpeedManagementDefinition(v) => {
+                if w.wrapper(2307)? {
+                    w.begin_object(926)?;
+                    w.key(2307)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::TrafficSignalSettingDefinition(v) => {
+                if w.wrapper(2322)? {
+                    w.begin_object(926)?;
+                    w.key(2322)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::WinterDrivingManagementDefinition(v) => {
+                if w.wrapper(2326)? {
+                    w.begin_object(926)?;
+                    w.key(2326)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::RoadsideAssistanceDefinition(v) => {
+                if w.wrapper(2302)? {
+                    w.begin_object(926)?;
+                    w.key(2302)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `tmp:Strategy`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Strategy {
@@ -3824,8 +8015,8 @@ impl Strategy {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x1001f6) => Self::StrategyByReference(Box::new(StrategyByReference::read(r)?)),
-            Some(0x1001f7) => Self::StrategyDefinition(Box::new(StrategyDefinition::read(r)?)),
+            Some(0x140204) => Self::StrategyByReference(Box::new(StrategyByReference::read(r)?)),
+            Some(0x140205) => Self::StrategyDefinition(Box::new(StrategyDefinition::read(r)?)),
             _ => {
                 r.unknown_type("Strategy")?;
                 return Ok(None);
@@ -3859,6 +8050,60 @@ impl Strategy {
     }
 }
 
+impl Strategy {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2309 => if r.first(&mut seen)? { value = StrategyByReference::read_json(r)?.map(|v| Self::StrategyByReference(Box::new(v))); },
+                2311 => if r.first(&mut seen)? { value = StrategyDefinition::read_json(r)?.map(|v| Self::StrategyDefinition(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Strategy in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::StrategyByReference(v) => {
+                if w.wrapper(2309)? {
+                    w.begin_object(943)?;
+                    w.key(2309)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::StrategyDefinition(v) => {
+                if w.wrapper(2311)? {
+                    w.begin_object(943)?;
+                    w.key(2311)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `tmp:TmplanOperation`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TmplanOperation {
@@ -3875,8 +8120,8 @@ impl TmplanOperation {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x10011d) => Self::NonPredefinedTmplanOperation(Box::new(NonPredefinedTmplanOperation::read(r)?)),
-            Some(0x100194) => Self::PredefinedTmplanOperation(Box::new(PredefinedTmplanOperation::read(r)?)),
+            Some(0x140126) => Self::NonPredefinedTmplanOperation(Box::new(NonPredefinedTmplanOperation::read(r)?)),
+            Some(0x14019d) => Self::PredefinedTmplanOperation(Box::new(PredefinedTmplanOperation::read(r)?)),
             _ => {
                 r.unknown_type("TmplanOperation")?;
                 return Ok(None);
@@ -3970,6 +8215,60 @@ impl TmplanOperation {
         match self {
             Self::NonPredefinedTmplanOperation(v) => v.write(w, tag, " xsi:type=\"tmp:NonPredefinedTmplanOperation\"", ""),
             Self::PredefinedTmplanOperation(v) => v.write(w, tag, " xsi:type=\"tmp:PredefinedTmplanOperation\"", ""),
+        }
+    }
+}
+
+impl TmplanOperation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2290 => if r.first(&mut seen)? { value = NonPredefinedTmplanOperation::read_json(r)?.map(|v| Self::NonPredefinedTmplanOperation(Box::new(v))); },
+                2295 => if r.first(&mut seen)? { value = PredefinedTmplanOperation::read_json(r)?.map(|v| Self::PredefinedTmplanOperation(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of TmplanOperation in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::NonPredefinedTmplanOperation(v) => {
+                if w.wrapper(2290)? {
+                    w.begin_object(946)?;
+                    w.key(2290)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PredefinedTmplanOperation(v) => {
+                if w.wrapper(2295)? {
+                    w.begin_object(946)?;
+                    w.key(2295)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
         }
     }
 }

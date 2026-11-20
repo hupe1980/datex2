@@ -126,6 +126,9 @@ pub enum WarningKind {
     UnknownEnumValue,
     /// A value could not be read as its type (text where a number belongs, for example); the field is empty.
     InvalidValue,
+    /// A JSON value of another type than the schema's (a number written as a string, a single
+    /// object where a list belongs) was accepted.
+    TypeMismatch,
     /// An element that should hold a value was empty; it was treated as absent.
     EmptyValue,
     /// A timestamp had no time zone; it was kept as written.
@@ -152,6 +155,7 @@ impl WarningKind {
             Self::UnexpectedType => "unexpected type ignored",
             Self::UnknownEnumValue => "unknown enumeration value kept as extended",
             Self::InvalidValue => "invalid value dropped",
+            Self::TypeMismatch => "value of another JSON type accepted",
             Self::EmptyValue => "empty value treated as absent",
             Self::NoTimeZone => "timestamp without time zone",
             Self::MissingElement => "missing element",

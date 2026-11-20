@@ -4,9 +4,13 @@
 //! Names follow the standard; see <https://docs.datex2.eu/> for what each one means.
 
 #[allow(unused_imports)]
-use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst};
+use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst, message_container as con, exchange_information as ex, information_management as inf, cis_information as cis};
 #[allow(unused_imports)]
-use crate::out::{Out, Pattern};
+use crate::out::{Out, Pattern, Rules};
+#[allow(unused_imports)]
+use crate::json::{JsonReader, JsonWriter};
+#[allow(unused_imports)]
+use crate::{ErrorKind, WarningKind};
 #[allow(unused_imports)]
 use crate::xml::{Enumeration, Xml};
 #[allow(unused_imports)]
@@ -587,6 +591,27 @@ impl Enumeration for ConnectorTypeEnum {
     fn extended(value: String) -> Self {
         Self::Extended(value)
     }
+    fn from_alias(literal: &str) -> Option<Self> {
+        match literal {
+            "domesticA" => Some(Self::DomesticAType),
+            "domesticB" => Some(Self::DomesticBType),
+            "domesticC" => Some(Self::DomesticCType),
+            "domesticD" => Some(Self::DomesticDType),
+            "domesticE" => Some(Self::DomesticEType),
+            "domesticF" => Some(Self::DomesticFType),
+            "domesticG" => Some(Self::DomesticGType),
+            "domesticH" => Some(Self::DomesticHType),
+            "domesticI" => Some(Self::DomesticIType),
+            "domesticJ" => Some(Self::DomesticJType),
+            "domesticK" => Some(Self::DomesticKType),
+            "domesticL" => Some(Self::DomesticLType),
+            "domesticM" => Some(Self::DomesticMType),
+            "domesticN" => Some(Self::DomesticNType),
+            "domesticO" => Some(Self::DomesticOType),
+            _ => None,
+        }
+    }
+
 }
 
 impl ConnectorTypeEnum {
@@ -1667,12 +1692,12 @@ pub struct AlternativeFuelsRefillPoint {
 }
 
 impl AlternativeFuelsRefillPoint {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x20b90, 0x20764, 0x20496, 0x1076d, 0x10907, 0x10936, 0x10946, 0x10ae4, 0x107d5, 0x10592, 0x10735, 0x109e6, 0x1086b, 0x10add, 0x10a6f, 0x10418];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x20bee, 0x20794, 0x204b6, 0x1079d, 0x10946, 0x10978, 0x10988, 0x10b2e, 0x1080a, 0x105b5, 0x10764, 0x10a2b, 0x108a7, 0x10b26, 0x10ab6, 0x10433];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1002b);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x1002c);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -1714,43 +1739,43 @@ impl AlternativeFuelsRefillPoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x20b90 => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
-                    0x20764 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
-                    0x20496 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1174); }
-                    0x1076d => { let v = r.enumeration::<DeliveryUnitEnum>()?; r.set(&mut e24, v, 1901); }
-                    0x10907 => { let v = r.value::<f32>()?; r.set(&mut e25, v, 2311); }
-                    0x10936 => { let v = r.value::<f32>()?; r.set(&mut e26, v, 2358); }
-                    0x10946 => { let v = r.multilingual()?; r.set(&mut e27, v, 2374); }
-                    0x10ae4 => { let v = r.enumeration::<afac::ReservationTypeEnum>()?; r.set(&mut e28, v, 2788); }
-                    0x107d5 => { let v = AnyEnergyProduct::read(r)?; e29.extend(v); }
-                    0x10592 => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1426); }
-                    0x10735 => { let v = r.enumeration::<GasConnectorTypeEnum>()?; e31.extend(v); }
-                    0x109e6 => { let v = r.string()?; e32.extend(v); }
-                    0x1086b => { let v = r.enumeration::<HydrogenFuellingProcessProtocolEnum>()?; r.set(&mut e33, v, 2155); }
-                    0x10add => { let v = r.value::<f32>()?; r.set(&mut e34, v, 2781); }
-                    0x10a6f => { let v = r.value::<f32>()?; r.set(&mut e35, v, 2671); }
-                    0x10418 => { let v = r.raw()?; r.set(&mut e36, v.map(Box::new), 1048); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x20bee => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
+                    0x20794 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
+                    0x204b6 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1206); }
+                    0x1079d => { let v = r.enumeration::<DeliveryUnitEnum>()?; r.set(&mut e24, v, 1949); }
+                    0x10946 => { let v = r.value::<f32>()?; r.set(&mut e25, v, 2374); }
+                    0x10978 => { let v = r.value::<f32>()?; r.set(&mut e26, v, 2424); }
+                    0x10988 => { let v = r.multilingual()?; r.set(&mut e27, v, 2440); }
+                    0x10b2e => { let v = r.enumeration::<afac::ReservationTypeEnum>()?; r.set(&mut e28, v, 2862); }
+                    0x1080a => { let v = AnyEnergyProduct::read(r)?; e29.extend(v); }
+                    0x105b5 => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1461); }
+                    0x10764 => { let v = r.enumeration::<GasConnectorTypeEnum>()?; e31.extend(v); }
+                    0x10a2b => { let v = r.string()?; e32.extend(v); }
+                    0x108a7 => { let v = r.enumeration::<HydrogenFuellingProcessProtocolEnum>()?; r.set(&mut e33, v, 2215); }
+                    0x10b26 => { let v = r.value::<f32>()?; r.set(&mut e34, v, 2854); }
+                    0x10ab6 => { let v = r.value::<f32>()?; r.set(&mut e35, v, 2742); }
+                    0x10433 => { let v = r.raw()?; r.set(&mut e36, v.map(Box::new), 1075); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1759,7 +1784,7 @@ impl AlternativeFuelsRefillPoint {
                 break;
             }
         }
-        r.required(&e24, 1901);
+        r.required(&e24, 1949);
         let v = Self {
             id: a0,
             version: a1,
@@ -1863,6 +1888,398 @@ impl AlternativeFuelsRefillPoint {
     }
 }
 
+impl AlternativeFuelsRefillPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 39];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = Vec::new();
+        let mut f24 = Vec::new();
+        let mut f25 = None;
+        let mut f26 = None;
+        let mut f27 = None;
+        let mut f28 = None;
+        let mut f29 = None;
+        let mut f30 = None;
+        let mut f31 = Vec::new();
+        let mut f32 = None;
+        let mut f33 = Vec::new();
+        let mut f34 = Vec::new();
+        let mut f35 = None;
+        let mut f36 = None;
+        let mut f37 = None;
+        let mut f38 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = afac::OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = afac::Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = afac::Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = afac::Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = afac::Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = afac::Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = afac::Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                2218 => if r.first(&mut seen[23])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacility::read_json(r)? { f23.push(v); } } },
+                525 => if r.first(&mut seen[24])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = DedicatedParkingSpaces::read_json(r)? { f24.push(v); } } },
+                130 => if r.first(&mut seen[25])? { f25 = r.raw_object()?.map(Box::new); },
+                534 => if r.first(&mut seen[26])? { f26 = r.enumeration::<DeliveryUnitEnum>()?; },
+                1275 => if r.first(&mut seen[27])? { f27 = r.number::<f32>()?; },
+                1326 => if r.first(&mut seen[28])? { f28 = r.number::<f32>()?; },
+                1342 => if r.first(&mut seen[29])? { f29 = r.multilingual()?; },
+                1885 => if r.first(&mut seen[30])? { f30 = r.enumeration::<afac::ReservationTypeEnum>()?; },
+                677 => if r.first(&mut seen[31])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyEnergyProduct::read_json(r)? { f31.push(v); } } },
+                105 => if r.first(&mut seen[32])? { f32 = r.raw_object()?.map(Box::new); },
+                450 => if r.first(&mut seen[33])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<GasConnectorTypeEnum>()? { f33.push(v); } } },
+                1502 => if r.first(&mut seen[34])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f34.push(v); } } },
+                960 => if r.first(&mut seen[35])? { f35 = r.enumeration::<HydrogenFuellingProcessProtocolEnum>()?; },
+                1854 => if r.first(&mut seen[36])? { f36 = r.number::<f32>()?; },
+                1640 => if r.first(&mut seen[37])? { f37 = r.number::<f32>()?; },
+                70 => if r.first(&mut seen[38])? { f38 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f26, 534);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            supplemental_facility: f23,
+            dedicated_parking_spaces: f24,
+            facility_extension: f25,
+            delivery_unit: f26,
+            maximum_delivery_amount: f27,
+            minimum_delivery_amount: f28,
+            model_type: f29,
+            reservation: f30,
+            energy_product: f31,
+            refill_point_extension: f32,
+            connector: f33,
+            other_connector: f34,
+            hydrogen_process_protocol: f35,
+            renewable_sources_ratio: f36,
+            pressure: f37,
+            alternative_fuels_refill_point_extension: f38,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(0)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility.is_empty() {
+            w.key(2218)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.dedicated_parking_spaces.is_empty() {
+            w.key(525)?;
+            w.begin_array()?;
+            for v in &self.dedicated_parking_spaces {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_extension {
+            w.key(130)?;
+            w.extension(v)?;
+        }
+        match &self.delivery_unit {
+            Some(v) => {
+                w.key(534)?;
+                w.enumeration(11, v.literal())?;
+            }
+            None => w.absent(534, w.missing("deliveryUnit"))?,
+        }
+        if let Some(v) = &self.maximum_delivery_amount {
+            w.key(1275)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.minimum_delivery_amount {
+            w.key(1326)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.model_type {
+            w.key(1342)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.reservation {
+            w.key(1885)?;
+            w.enumeration(124, v.literal())?;
+        }
+        if !self.energy_product.is_empty() {
+            w.key(677)?;
+            w.begin_array()?;
+            for v in &self.energy_product {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.refill_point_extension {
+            w.key(105)?;
+            w.extension(v)?;
+        }
+        if !self.connector.is_empty() {
+            w.key(450)?;
+            w.begin_array()?;
+            for v in &self.connector {
+                w.item()?;
+                w.enumeration(34, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.other_connector.is_empty() {
+            w.key(1502)?;
+            w.begin_array()?;
+            for v in &self.other_connector {
+                w.item()?;
+                w.max_len("otherConnector", v, 1024)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.hydrogen_process_protocol {
+            w.key(960)?;
+            w.enumeration(36, v.literal())?;
+        }
+        if let Some(v) = &self.renewable_sources_ratio {
+            w.key(1854)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.pressure {
+            w.key(1640)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.alternative_fuels_refill_point_extension {
+            w.key(70)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:AssociatedParking`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AssociatedParking {
@@ -1885,10 +2302,10 @@ pub struct AssociatedParking {
 }
 
 impl AssociatedParking {
-    const FIELDS: &'static [u32] = &[0x20bfe, 0x2080c, 0x20777, 0x20425, 0x10708, 0x10bfb, 0x106f4, 0x10426];
+    const FIELDS: &'static [u32] = &[0x20c5d, 0x20848, 0x207a8, 0x20440, 0x10731, 0x10c5a, 0x1071d, 0x10441];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10039);
+        r.expect_type(0x1003a);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1901,14 +2318,14 @@ impl AssociatedParking {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20bfe => { let v = r.enumeration::<afac::FacilityTypeEnum>()?; r.set(&mut e0, v, 3070); }
-                    0x2080c => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2060); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e2, v, 1911); }
-                    0x20425 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1061); }
-                    0x10708 => { let v = r.value::<u64>()?; r.set(&mut e4, v, 1800); }
-                    0x10bfb => { let v = r.value::<u64>()?; r.set(&mut e5, v, 3067); }
-                    0x106f4 => { let v = r.value::<u64>()?; r.set(&mut e6, v, 1780); }
-                    0x10426 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1062); }
+                    0x20c5d => { let v = r.enumeration::<afac::FacilityTypeEnum>()?; r.set(&mut e0, v, 3165); }
+                    0x20848 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2120); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e2, v, 1960); }
+                    0x20440 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1088); }
+                    0x10731 => { let v = r.value::<u64>()?; r.set(&mut e4, v, 1841); }
+                    0x10c5a => { let v = r.value::<u64>()?; r.set(&mut e5, v, 3162); }
+                    0x1071d => { let v = r.value::<u64>()?; r.set(&mut e6, v, 1821); }
+                    0x10441 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1089); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -1917,7 +2334,7 @@ impl AssociatedParking {
                 break;
             }
         }
-        r.required(&e0, 3070);
+        r.required(&e0, 3165);
         let v = Self {
             r#type: e0,
             facility_reference: e1,
@@ -1953,6 +2370,103 @@ impl AssociatedParking {
     }
 }
 
+impl AssociatedParking {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2495 => if r.first(&mut seen[0])? { f0 = r.enumeration::<afac::FacilityTypeEnum>()?; },
+                830 => if r.first(&mut seen[1])? { f1 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                545 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                116 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                315 => if r.first(&mut seen[4])? { f4 = r.number::<u64>()?; },
+                2492 => if r.first(&mut seen[5])? { f5 = r.number::<u64>()?; },
+                296 => if r.first(&mut seen[6])? { f6 = r.number::<u64>()?; },
+                72 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2495);
+        Ok(Self {
+            r#type: f0,
+            facility_reference: f1,
+            description: f2,
+            associated_facility_extension: f3,
+            car_parking_capacity: f4,
+            truck_parking_capacity: f5,
+            bike_parking_capacity: f6,
+            associated_parking_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(1)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.r#type {
+            Some(v) => {
+                w.key(2495)?;
+                w.enumeration(79, v.literal())?;
+            }
+            None => w.absent(2495, w.missing("type"))?,
+        }
+        if let Some(v) = &self.facility_reference {
+            w.key(830)?;
+            v.write_json(w, Some("FacilityObject"))?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.associated_facility_extension {
+            w.key(116)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.car_parking_capacity {
+            w.key(315)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.truck_parking_capacity {
+            w.key(2492)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.bike_parking_capacity {
+            w.key(296)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.associated_parking_extension {
+            w.key(72)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:Connector`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Connector {
@@ -1977,10 +2491,10 @@ pub struct Connector {
 }
 
 impl Connector {
-    const FIELDS: &'static [u32] = &[0x10737, 0x109e6, 0x10749, 0x10736, 0x10901, 0x10c69, 0x10906, 0x10805, 0x10446];
+    const FIELDS: &'static [u32] = &[0x10766, 0x10a2b, 0x10778, 0x10765, 0x10940, 0x10ccb, 0x10945, 0x10840, 0x10462];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1005a);
+        r.expect_type(0x1005c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -1994,15 +2508,15 @@ impl Connector {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10737 => { let v = r.enumeration::<ConnectorTypeEnum>()?; r.set(&mut e0, v, 1847); }
-                    0x109e6 => { let v = r.string()?; r.set(&mut e1, v, 2534); }
-                    0x10749 => { let v = r.string()?; e2.extend(v); }
-                    0x10736 => { let v = r.enumeration::<ConnectorFormatTypeEnum>()?; r.set(&mut e3, v, 1846); }
-                    0x10901 => { let v = r.value::<f32>()?; r.set(&mut e4, v, 2305); }
-                    0x10c69 => { let v = r.value::<f32>()?; r.set(&mut e5, v, 3177); }
-                    0x10906 => { let v = r.value::<f32>()?; r.set(&mut e6, v, 2310); }
-                    0x10805 => { let v = Some(afac::ExternalIdentifier::read(r)?); e7.extend(v); }
-                    0x10446 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1094); }
+                    0x10766 => { let v = r.enumeration::<ConnectorTypeEnum>()?; r.set(&mut e0, v, 1894); }
+                    0x10a2b => { let v = r.string()?; r.set(&mut e1, v, 2603); }
+                    0x10778 => { let v = r.string()?; e2.extend(v); }
+                    0x10765 => { let v = r.enumeration::<ConnectorFormatTypeEnum>()?; r.set(&mut e3, v, 1893); }
+                    0x10940 => { let v = r.value::<f32>()?; r.set(&mut e4, v, 2368); }
+                    0x10ccb => { let v = r.value::<f32>()?; r.set(&mut e5, v, 3275); }
+                    0x10945 => { let v = r.value::<f32>()?; r.set(&mut e6, v, 2373); }
+                    0x10840 => { let v = Some(afac::ExternalIdentifier::read(r)?); e7.extend(v); }
+                    0x10462 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1122); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2011,8 +2525,8 @@ impl Connector {
                 break;
             }
         }
-        r.required(&e0, 1847);
-        r.required(&e4, 2305);
+        r.required(&e0, 1894);
+        r.required(&e4, 2368);
         let v = Self {
             connector_type: e0,
             other_connector: e1,
@@ -2050,6 +2564,124 @@ impl Connector {
         for v in &self.external_identifier { v.write(w, "aegi:externalIdentifier", "", "")?; }
         if let Some(v) = &self.connector_extension { w.extension("aegi:_connectorExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl Connector {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 9];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                452 => if r.first(&mut seen[0])? { f0 = r.enumeration::<ConnectorTypeEnum>()?; },
+                1502 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                470 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f2.push(v); } } },
+                451 => if r.first(&mut seen[3])? { f3 = r.enumeration::<ConnectorFormatTypeEnum>()?; },
+                1269 => if r.first(&mut seen[4])? { f4 = r.number::<f32>()?; },
+                2656 => if r.first(&mut seen[5])? { f5 = r.number::<f32>()?; },
+                1274 => if r.first(&mut seen[6])? { f6 = r.number::<f32>()?; },
+                739 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::ExternalIdentifier::read_json(r)? { f7.push(v); } } },
+                73 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 452);
+        r.required(&f4, 1269);
+        Ok(Self {
+            connector_type: f0,
+            other_connector: f1,
+            country_of_domestic_socket: f2,
+            connector_format: f3,
+            max_power_at_socket: f4,
+            voltage: f5,
+            maximum_current: f6,
+            external_identifier: f7,
+            connector_extension: f8,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(6)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.connector_type {
+            Some(v) => {
+                w.key(452)?;
+                w.enumeration(8, v.literal())?;
+            }
+            None => w.absent(452, w.missing("connectorType"))?,
+        }
+        if let Some(v) = &self.other_connector {
+            w.key(1502)?;
+            w.max_len("otherConnector", v, 1024)?; w.string(v)?;
+        }
+        if !self.country_of_domestic_socket.is_empty() {
+            w.key(470)?;
+            w.begin_array()?;
+            for v in &self.country_of_domestic_socket {
+                w.item()?;
+                w.max_len("countryOfDomesticSocket", v, 2)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.connector_format {
+            w.key(451)?;
+            w.enumeration(7, v.literal())?;
+        }
+        match &self.max_power_at_socket {
+            Some(v) => {
+                w.key(1269)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(1269, w.missing("maxPowerAtSocket"))?,
+        }
+        if let Some(v) = &self.voltage {
+            w.key(2656)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.maximum_current {
+            w.key(1274)?;
+            w.float32(*v)?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.connector_extension {
+            w.key(73)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -2111,12 +2743,12 @@ pub struct DedicatedParkingSpaces {
 }
 
 impl DedicatedParkingSpaces {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x10982, 0x10c1e, 0x10458];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x109c6, 0x10c7e, 0x10474];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1006d);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x1006f);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -2145,30 +2777,30 @@ impl DedicatedParkingSpaces {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x10982 => { let v = r.value::<u64>()?; r.set(&mut e21, v, 2434); }
-                    0x10c1e => { let v = r.enumeration::<afac::UserTypeEnum>()?; e22.extend(v); }
-                    0x10458 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1112); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x109c6 => { let v = r.value::<u64>()?; r.set(&mut e21, v, 2502); }
+                    0x10c7e => { let v = r.enumeration::<afac::UserTypeEnum>()?; e22.extend(v); }
+                    0x10474 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1140); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2177,7 +2809,7 @@ impl DedicatedParkingSpaces {
                 break;
             }
         }
-        r.required(&e21, 2434);
+        r.required(&e21, 2502);
         let v = Self {
             id: a0,
             version: a1,
@@ -2252,6 +2884,287 @@ impl DedicatedParkingSpaces {
         for v in &self.user_specific { w.enumeration("aegi:userSpecific", v.literal())?; }
         if let Some(v) = &self.dedicated_parking_spaces_extension { w.extension("aegi:_dedicatedParkingSpacesExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl DedicatedParkingSpaces {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 26];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = None;
+        let mut f24 = Vec::new();
+        let mut f25 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = afac::OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = afac::Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = afac::Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = afac::Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = afac::Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = afac::Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = afac::Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                1402 => if r.first(&mut seen[23])? { f23 = r.number::<u64>()?; },
+                2531 => if r.first(&mut seen[24])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::UserTypeEnum>()? { f24.push(v); } } },
+                74 => if r.first(&mut seen[25])? { f25 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f23, 1402);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            number_of_spaces: f23,
+            user_specific: f24,
+            dedicated_parking_spaces_extension: f25,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(10)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        match &self.number_of_spaces {
+            Some(v) => {
+                w.key(1402)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1402, w.missing("numberOfSpaces"))?,
+        }
+        if !self.user_specific.is_empty() {
+            w.key(2531)?;
+            w.begin_array()?;
+            for v in &self.user_specific {
+                w.item()?;
+                w.enumeration(144, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dedicated_parking_spaces_extension {
+            w.key(74)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -2335,12 +3248,12 @@ pub struct DieselRefillPoint {
 }
 
 impl DieselRefillPoint {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x20b90, 0x20764, 0x20496, 0x1076d, 0x10907, 0x10936, 0x10946, 0x10ae4, 0x107d5, 0x10592, 0x10785, 0x10713, 0x106f6, 0x10467];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x20bee, 0x20794, 0x204b6, 0x1079d, 0x10946, 0x10978, 0x10988, 0x10b2e, 0x1080a, 0x105b5, 0x107b6, 0x1073c, 0x1071f, 0x10483];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1007c);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x1007e);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -2380,41 +3293,41 @@ impl DieselRefillPoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x20b90 => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
-                    0x20764 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
-                    0x20496 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1174); }
-                    0x1076d => { let v = r.enumeration::<DeliveryUnitEnum>()?; r.set(&mut e24, v, 1901); }
-                    0x10907 => { let v = r.value::<f32>()?; r.set(&mut e25, v, 2311); }
-                    0x10936 => { let v = r.value::<f32>()?; r.set(&mut e26, v, 2358); }
-                    0x10946 => { let v = r.multilingual()?; r.set(&mut e27, v, 2374); }
-                    0x10ae4 => { let v = r.enumeration::<afac::ReservationTypeEnum>()?; r.set(&mut e28, v, 2788); }
-                    0x107d5 => { let v = AnyEnergyProduct::read(r)?; e29.extend(v); }
-                    0x10592 => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1426); }
-                    0x10785 => { let v = r.enumeration::<DieselVehicleTypeEnum>()?; r.set(&mut e31, v, 1925); }
-                    0x10713 => { let v = r.value::<u64>()?; r.set(&mut e32, v, 1811); }
-                    0x106f6 => { let v = r.value::<f32>()?; r.set(&mut e33, v, 1782); }
-                    0x10467 => { let v = r.raw()?; r.set(&mut e34, v.map(Box::new), 1127); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x20bee => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
+                    0x20794 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
+                    0x204b6 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1206); }
+                    0x1079d => { let v = r.enumeration::<DeliveryUnitEnum>()?; r.set(&mut e24, v, 1949); }
+                    0x10946 => { let v = r.value::<f32>()?; r.set(&mut e25, v, 2374); }
+                    0x10978 => { let v = r.value::<f32>()?; r.set(&mut e26, v, 2424); }
+                    0x10988 => { let v = r.multilingual()?; r.set(&mut e27, v, 2440); }
+                    0x10b2e => { let v = r.enumeration::<afac::ReservationTypeEnum>()?; r.set(&mut e28, v, 2862); }
+                    0x1080a => { let v = AnyEnergyProduct::read(r)?; e29.extend(v); }
+                    0x105b5 => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1461); }
+                    0x107b6 => { let v = r.enumeration::<DieselVehicleTypeEnum>()?; r.set(&mut e31, v, 1974); }
+                    0x1073c => { let v = r.value::<u64>()?; r.set(&mut e32, v, 1852); }
+                    0x1071f => { let v = r.value::<f32>()?; r.set(&mut e33, v, 1823); }
+                    0x10483 => { let v = r.raw()?; r.set(&mut e34, v.map(Box::new), 1155); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2423,7 +3336,7 @@ impl DieselRefillPoint {
                 break;
             }
         }
-        r.required(&e24, 1901);
+        r.required(&e24, 1949);
         let v = Self {
             id: a0,
             version: a1,
@@ -2523,6 +3436,374 @@ impl DieselRefillPoint {
     }
 }
 
+impl DieselRefillPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 37];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = Vec::new();
+        let mut f24 = Vec::new();
+        let mut f25 = None;
+        let mut f26 = None;
+        let mut f27 = None;
+        let mut f28 = None;
+        let mut f29 = None;
+        let mut f30 = None;
+        let mut f31 = Vec::new();
+        let mut f32 = None;
+        let mut f33 = None;
+        let mut f34 = None;
+        let mut f35 = None;
+        let mut f36 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = afac::OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = afac::Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = afac::Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = afac::Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = afac::Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = afac::Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = afac::Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                2218 => if r.first(&mut seen[23])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacility::read_json(r)? { f23.push(v); } } },
+                525 => if r.first(&mut seen[24])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = DedicatedParkingSpaces::read_json(r)? { f24.push(v); } } },
+                130 => if r.first(&mut seen[25])? { f25 = r.raw_object()?.map(Box::new); },
+                534 => if r.first(&mut seen[26])? { f26 = r.enumeration::<DeliveryUnitEnum>()?; },
+                1275 => if r.first(&mut seen[27])? { f27 = r.number::<f32>()?; },
+                1326 => if r.first(&mut seen[28])? { f28 = r.number::<f32>()?; },
+                1342 => if r.first(&mut seen[29])? { f29 = r.multilingual()?; },
+                1885 => if r.first(&mut seen[30])? { f30 = r.enumeration::<afac::ReservationTypeEnum>()?; },
+                677 => if r.first(&mut seen[31])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyEnergyProduct::read_json(r)? { f31.push(v); } } },
+                105 => if r.first(&mut seen[32])? { f32 = r.raw_object()?.map(Box::new); },
+                559 => if r.first(&mut seen[33])? { f33 = r.enumeration::<DieselVehicleTypeEnum>()?; },
+                326 => if r.first(&mut seen[34])? { f34 = r.number::<u64>()?; },
+                298 => if r.first(&mut seen[35])? { f35 = r.number::<f32>()?; },
+                76 => if r.first(&mut seen[36])? { f36 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f26, 534);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            supplemental_facility: f23,
+            dedicated_parking_spaces: f24,
+            facility_extension: f25,
+            delivery_unit: f26,
+            maximum_delivery_amount: f27,
+            minimum_delivery_amount: f28,
+            model_type: f29,
+            reservation: f30,
+            energy_product: f31,
+            refill_point_extension: f32,
+            diesel_vehicle_type: f33,
+            cetane: f34,
+            bio_diesel_share: f35,
+            diesel_refill_point_extension: f36,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(12)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility.is_empty() {
+            w.key(2218)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.dedicated_parking_spaces.is_empty() {
+            w.key(525)?;
+            w.begin_array()?;
+            for v in &self.dedicated_parking_spaces {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_extension {
+            w.key(130)?;
+            w.extension(v)?;
+        }
+        match &self.delivery_unit {
+            Some(v) => {
+                w.key(534)?;
+                w.enumeration(11, v.literal())?;
+            }
+            None => w.absent(534, w.missing("deliveryUnit"))?,
+        }
+        if let Some(v) = &self.maximum_delivery_amount {
+            w.key(1275)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.minimum_delivery_amount {
+            w.key(1326)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.model_type {
+            w.key(1342)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.reservation {
+            w.key(1885)?;
+            w.enumeration(124, v.literal())?;
+        }
+        if !self.energy_product.is_empty() {
+            w.key(677)?;
+            w.begin_array()?;
+            for v in &self.energy_product {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.refill_point_extension {
+            w.key(105)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.diesel_vehicle_type {
+            w.key(559)?;
+            w.enumeration(13, v.literal())?;
+        }
+        if let Some(v) = &self.cetane {
+            w.key(326)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.bio_diesel_share {
+            w.key(298)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.diesel_refill_point_extension {
+            w.key(76)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:ElectricChargingEquipment`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ElectricChargingEquipment {
@@ -2591,12 +3872,12 @@ pub struct ElectricChargingEquipment {
 }
 
 impl ElectricChargingEquipment {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x206dc, 0x20a98, 0x20acc, 0x206c5, 0x20954, 0x205dc, 0x107b8, 0x1047b];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x20705, 0x20adf, 0x20b15, 0x206ee, 0x20996, 0x20605, 0x107ea, 0x10498];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10090);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x10093);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -2630,35 +3911,35 @@ impl ElectricChargingEquipment {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x206dc => { let v = r.enumeration::<afac::AvailabilityEnum>()?; r.set(&mut e21, v, 1756); }
-                    0x20a98 => { let v = r.value::<u64>()?; r.set(&mut e22, v, 2712); }
-                    0x20acc => { let v = r.value::<bool>()?; r.set(&mut e23, v, 2764); }
-                    0x206c5 => { let v = r.enumeration::<afac::UserTypeEnum>()?; e24.extend(v); }
-                    0x20954 => { let v = r.value::<bool>()?; r.set(&mut e25, v, 2388); }
-                    0x205dc => { let v = r.raw()?; r.set(&mut e26, v.map(Box::new), 1500); }
-                    0x107b8 => { let v = Some(ElectricChargingPoint::read(r)?); r.set(&mut e27, v.map(Box::new), 1976); }
-                    0x1047b => { let v = r.raw()?; r.set(&mut e28, v.map(Box::new), 1147); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x20705 => { let v = r.enumeration::<afac::AvailabilityEnum>()?; r.set(&mut e21, v, 1797); }
+                    0x20adf => { let v = r.value::<u64>()?; r.set(&mut e22, v, 2783); }
+                    0x20b15 => { let v = r.value::<bool>()?; r.set(&mut e23, v, 2837); }
+                    0x206ee => { let v = r.enumeration::<afac::UserTypeEnum>()?; e24.extend(v); }
+                    0x20996 => { let v = r.value::<bool>()?; r.set(&mut e25, v, 2454); }
+                    0x20605 => { let v = r.raw()?; r.set(&mut e26, v.map(Box::new), 1541); }
+                    0x107ea => { let v = Some(ElectricChargingPoint::read(r)?); r.set(&mut e27, v.map(Box::new), 2026); }
+                    0x10498 => { let v = r.raw()?; r.set(&mut e28, v.map(Box::new), 1176); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2667,7 +3948,7 @@ impl ElectricChargingEquipment {
                 break;
             }
         }
-        r.required(&e27, 1976);
+        r.required(&e27, 2026);
         let v = Self {
             id: a0,
             version: a1,
@@ -2752,6 +4033,322 @@ impl ElectricChargingEquipment {
         }
         if let Some(v) = &self.electric_charging_equipment_extension { w.extension("aegi:_electricChargingEquipmentExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl ElectricChargingEquipment {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 31];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = None;
+        let mut f24 = None;
+        let mut f25 = None;
+        let mut f26 = Vec::new();
+        let mut f27 = None;
+        let mut f28 = None;
+        let mut f29 = None;
+        let mut f30 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = afac::OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = afac::Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = afac::Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = afac::Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = afac::Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = afac::Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = afac::Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                272 => if r.first(&mut seen[23])? { f23 = r.enumeration::<afac::AvailabilityEnum>()?; },
+                1783 => if r.first(&mut seen[24])? { f24 = r.number::<u64>()?; },
+                1837 => if r.first(&mut seen[25])? { f25 = r.boolean()?; },
+                249 => if r.first(&mut seen[26])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::UserTypeEnum>()? { f26.push(v); } } },
+                1355 => if r.first(&mut seen[27])? { f27 = r.boolean()?; },
+                185 => if r.first(&mut seen[28])? { f28 = r.raw_object()?.map(Box::new); },
+                645 => if r.first(&mut seen[29])? { f29 = ElectricChargingPoint::read_json(r)?.map(Box::new); },
+                78 => if r.first(&mut seen[30])? { f30 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f29, 645);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            availability: f23,
+            quantity: f24,
+            regularly_cleaned: f25,
+            applicable_for_user: f26,
+            nearby: f27,
+            supplemental_facility_extension: f28,
+            electric_charging_point: f29,
+            electric_charging_equipment_extension: f30,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(14)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.availability {
+            w.key(272)?;
+            w.enumeration(62, v.literal())?;
+        }
+        if let Some(v) = &self.quantity {
+            w.key(1783)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.regularly_cleaned {
+            w.key(1837)?;
+            w.boolean(*v)?;
+        }
+        if !self.applicable_for_user.is_empty() {
+            w.key(249)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_user {
+                w.item()?;
+                w.enumeration(144, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.nearby {
+            w.key(1355)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.supplemental_facility_extension {
+            w.key(185)?;
+            w.extension(v)?;
+        }
+        match &self.electric_charging_point {
+            Some(v) => {
+                w.key(645)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(645, w.missing("electricChargingPoint"))?,
+        }
+        if let Some(v) = &self.electric_charging_equipment_extension {
+            w.key(78)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -2849,12 +4446,12 @@ pub struct ElectricChargingPoint {
 }
 
 impl ElectricChargingPoint {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x20b90, 0x20764, 0x20496, 0x1076d, 0x10907, 0x10936, 0x10946, 0x10ae4, 0x107d5, 0x10592, 0x10753, 0x10c1a, 0x10c48, 0x10972, 0x106e2, 0x106df, 0x10716, 0x10b4a, 0x109eb, 0x10735, 0x1047c];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x20bee, 0x20794, 0x204b6, 0x1079d, 0x10946, 0x10978, 0x10988, 0x10b2e, 0x1080a, 0x105b5, 0x10782, 0x10c7a, 0x10ca8, 0x109b6, 0x1070b, 0x10708, 0x1073f, 0x10ba4, 0x10a30, 0x10764, 0x10499];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10091);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x10094);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -2901,48 +4498,48 @@ impl ElectricChargingPoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x20b90 => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
-                    0x20764 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
-                    0x20496 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1174); }
-                    0x1076d => { let v = r.enumeration::<DeliveryUnitEnum>()?; r.set(&mut e24, v, 1901); }
-                    0x10907 => { let v = r.value::<f32>()?; r.set(&mut e25, v, 2311); }
-                    0x10936 => { let v = r.value::<f32>()?; r.set(&mut e26, v, 2358); }
-                    0x10946 => { let v = r.multilingual()?; r.set(&mut e27, v, 2374); }
-                    0x10ae4 => { let v = r.enumeration::<afac::ReservationTypeEnum>()?; r.set(&mut e28, v, 2788); }
-                    0x107d5 => { let v = AnyEnergyProduct::read(r)?; e29.extend(v); }
-                    0x10592 => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1426); }
-                    0x10753 => { let v = r.enumeration::<CurrentTypeEnum>()?; r.set(&mut e31, v, 1875); }
-                    0x10c1a => { let v = r.enumeration::<ChargingPointUsageTypeEnum>()?; e32.extend(v); }
-                    0x10c48 => { let v = r.enumeration::<VehicleToGridCommunicationTypeEnum>()?; e33.extend(v); }
-                    0x10972 => { let v = r.value::<u64>()?; r.set(&mut e34, v, 2418); }
-                    0x106e2 => { let v = r.value::<f32>()?; e35.extend(v); }
-                    0x106df => { let v = r.value::<f32>()?; e36.extend(v); }
-                    0x10716 => { let v = r.enumeration::<ChargingModeEnum>()?; r.set(&mut e37, v, 1814); }
-                    0x10b4a => { let v = r.enumeration::<SmartRechargingServicesEnum>()?; e38.extend(v); }
-                    0x109eb => { let v = r.multilingual()?; e39.extend(v); }
-                    0x10735 => { let v = Some(Connector::read(r)?); e40.extend(v); }
-                    0x1047c => { let v = r.raw()?; r.set(&mut e41, v.map(Box::new), 1148); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x20bee => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
+                    0x20794 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
+                    0x204b6 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1206); }
+                    0x1079d => { let v = r.enumeration::<DeliveryUnitEnum>()?; r.set(&mut e24, v, 1949); }
+                    0x10946 => { let v = r.value::<f32>()?; r.set(&mut e25, v, 2374); }
+                    0x10978 => { let v = r.value::<f32>()?; r.set(&mut e26, v, 2424); }
+                    0x10988 => { let v = r.multilingual()?; r.set(&mut e27, v, 2440); }
+                    0x10b2e => { let v = r.enumeration::<afac::ReservationTypeEnum>()?; r.set(&mut e28, v, 2862); }
+                    0x1080a => { let v = AnyEnergyProduct::read(r)?; e29.extend(v); }
+                    0x105b5 => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1461); }
+                    0x10782 => { let v = r.enumeration::<CurrentTypeEnum>()?; r.set(&mut e31, v, 1922); }
+                    0x10c7a => { let v = r.enumeration::<ChargingPointUsageTypeEnum>()?; e32.extend(v); }
+                    0x10ca8 => { let v = r.enumeration::<VehicleToGridCommunicationTypeEnum>()?; e33.extend(v); }
+                    0x109b6 => { let v = r.value::<u64>()?; r.set(&mut e34, v, 2486); }
+                    0x1070b => { let v = r.value::<f32>()?; e35.extend(v); }
+                    0x10708 => { let v = r.value::<f32>()?; e36.extend(v); }
+                    0x1073f => { let v = r.enumeration::<ChargingModeEnum>()?; r.set(&mut e37, v, 1855); }
+                    0x10ba4 => { let v = r.enumeration::<SmartRechargingServicesEnum>()?; e38.extend(v); }
+                    0x10a30 => { let v = r.multilingual()?; e39.extend(v); }
+                    0x10764 => { let v = Some(Connector::read(r)?); e40.extend(v); }
+                    0x10499 => { let v = r.raw()?; r.set(&mut e41, v.map(Box::new), 1177); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2951,8 +4548,8 @@ impl ElectricChargingPoint {
                 break;
             }
         }
-        r.required(&e24, 1901);
-        r.required(&e31, 1875);
+        r.required(&e24, 1949);
+        r.required(&e31, 1922);
         let v = Self {
             id: a0,
             version: a1,
@@ -3069,6 +4666,463 @@ impl ElectricChargingPoint {
     }
 }
 
+impl ElectricChargingPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 44];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = Vec::new();
+        let mut f24 = Vec::new();
+        let mut f25 = None;
+        let mut f26 = None;
+        let mut f27 = None;
+        let mut f28 = None;
+        let mut f29 = None;
+        let mut f30 = None;
+        let mut f31 = Vec::new();
+        let mut f32 = None;
+        let mut f33 = None;
+        let mut f34 = Vec::new();
+        let mut f35 = Vec::new();
+        let mut f36 = None;
+        let mut f37 = Vec::new();
+        let mut f38 = Vec::new();
+        let mut f39 = None;
+        let mut f40 = Vec::new();
+        let mut f41 = Vec::new();
+        let mut f42 = Vec::new();
+        let mut f43 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = afac::OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = afac::Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = afac::Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = afac::Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = afac::Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = afac::Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = afac::Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                2218 => if r.first(&mut seen[23])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacility::read_json(r)? { f23.push(v); } } },
+                525 => if r.first(&mut seen[24])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = DedicatedParkingSpaces::read_json(r)? { f24.push(v); } } },
+                130 => if r.first(&mut seen[25])? { f25 = r.raw_object()?.map(Box::new); },
+                534 => if r.first(&mut seen[26])? { f26 = r.enumeration::<DeliveryUnitEnum>()?; },
+                1275 => if r.first(&mut seen[27])? { f27 = r.number::<f32>()?; },
+                1326 => if r.first(&mut seen[28])? { f28 = r.number::<f32>()?; },
+                1342 => if r.first(&mut seen[29])? { f29 = r.multilingual()?; },
+                1885 => if r.first(&mut seen[30])? { f30 = r.enumeration::<afac::ReservationTypeEnum>()?; },
+                677 => if r.first(&mut seen[31])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyEnergyProduct::read_json(r)? { f31.push(v); } } },
+                646 => if r.first(&mut seen[31])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ElectricEnergy::read_json(r)?.map(|v| AnyEnergyProduct::ElectricEnergy(Box::new(v))) { f31.push(v); } } },
+                105 => if r.first(&mut seen[32])? { f32 = r.raw_object()?.map(Box::new); },
+                480 => if r.first(&mut seen[33])? { f33 = r.enumeration::<CurrentTypeEnum>()?; },
+                2527 => if r.first(&mut seen[34])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<ChargingPointUsageTypeEnum>()? { f34.push(v); } } },
+                2572 => if r.first(&mut seen[35])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<VehicleToGridCommunicationTypeEnum>()? { f35.push(v); } } },
+                1386 => if r.first(&mut seen[36])? { f36 = r.number::<u64>()?; },
+                278 => if r.first(&mut seen[37])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.number::<f32>()? { f37.push(v); } } },
+                275 => if r.first(&mut seen[38])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.number::<f32>()? { f38.push(v); } } },
+                329 => if r.first(&mut seen[39])? { f39 = r.enumeration::<ChargingModeEnum>()?; },
+                2145 => if r.first(&mut seen[40])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<SmartRechargingServicesEnum>()? { f40.push(v); } } },
+                1507 => if r.first(&mut seen[41])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f41.push(v); } } },
+                450 => if r.first(&mut seen[42])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Connector::read_json(r)? { f42.push(v); } } },
+                80 => if r.first(&mut seen[43])? { f43 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f26, 534);
+        r.required(&f33, 480);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            supplemental_facility: f23,
+            dedicated_parking_spaces: f24,
+            facility_extension: f25,
+            delivery_unit: f26,
+            maximum_delivery_amount: f27,
+            minimum_delivery_amount: f28,
+            model_type: f29,
+            reservation: f30,
+            energy_product: f31,
+            refill_point_extension: f32,
+            current_type: f33,
+            usage_type: f34,
+            vehicle_to_grid_communication_type: f35,
+            number_of_connectors: f36,
+            available_voltage: f37,
+            available_charging_power: f38,
+            charging_mode: f39,
+            smart_recharging_services: f40,
+            other_smart_recharging_services: f41,
+            connector: f42,
+            electric_charging_point_extension: f43,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(15)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility.is_empty() {
+            w.key(2218)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.dedicated_parking_spaces.is_empty() {
+            w.key(525)?;
+            w.begin_array()?;
+            for v in &self.dedicated_parking_spaces {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_extension {
+            w.key(130)?;
+            w.extension(v)?;
+        }
+        match &self.delivery_unit {
+            Some(v) => {
+                w.key(534)?;
+                w.enumeration(11, v.literal())?;
+            }
+            None => w.absent(534, w.missing("deliveryUnit"))?,
+        }
+        if let Some(v) = &self.maximum_delivery_amount {
+            w.key(1275)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.minimum_delivery_amount {
+            w.key(1326)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.model_type {
+            w.key(1342)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.reservation {
+            w.key(1885)?;
+            w.enumeration(124, v.literal())?;
+        }
+        if !self.energy_product.is_empty() {
+            w.key(677)?;
+            w.begin_array()?;
+            for v in &self.energy_product {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.refill_point_extension {
+            w.key(105)?;
+            w.extension(v)?;
+        }
+        match &self.current_type {
+            Some(v) => {
+                w.key(480)?;
+                w.enumeration(9, v.literal())?;
+            }
+            None => w.absent(480, w.missing("currentType"))?,
+        }
+        if !self.usage_type.is_empty() {
+            w.key(2527)?;
+            w.begin_array()?;
+            for v in &self.usage_type {
+                w.item()?;
+                w.enumeration(5, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.vehicle_to_grid_communication_type.is_empty() {
+            w.key(2572)?;
+            w.begin_array()?;
+            for v in &self.vehicle_to_grid_communication_type {
+                w.item()?;
+                w.enumeration(52, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.number_of_connectors {
+            w.key(1386)?;
+            w.integer(*v)?;
+        }
+        if !self.available_voltage.is_empty() {
+            w.key(278)?;
+            w.begin_array()?;
+            for v in &self.available_voltage {
+                w.item()?;
+                w.float32(*v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.available_charging_power.is_empty() {
+            w.key(275)?;
+            w.begin_array()?;
+            for v in &self.available_charging_power {
+                w.item()?;
+                w.float32(*v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.charging_mode {
+            w.key(329)?;
+            w.enumeration(4, v.literal())?;
+        }
+        if !self.smart_recharging_services.is_empty() {
+            w.key(2145)?;
+            w.begin_array()?;
+            for v in &self.smart_recharging_services {
+                w.item()?;
+                w.enumeration(50, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.other_smart_recharging_services.is_empty() {
+            w.key(1507)?;
+            w.begin_array()?;
+            for v in &self.other_smart_recharging_services {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.connector.is_empty() {
+            w.key(450)?;
+            w.begin_array()?;
+            for v in &self.connector {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.electric_charging_point_extension {
+            w.key(80)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:ElectricChargingPointStatus`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ElectricChargingPointStatus {
@@ -3121,10 +5175,10 @@ pub struct ElectricChargingPointStatus {
 }
 
 impl ElectricChargingPointStatus {
-    const FIELDS: &'static [u32] = &[0x20aba, 0x208ba, 0x209a8, 0x209ce, 0x20aca, 0x20b77, 0x20958, 0x20959, 0x2080d, 0x20498, 0x20b91, 0x20499, 0x10b73, 0x10c0a, 0x107dc, 0x10c6b, 0x10a42, 0x10593, 0x10ad9, 0x10754, 0x10752, 0x1095a, 0x1047d];
+    const FIELDS: &'static [u32] = &[0x20b01, 0x208f8, 0x209ec, 0x20a13, 0x20b13, 0x20bd2, 0x2099a, 0x2099b, 0x20849, 0x204b8, 0x20bef, 0x204b9, 0x10bce, 0x10c69, 0x10811, 0x10ccd, 0x10a88, 0x105b6, 0x10b22, 0x10783, 0x10781, 0x1099c, 0x1049a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10092);
+        r.expect_type(0x10095);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3152,29 +5206,29 @@ impl ElectricChargingPointStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20aba => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2746); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e1, v, 2234); }
-                    0x209a8 => { let v = r.enumeration::<afac::OpeningStatusEnum>()?; r.set(&mut e2, v, 2472); }
-                    0x209ce => { let v = r.enumeration::<afac::OperationStatusEnum>()?; r.set(&mut e3, v, 2510); }
-                    0x20aca => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2762); }
-                    0x20b77 => { let v = r.multilingual()?; r.set(&mut e5, v, 2935); }
-                    0x20958 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e6, v, 2392); }
-                    0x20959 => { let v = afac::Rates::read(r)?; r.set(&mut e7, v, 2393); }
-                    0x2080d => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2061); }
-                    0x20498 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1176); }
-                    0x20b91 => { let v = Some(afac::SupplementalFacilityStatus::read(r)?); e10.extend(v); }
-                    0x20499 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1177); }
-                    0x10b73 => { let v = r.enumeration::<RefillPointStatusEnum>()?; r.set(&mut e12, v, 2931); }
-                    0x10c0a => { let v = r.value::<f32>()?; r.set(&mut e13, v, 3082); }
-                    0x107dc => { let v = Some(EnergyRateUpdate::read(r)?); e14.extend(v); }
-                    0x10c6b => { let v = Some(afac::DurationValue::read(r)?); r.set(&mut e15, v.map(Box::new), 3179); }
-                    0x10a42 => { let v = Some(PlannedRefillPointStatus::read(r)?); e16.extend(v); }
-                    0x10593 => { let v = r.raw()?; r.set(&mut e17, v.map(Box::new), 1427); }
-                    0x10ad9 => { let v = r.value::<f32>()?; r.set(&mut e18, v, 2777); }
-                    0x10754 => { let v = r.value::<f32>()?; r.set(&mut e19, v, 1876); }
-                    0x10752 => { let v = r.value::<f32>()?; r.set(&mut e20, v, 1874); }
-                    0x1095a => { let v = r.date_time()?; e21.extend(v); }
-                    0x1047d => { let v = r.raw()?; r.set(&mut e22, v.map(Box::new), 1149); }
+                    0x20b01 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2817); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e1, v, 2296); }
+                    0x209ec => { let v = r.enumeration::<afac::OpeningStatusEnum>()?; r.set(&mut e2, v, 2540); }
+                    0x20a13 => { let v = r.enumeration::<afac::OperationStatusEnum>()?; r.set(&mut e3, v, 2579); }
+                    0x20b13 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2835); }
+                    0x20bd2 => { let v = r.multilingual()?; r.set(&mut e5, v, 3026); }
+                    0x2099a => { let v = afac::OperatingHours::read(r)?; r.set(&mut e6, v, 2458); }
+                    0x2099b => { let v = afac::Rates::read(r)?; r.set(&mut e7, v, 2459); }
+                    0x20849 => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2121); }
+                    0x204b8 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1208); }
+                    0x20bef => { let v = Some(afac::SupplementalFacilityStatus::read(r)?); e10.extend(v); }
+                    0x204b9 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1209); }
+                    0x10bce => { let v = r.enumeration::<RefillPointStatusEnum>()?; r.set(&mut e12, v, 3022); }
+                    0x10c69 => { let v = r.value::<f32>()?; r.set(&mut e13, v, 3177); }
+                    0x10811 => { let v = Some(EnergyRateUpdate::read(r)?); e14.extend(v); }
+                    0x10ccd => { let v = Some(afac::DurationValue::read(r)?); r.set(&mut e15, v.map(Box::new), 3277); }
+                    0x10a88 => { let v = Some(PlannedRefillPointStatus::read(r)?); e16.extend(v); }
+                    0x105b6 => { let v = r.raw()?; r.set(&mut e17, v.map(Box::new), 1462); }
+                    0x10b22 => { let v = r.value::<f32>()?; r.set(&mut e18, v, 2850); }
+                    0x10783 => { let v = r.value::<f32>()?; r.set(&mut e19, v, 1923); }
+                    0x10781 => { let v = r.value::<f32>()?; r.set(&mut e20, v, 1921); }
+                    0x1099c => { let v = r.date_time()?; e21.extend(v); }
+                    0x1049a => { let v = r.raw()?; r.set(&mut e22, v.map(Box::new), 1178); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3183,8 +5237,8 @@ impl ElectricChargingPointStatus {
                 break;
             }
         }
-        r.required(&e0, 2746);
-        r.required(&e12, 2931);
+        r.required(&e0, 2817);
+        r.required(&e12, 3022);
         let v = Self {
             reference: e0,
             last_updated: e1,
@@ -3253,6 +5307,232 @@ impl ElectricChargingPointStatus {
     }
 }
 
+impl ElectricChargingPointStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 23];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = Vec::new();
+        let mut f15 = None;
+        let mut f16 = Vec::new();
+        let mut f17 = None;
+        let mut f18 = None;
+        let mut f19 = None;
+        let mut f20 = None;
+        let mut f21 = Vec::new();
+        let mut f22 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1817 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1043 => if r.first(&mut seen[1])? { f1 = r.date_time()?; },
+                1440 => if r.first(&mut seen[2])? { f2 = r.enumeration::<afac::OpeningStatusEnum>()?; },
+                1479 => if r.first(&mut seen[3])? { f3 = r.enumeration::<afac::OperationStatusEnum>()?; },
+                1835 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                2191 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1358 => if r.first(&mut seen[6])? { f6 = afac::OperatingHours::read_json(r)?; },
+                1359 => if r.first(&mut seen[7])? { f7 = afac::Rates::read_json(r)?; },
+                831 => if r.first(&mut seen[8])? { f8 = com::AnyFault::read_json(r)?; },
+                132 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                2219 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacilityStatus::read_json(r)? { f10.push(v); } } },
+                133 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                2187 => if r.first(&mut seen[12])? { f12 = r.enumeration::<RefillPointStatusEnum>()?; },
+                2510 => if r.first(&mut seen[13])? { f13 = r.number::<f32>()?; },
+                684 => if r.first(&mut seen[14])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyRateUpdate::read_json(r)? { f14.push(v); } } },
+                2658 => if r.first(&mut seen[15])? { f15 = afac::DurationValue::read_json(r)?.map(Box::new); },
+                1594 => if r.first(&mut seen[16])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = PlannedRefillPointStatus::read_json(r)? { f16.push(v); } } },
+                107 => if r.first(&mut seen[17])? { f17 = r.raw_object()?.map(Box::new); },
+                1850 => if r.first(&mut seen[18])? { f18 = r.number::<f32>()?; },
+                481 => if r.first(&mut seen[19])? { f19 = r.number::<f32>()?; },
+                479 => if r.first(&mut seen[20])? { f20 = r.number::<f32>()?; },
+                1360 => if r.first(&mut seen[21])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.date_time()? { f21.push(v); } } },
+                82 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1817);
+        r.required(&f12, 2187);
+        Ok(Self {
+            reference: f0,
+            last_updated: f1,
+            opening_status: f2,
+            operation_status: f3,
+            regular_operating_hours_in_force: f4,
+            status_description: f5,
+            new_operating_hours: f6,
+            new_rates: f7,
+            fault: f8,
+            facility_object_status_extension: f9,
+            supplemental_facility_status: f10,
+            facility_status_extension: f11,
+            status: f12,
+            units_in_stock: f13,
+            energy_rate_update: f14,
+            waiting_time: f15,
+            planned_refill_point_status: f16,
+            refill_point_status_extension: f17,
+            remaining_charging_time: f18,
+            current_voltage: f19,
+            current_charging_power: f20,
+            next_available_charging_slots: f21,
+            electric_charging_point_status_extension: f22,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(16)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.reference {
+            Some(v) => {
+                w.key(1817)?;
+                v.write_json(w, Some("FacilityObject"))?;
+            }
+            None => w.absent(1817, w.missing("reference"))?,
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.opening_status {
+            w.key(1440)?;
+            w.enumeration(88, v.literal())?;
+        }
+        if let Some(v) = &self.operation_status {
+            w.key(1479)?;
+            w.enumeration(94, v.literal())?;
+        }
+        if let Some(v) = &self.regular_operating_hours_in_force {
+            w.key(1835)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.status_description {
+            w.key(2191)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.new_operating_hours {
+            w.key(1358)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.new_rates {
+            w.key(1359)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.fault {
+            w.key(831)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.facility_object_status_extension {
+            w.key(132)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility_status.is_empty() {
+            w.key(2219)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_status_extension {
+            w.key(133)?;
+            w.extension(v)?;
+        }
+        match &self.status {
+            Some(v) => {
+                w.key(2187)?;
+                w.enumeration(46, v.literal())?;
+            }
+            None => w.absent(2187, w.missing("status"))?,
+        }
+        if let Some(v) = &self.units_in_stock {
+            w.key(2510)?;
+            w.float32(*v)?;
+        }
+        if !self.energy_rate_update.is_empty() {
+            w.key(684)?;
+            w.begin_array()?;
+            for v in &self.energy_rate_update {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.waiting_time {
+            w.key(2658)?;
+            v.write_json(w, None)?;
+        }
+        if !self.planned_refill_point_status.is_empty() {
+            w.key(1594)?;
+            w.begin_array()?;
+            for v in &self.planned_refill_point_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.refill_point_status_extension {
+            w.key(107)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.remaining_charging_time {
+            w.key(1850)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.current_voltage {
+            w.key(481)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.current_charging_power {
+            w.key(479)?;
+            w.float32(*v)?;
+        }
+        if !self.next_available_charging_slots.is_empty() {
+            w.key(1360)?;
+            w.begin_array()?;
+            for v in &self.next_available_charging_slots {
+                w.item()?;
+                w.date_time(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.electric_charging_point_status_extension {
+            w.key(82)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:ElectricEnergy`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ElectricEnergy {
@@ -3283,10 +5563,10 @@ pub struct ElectricEnergy {
 }
 
 impl ElectricEnergy {
-    const FIELDS: &'static [u32] = &[0x107d7, 0x1089b, 0x107da, 0x107d6, 0x10adb, 0x10942, 0x107d9, 0x1048d, 0x10709, 0x1096f, 0x107bb, 0x1047e];
+    const FIELDS: &'static [u32] = &[0x1080c, 0x108d9, 0x1080f, 0x1080b, 0x10b24, 0x10984, 0x1080e, 0x104ab, 0x10732, 0x109b3, 0x107ed, 0x1049b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10093);
+        r.expect_type(0x10096);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3303,18 +5583,18 @@ impl ElectricEnergy {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x107d7 => { let v = r.multilingual()?; r.set(&mut e0, v, 2007); }
-                    0x1089b => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2203); }
-                    0x107da => { let v = Some(com::Reference::read(r)?); e2.extend(v); }
-                    0x107d6 => { let v = r.string()?; r.set(&mut e3, v, 2006); }
-                    0x10adb => { let v = r.string()?; r.set(&mut e4, v, 2779); }
-                    0x10942 => { let v = afac::Organisation::read(r)?; e5.extend(v); }
-                    0x107d9 => { let v = Some(EnergyRate::read(r)?); e6.extend(v); }
-                    0x1048d => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1165); }
-                    0x10709 => { let v = r.value::<f32>()?; r.set(&mut e8, v, 1801); }
-                    0x1096f => { let v = r.value::<f32>()?; r.set(&mut e9, v, 2415); }
-                    0x107bb => { let v = Some(ElectricEnergySourceRatio::read(r)?); e10.extend(v); }
-                    0x1047e => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1150); }
+                    0x1080c => { let v = r.multilingual()?; r.set(&mut e0, v, 2060); }
+                    0x108d9 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2265); }
+                    0x1080f => { let v = Some(com::Reference::read(r)?); e2.extend(v); }
+                    0x1080b => { let v = r.string()?; r.set(&mut e3, v, 2059); }
+                    0x10b24 => { let v = r.string()?; r.set(&mut e4, v, 2852); }
+                    0x10984 => { let v = afac::Organisation::read(r)?; e5.extend(v); }
+                    0x1080e => { let v = Some(EnergyRate::read(r)?); e6.extend(v); }
+                    0x104ab => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1195); }
+                    0x10732 => { let v = r.value::<f32>()?; r.set(&mut e8, v, 1842); }
+                    0x109b3 => { let v = r.value::<f32>()?; r.set(&mut e9, v, 2483); }
+                    0x107ed => { let v = Some(ElectricEnergySourceRatio::read(r)?); e10.extend(v); }
+                    0x1049b => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1179); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3363,6 +5643,147 @@ impl ElectricEnergy {
     }
 }
 
+impl ElectricEnergy {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = Vec::new();
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                679 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1012 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                682 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::Reference::read_json(r)? { f2.push(v); } } },
+                678 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1852 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                1338 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Organisation::read_json(r)? { f5.push(v); } } },
+                681 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyRate::read_json(r)? { f6.push(v); } } },
+                98 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                316 => if r.first(&mut seen[8])? { f8 = r.number::<f32>()?; },
+                1383 => if r.first(&mut seen[9])? { f9 = r.number::<f32>()?; },
+                649 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ElectricEnergySourceRatio::read_json(r)? { f10.push(v); } } },
+                84 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            energy_product_name: f0,
+            is_green_energy: f1,
+            energy_rate_by_reference: f2,
+            energy_product_information: f3,
+            renewable_energy_evidence: f4,
+            mobility_service_provider: f5,
+            energy_rate: f6,
+            energy_product_extension: f7,
+            carbon_dioxide_impact: f8,
+            nuclear_waste_impact: f9,
+            electric_energy_source_ratio: f10,
+            electric_energy_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(17)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.energy_product_name {
+            w.key(679)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.is_green_energy {
+            w.key(1012)?;
+            w.boolean(*v)?;
+        }
+        if !self.energy_rate_by_reference.is_empty() {
+            w.key(682)?;
+            w.begin_array()?;
+            for v in &self.energy_rate_by_reference {
+                w.item()?;
+                v.write_json(w, Some("EnergyRate"))?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_product_information {
+            w.key(678)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.renewable_energy_evidence {
+            w.key(1852)?;
+            w.string(v)?;
+        }
+        if !self.mobility_service_provider.is_empty() {
+            w.key(1338)?;
+            w.begin_array()?;
+            for v in &self.mobility_service_provider {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.energy_rate.is_empty() {
+            w.key(681)?;
+            w.begin_array()?;
+            for v in &self.energy_rate {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_product_extension {
+            w.key(98)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.carbon_dioxide_impact {
+            w.key(316)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.nuclear_waste_impact {
+            w.key(1383)?;
+            w.float32(*v)?;
+        }
+        if !self.electric_energy_source_ratio.is_empty() {
+            w.key(649)?;
+            w.begin_array()?;
+            for v in &self.electric_energy_source_ratio {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.electric_energy_extension {
+            w.key(84)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:ElectricEnergySourceRatio`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ElectricEnergySourceRatio {
@@ -3377,10 +5798,10 @@ pub struct ElectricEnergySourceRatio {
 }
 
 impl ElectricEnergySourceRatio {
-    const FIELDS: &'static [u32] = &[0x107dd, 0x109e7, 0x10b52, 0x10480];
+    const FIELDS: &'static [u32] = &[0x10812, 0x10a2c, 0x10bac, 0x1049d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10095);
+        r.expect_type(0x10098);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3389,10 +5810,10 @@ impl ElectricEnergySourceRatio {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x107dd => { let v = r.enumeration::<ElectricEnergySourceTypeEnum>()?; r.set(&mut e0, v, 2013); }
-                    0x109e7 => { let v = r.string()?; r.set(&mut e1, v, 2535); }
-                    0x10b52 => { let v = Some(com::PercentageValue::read(r)?); r.set(&mut e2, v.map(Box::new), 2898); }
-                    0x10480 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1152); }
+                    0x10812 => { let v = r.enumeration::<ElectricEnergySourceTypeEnum>()?; r.set(&mut e0, v, 2066); }
+                    0x10a2c => { let v = r.string()?; r.set(&mut e1, v, 2604); }
+                    0x10bac => { let v = Some(com::PercentageValue::read(r)?); r.set(&mut e2, v.map(Box::new), 2988); }
+                    0x1049d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1181); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3401,8 +5822,8 @@ impl ElectricEnergySourceRatio {
                 break;
             }
         }
-        r.required(&e0, 2013);
-        r.required(&e2, 2898);
+        r.required(&e0, 2066);
+        r.required(&e2, 2988);
         let v = Self {
             energy_source: e0,
             other_energy_source: e1,
@@ -3433,6 +5854,79 @@ impl ElectricEnergySourceRatio {
     }
 }
 
+impl ElectricEnergySourceRatio {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                685 => if r.first(&mut seen[0])? { f0 = r.enumeration::<ElectricEnergySourceTypeEnum>()?; },
+                1503 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                2153 => if r.first(&mut seen[2])? { f2 = com::PercentageValue::read_json(r)?.map(Box::new); },
+                85 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 685);
+        r.required(&f2, 2153);
+        Ok(Self {
+            energy_source: f0,
+            other_energy_source: f1,
+            source_ratio_value: f2,
+            electric_energy_source_ratio_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(18)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.energy_source {
+            Some(v) => {
+                w.key(685)?;
+                w.enumeration(19, v.literal())?;
+            }
+            None => w.absent(685, w.missing("energySource"))?,
+        }
+        if let Some(v) = &self.other_energy_source {
+            w.key(1503)?;
+            w.max_len("otherEnergySource", v, 1024)?; w.string(v)?;
+        }
+        match &self.source_ratio_value {
+            Some(v) => {
+                w.key(2153)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2153, w.missing("sourceRatioValue"))?,
+        }
+        if let Some(v) = &self.electric_energy_source_ratio_extension {
+            w.key(85)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyBasedApplicability`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyBasedApplicability {
@@ -3445,10 +5939,10 @@ pub struct EnergyBasedApplicability {
 }
 
 impl EnergyBasedApplicability {
-    const FIELDS: &'static [u32] = &[0x10831, 0x10bc5, 0x10483];
+    const FIELDS: &'static [u32] = &[0x1086d, 0x10c24, 0x104a1];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10099);
+        r.expect_type(0x1009d);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3456,9 +5950,9 @@ impl EnergyBasedApplicability {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10831 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2097); }
-                    0x10bc5 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3013); }
-                    0x10483 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1155); }
+                    0x1086d => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2157); }
+                    0x10c24 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3108); }
+                    0x104a1 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1185); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3486,6 +5980,64 @@ impl EnergyBasedApplicability {
         if let Some(v) = &self.to_k_wh { w.leaf("aegi:toKWh", v)?; }
         if let Some(v) = &self.energy_based_applicability_extension { w.extension("aegi:_energyBasedApplicabilityExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl EnergyBasedApplicability {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                867 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                2333 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                86 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            from_k_wh: f0,
+            to_k_wh: f1,
+            energy_based_applicability_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(20)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.from_k_wh {
+            w.key(867)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.to_k_wh {
+            w.key(2333)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.energy_based_applicability_extension {
+            w.key(86)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -3571,12 +6123,12 @@ pub struct EnergyInfrastructureSite {
 }
 
 impl EnergyInfrastructureSite {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x20b90, 0x20764, 0x20496, 0x10c04, 0x106fd, 0x107f5, 0x10a6c, 0x10b34, 0x107e2, 0x107f7, 0x107cf, 0x107cc, 0x10942, 0x10b09, 0x10484];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x20bee, 0x20794, 0x204b6, 0x10c63, 0x10726, 0x1082f, 0x10ab3, 0x10b89, 0x10817, 0x10831, 0x10804, 0x10801, 0x10984, 0x10b56, 0x104a2];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1009a);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x1009e);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -3617,42 +6169,42 @@ impl EnergyInfrastructureSite {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x20b90 => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
-                    0x20764 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
-                    0x20496 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1174); }
-                    0x10c04 => { let v = r.enumeration::<EnergyInfrastructureSiteTypeEnum>()?; r.set(&mut e24, v, 3076); }
-                    0x106fd => { let v = r.multilingual()?; r.set(&mut e25, v, 1789); }
-                    0x107f5 => { let v = r.enumeration::<afac::UserTypeEnum>()?; e26.extend(v); }
-                    0x10a6c => { let v = r.enumeration::<afac::UserTypeEnum>()?; e27.extend(v); }
-                    0x10b34 => { let v = Some(ServiceType::read(r)?); e28.extend(v); }
-                    0x107e2 => { let v = loc::Location::read(r)?; e29.extend(v); }
-                    0x107f7 => { let v = loc::Location::read(r)?; e30.extend(v); }
-                    0x107cf => { let v = Some(EnergyInfrastructureStation::read(r)?); e31.extend(v); }
-                    0x107cc => { let v = afac::Organisation::read(r)?; r.set(&mut e32, v, 1996); }
-                    0x10942 => { let v = afac::Organisation::read(r)?; e33.extend(v); }
-                    0x10b09 => { let v = afac::Organisation::read(r)?; e34.extend(v); }
-                    0x10484 => { let v = r.raw()?; r.set(&mut e35, v.map(Box::new), 1156); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x20bee => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
+                    0x20794 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
+                    0x204b6 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1206); }
+                    0x10c63 => { let v = r.enumeration::<EnergyInfrastructureSiteTypeEnum>()?; r.set(&mut e24, v, 3171); }
+                    0x10726 => { let v = r.multilingual()?; r.set(&mut e25, v, 1830); }
+                    0x1082f => { let v = r.enumeration::<afac::UserTypeEnum>()?; e26.extend(v); }
+                    0x10ab3 => { let v = r.enumeration::<afac::UserTypeEnum>()?; e27.extend(v); }
+                    0x10b89 => { let v = Some(ServiceType::read(r)?); e28.extend(v); }
+                    0x10817 => { let v = loc::Location::read(r)?; e29.extend(v); }
+                    0x10831 => { let v = loc::Location::read(r)?; e30.extend(v); }
+                    0x10804 => { let v = Some(EnergyInfrastructureStation::read(r)?); e31.extend(v); }
+                    0x10801 => { let v = afac::Organisation::read(r)?; r.set(&mut e32, v, 2049); }
+                    0x10984 => { let v = afac::Organisation::read(r)?; e33.extend(v); }
+                    0x10b56 => { let v = afac::Organisation::read(r)?; e34.extend(v); }
+                    0x104a2 => { let v = r.raw()?; r.set(&mut e35, v.map(Box::new), 1186); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3759,6 +6311,413 @@ impl EnergyInfrastructureSite {
     }
 }
 
+impl EnergyInfrastructureSite {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 38];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = Vec::new();
+        let mut f24 = Vec::new();
+        let mut f25 = None;
+        let mut f26 = None;
+        let mut f27 = None;
+        let mut f28 = Vec::new();
+        let mut f29 = Vec::new();
+        let mut f30 = Vec::new();
+        let mut f31 = Vec::new();
+        let mut f32 = Vec::new();
+        let mut f33 = Vec::new();
+        let mut f34 = None;
+        let mut f35 = Vec::new();
+        let mut f36 = Vec::new();
+        let mut f37 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = afac::OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = afac::Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = afac::Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = afac::Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = afac::Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = afac::Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = afac::Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                2218 => if r.first(&mut seen[23])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacility::read_json(r)? { f23.push(v); } } },
+                525 => if r.first(&mut seen[24])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = DedicatedParkingSpaces::read_json(r)? { f24.push(v); } } },
+                130 => if r.first(&mut seen[25])? { f25 = r.raw_object()?.map(Box::new); },
+                2501 => if r.first(&mut seen[26])? { f26 = r.enumeration::<EnergyInfrastructureSiteTypeEnum>()?; },
+                305 => if r.first(&mut seen[27])? { f27 = r.multilingual()?; },
+                721 => if r.first(&mut seen[28])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::UserTypeEnum>()? { f28.push(v); } } },
+                1637 => if r.first(&mut seen[29])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::UserTypeEnum>()? { f29.push(v); } } },
+                2040 => if r.first(&mut seen[30])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ServiceType::read_json(r)? { f30.push(v); } } },
+                690 => if r.first(&mut seen[31])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::Location::read_json(r)? { f31.push(v); } } },
+                723 => if r.first(&mut seen[32])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = loc::Location::read_json(r)? { f32.push(v); } } },
+                671 => if r.first(&mut seen[33])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyInfrastructureStation::read_json(r)? { f33.push(v); } } },
+                668 => if r.first(&mut seen[34])? { f34 = afac::Organisation::read_json(r)?; },
+                1338 => if r.first(&mut seen[35])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Organisation::read_json(r)? { f35.push(v); } } },
+                1989 => if r.first(&mut seen[36])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Organisation::read_json(r)? { f36.push(v); } } },
+                1988 => if r.first(&mut seen[36])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Organisation::read_json(r)? { f36.push(v); } } },
+                87 => if r.first(&mut seen[37])? { f37 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            supplemental_facility: f23,
+            dedicated_parking_spaces: f24,
+            facility_extension: f25,
+            type_of_site: f26,
+            brand: f27,
+            exclusive_users: f28,
+            preferred_users: f29,
+            service_type: f30,
+            entrance: f31,
+            exit: f32,
+            energy_infrastructure_station: f33,
+            energy_distributor: f34,
+            mobility_service_provider: f35,
+            roaming_platform: f36,
+            energy_infrastructure_site_extension: f37,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(21)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility.is_empty() {
+            w.key(2218)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.dedicated_parking_spaces.is_empty() {
+            w.key(525)?;
+            w.begin_array()?;
+            for v in &self.dedicated_parking_spaces {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_extension {
+            w.key(130)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.type_of_site {
+            w.key(2501)?;
+            w.enumeration(23, v.literal())?;
+        }
+        if let Some(v) = &self.brand {
+            w.key(305)?;
+            w.multilingual(v)?;
+        }
+        if !self.exclusive_users.is_empty() {
+            w.key(721)?;
+            w.begin_array()?;
+            for v in &self.exclusive_users {
+                w.item()?;
+                w.enumeration(144, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.preferred_users.is_empty() {
+            w.key(1637)?;
+            w.begin_array()?;
+            for v in &self.preferred_users {
+                w.item()?;
+                w.enumeration(144, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.service_type.is_empty() {
+            w.key(2040)?;
+            w.begin_array()?;
+            for v in &self.service_type {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.entrance.is_empty() {
+            w.key(690)?;
+            w.begin_array()?;
+            for v in &self.entrance {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.exit.is_empty() {
+            w.key(723)?;
+            w.begin_array()?;
+            for v in &self.exit {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.energy_infrastructure_station.is_empty() {
+            w.key(671)?;
+            w.begin_array()?;
+            for v in &self.energy_infrastructure_station {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_distributor {
+            w.key(668)?;
+            v.write_json(w)?;
+        }
+        if !self.mobility_service_provider.is_empty() {
+            w.key(1338)?;
+            w.begin_array()?;
+            for v in &self.mobility_service_provider {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.roaming_platform.is_empty() {
+            w.key(1989)?;
+            w.begin_array()?;
+            for v in &self.roaming_platform {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_infrastructure_site_extension {
+            w.key(87)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyInfrastructureSiteStatus`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyInfrastructureSiteStatus {
@@ -3799,10 +6758,10 @@ pub struct EnergyInfrastructureSiteStatus {
 }
 
 impl EnergyInfrastructureSiteStatus {
-    const FIELDS: &'static [u32] = &[0x20aba, 0x208ba, 0x209a8, 0x209ce, 0x20aca, 0x20b77, 0x20958, 0x20959, 0x2080d, 0x20498, 0x20b91, 0x20499, 0x106de, 0x106e1, 0x107d0, 0x10b34, 0x10485];
+    const FIELDS: &'static [u32] = &[0x20b01, 0x208f8, 0x209ec, 0x20a13, 0x20b13, 0x20bd2, 0x2099a, 0x2099b, 0x20849, 0x204b8, 0x20bef, 0x204b9, 0x10707, 0x1070a, 0x10805, 0x10b89, 0x104a3];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1009b);
+        r.expect_type(0x1009f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3824,23 +6783,23 @@ impl EnergyInfrastructureSiteStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20aba => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2746); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e1, v, 2234); }
-                    0x209a8 => { let v = r.enumeration::<afac::OpeningStatusEnum>()?; r.set(&mut e2, v, 2472); }
-                    0x209ce => { let v = r.enumeration::<afac::OperationStatusEnum>()?; r.set(&mut e3, v, 2510); }
-                    0x20aca => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2762); }
-                    0x20b77 => { let v = r.multilingual()?; r.set(&mut e5, v, 2935); }
-                    0x20958 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e6, v, 2392); }
-                    0x20959 => { let v = afac::Rates::read(r)?; r.set(&mut e7, v, 2393); }
-                    0x2080d => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2061); }
-                    0x20498 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1176); }
-                    0x20b91 => { let v = Some(afac::SupplementalFacilityStatus::read(r)?); e10.extend(v); }
-                    0x20499 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1177); }
-                    0x106de => { let v = r.value::<u64>()?; r.set(&mut e12, v, 1758); }
-                    0x106e1 => { let v = r.value::<u64>()?; r.set(&mut e13, v, 1761); }
-                    0x107d0 => { let v = Some(EnergyInfrastructureStationStatus::read(r)?); e14.extend(v); }
-                    0x10b34 => { let v = Some(ServiceType::read(r)?); e15.extend(v); }
-                    0x10485 => { let v = r.raw()?; r.set(&mut e16, v.map(Box::new), 1157); }
+                    0x20b01 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2817); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e1, v, 2296); }
+                    0x209ec => { let v = r.enumeration::<afac::OpeningStatusEnum>()?; r.set(&mut e2, v, 2540); }
+                    0x20a13 => { let v = r.enumeration::<afac::OperationStatusEnum>()?; r.set(&mut e3, v, 2579); }
+                    0x20b13 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2835); }
+                    0x20bd2 => { let v = r.multilingual()?; r.set(&mut e5, v, 3026); }
+                    0x2099a => { let v = afac::OperatingHours::read(r)?; r.set(&mut e6, v, 2458); }
+                    0x2099b => { let v = afac::Rates::read(r)?; r.set(&mut e7, v, 2459); }
+                    0x20849 => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2121); }
+                    0x204b8 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1208); }
+                    0x20bef => { let v = Some(afac::SupplementalFacilityStatus::read(r)?); e10.extend(v); }
+                    0x204b9 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1209); }
+                    0x10707 => { let v = r.value::<u64>()?; r.set(&mut e12, v, 1799); }
+                    0x1070a => { let v = r.value::<u64>()?; r.set(&mut e13, v, 1802); }
+                    0x10805 => { let v = Some(EnergyInfrastructureStationStatus::read(r)?); e14.extend(v); }
+                    0x10b89 => { let v = Some(ServiceType::read(r)?); e15.extend(v); }
+                    0x104a3 => { let v = r.raw()?; r.set(&mut e16, v.map(Box::new), 1187); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3849,7 +6808,7 @@ impl EnergyInfrastructureSiteStatus {
                 break;
             }
         }
-        r.required(&e0, 2746);
+        r.required(&e0, 2817);
         let v = Self {
             reference: e0,
             last_updated: e1,
@@ -3900,6 +6859,181 @@ impl EnergyInfrastructureSiteStatus {
         for v in &self.service_type { v.write(w, "aegi:serviceType", "", "")?; }
         if let Some(v) = &self.energy_infrastructure_site_status_extension { w.extension("aegi:_energyInfrastructureSiteStatusExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl EnergyInfrastructureSiteStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 17];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = Vec::new();
+        let mut f15 = Vec::new();
+        let mut f16 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1817 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1043 => if r.first(&mut seen[1])? { f1 = r.date_time()?; },
+                1440 => if r.first(&mut seen[2])? { f2 = r.enumeration::<afac::OpeningStatusEnum>()?; },
+                1479 => if r.first(&mut seen[3])? { f3 = r.enumeration::<afac::OperationStatusEnum>()?; },
+                1835 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                2191 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1358 => if r.first(&mut seen[6])? { f6 = afac::OperatingHours::read_json(r)?; },
+                1359 => if r.first(&mut seen[7])? { f7 = afac::Rates::read_json(r)?; },
+                831 => if r.first(&mut seen[8])? { f8 = com::AnyFault::read_json(r)?; },
+                132 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                2219 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacilityStatus::read_json(r)? { f10.push(v); } } },
+                133 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                274 => if r.first(&mut seen[12])? { f12 = r.number::<u64>()?; },
+                277 => if r.first(&mut seen[13])? { f13 = r.number::<u64>()?; },
+                672 => if r.first(&mut seen[14])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyInfrastructureStationStatus::read_json(r)? { f14.push(v); } } },
+                2040 => if r.first(&mut seen[15])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ServiceType::read_json(r)? { f15.push(v); } } },
+                88 => if r.first(&mut seen[16])? { f16 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1817);
+        Ok(Self {
+            reference: f0,
+            last_updated: f1,
+            opening_status: f2,
+            operation_status: f3,
+            regular_operating_hours_in_force: f4,
+            status_description: f5,
+            new_operating_hours: f6,
+            new_rates: f7,
+            fault: f8,
+            facility_object_status_extension: f9,
+            supplemental_facility_status: f10,
+            facility_status_extension: f11,
+            available_car_parking_places: f12,
+            available_truck_parking_places: f13,
+            energy_infrastructure_station_status: f14,
+            service_type: f15,
+            energy_infrastructure_site_status_extension: f16,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(22)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.reference {
+            Some(v) => {
+                w.key(1817)?;
+                v.write_json(w, Some("FacilityObject"))?;
+            }
+            None => w.absent(1817, w.missing("reference"))?,
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.opening_status {
+            w.key(1440)?;
+            w.enumeration(88, v.literal())?;
+        }
+        if let Some(v) = &self.operation_status {
+            w.key(1479)?;
+            w.enumeration(94, v.literal())?;
+        }
+        if let Some(v) = &self.regular_operating_hours_in_force {
+            w.key(1835)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.status_description {
+            w.key(2191)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.new_operating_hours {
+            w.key(1358)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.new_rates {
+            w.key(1359)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.fault {
+            w.key(831)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.facility_object_status_extension {
+            w.key(132)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility_status.is_empty() {
+            w.key(2219)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_status_extension {
+            w.key(133)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.available_car_parking_places {
+            w.key(274)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.available_truck_parking_places {
+            w.key(277)?;
+            w.integer(*v)?;
+        }
+        if !self.energy_infrastructure_station_status.is_empty() {
+            w.key(672)?;
+            w.begin_array()?;
+            for v in &self.energy_infrastructure_station_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.service_type.is_empty() {
+            w.key(2040)?;
+            w.begin_array()?;
+            for v in &self.service_type {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_infrastructure_site_status_extension {
+            w.key(88)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -3987,12 +7121,12 @@ pub struct EnergyInfrastructureStation {
 }
 
 impl EnergyInfrastructureStation {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x20b90, 0x20764, 0x20496, 0x10bc9, 0x106d6, 0x10981, 0x10c1c, 0x10adc, 0x107cc, 0x10942, 0x10b09, 0x1086a, 0x10b34, 0x10ac3, 0x107d5, 0x10486];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x20bee, 0x20794, 0x204b6, 0x10c28, 0x106ff, 0x109c5, 0x10c7c, 0x10b25, 0x10801, 0x10984, 0x10b56, 0x108a6, 0x10b89, 0x10b0c, 0x1080a, 0x104a4];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1009c);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x100a0);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -4034,43 +7168,43 @@ impl EnergyInfrastructureStation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x20b90 => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
-                    0x20764 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
-                    0x20496 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1174); }
-                    0x10bc9 => { let v = r.value::<f32>()?; r.set(&mut e24, v, 3017); }
-                    0x106d6 => { let v = r.enumeration::<AuthenticationAndIdentificationEnum>()?; e25.extend(v); }
-                    0x10981 => { let v = r.value::<u64>()?; r.set(&mut e26, v, 2433); }
-                    0x10c1c => { let v = r.string()?; e27.extend(v); }
-                    0x10adc => { let v = r.value::<bool>()?; r.set(&mut e28, v, 2780); }
-                    0x107cc => { let v = afac::Organisation::read(r)?; r.set(&mut e29, v, 1996); }
-                    0x10942 => { let v = afac::Organisation::read(r)?; e30.extend(v); }
-                    0x10b09 => { let v = afac::Organisation::read(r)?; e31.extend(v); }
-                    0x1086a => { let v = Some(Hydrogen::read(r)?); r.set(&mut e32, v.map(Box::new), 2154); }
-                    0x10b34 => { let v = Some(ServiceType::read(r)?); e33.extend(v); }
-                    0x10ac3 => { let v = RefillPoint::read(r)?; e34.extend(v); }
-                    0x107d5 => { let v = AnyEnergyProduct::read(r)?; e35.extend(v); }
-                    0x10486 => { let v = r.raw()?; r.set(&mut e36, v.map(Box::new), 1158); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x20bee => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
+                    0x20794 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
+                    0x204b6 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1206); }
+                    0x10c28 => { let v = r.value::<f32>()?; r.set(&mut e24, v, 3112); }
+                    0x106ff => { let v = r.enumeration::<AuthenticationAndIdentificationEnum>()?; e25.extend(v); }
+                    0x109c5 => { let v = r.value::<u64>()?; r.set(&mut e26, v, 2501); }
+                    0x10c7c => { let v = r.string()?; e27.extend(v); }
+                    0x10b25 => { let v = r.value::<bool>()?; r.set(&mut e28, v, 2853); }
+                    0x10801 => { let v = afac::Organisation::read(r)?; r.set(&mut e29, v, 2049); }
+                    0x10984 => { let v = afac::Organisation::read(r)?; e30.extend(v); }
+                    0x10b56 => { let v = afac::Organisation::read(r)?; e31.extend(v); }
+                    0x108a6 => { let v = Some(Hydrogen::read(r)?); r.set(&mut e32, v.map(Box::new), 2214); }
+                    0x10b89 => { let v = Some(ServiceType::read(r)?); e33.extend(v); }
+                    0x10b0c => { let v = RefillPoint::read(r)?; e34.extend(v); }
+                    0x1080a => { let v = AnyEnergyProduct::read(r)?; e35.extend(v); }
+                    0x104a4 => { let v = r.raw()?; r.set(&mut e36, v.map(Box::new), 1188); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4179,6 +7313,415 @@ impl EnergyInfrastructureStation {
     }
 }
 
+impl EnergyInfrastructureStation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 39];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = Vec::new();
+        let mut f24 = Vec::new();
+        let mut f25 = None;
+        let mut f26 = None;
+        let mut f27 = Vec::new();
+        let mut f28 = None;
+        let mut f29 = Vec::new();
+        let mut f30 = None;
+        let mut f31 = None;
+        let mut f32 = Vec::new();
+        let mut f33 = Vec::new();
+        let mut f34 = None;
+        let mut f35 = Vec::new();
+        let mut f36 = Vec::new();
+        let mut f37 = Vec::new();
+        let mut f38 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = afac::OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = afac::Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = afac::Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = afac::Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = afac::Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = afac::Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = afac::Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                2218 => if r.first(&mut seen[23])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacility::read_json(r)? { f23.push(v); } } },
+                525 => if r.first(&mut seen[24])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = DedicatedParkingSpaces::read_json(r)? { f24.push(v); } } },
+                130 => if r.first(&mut seen[25])? { f25 = r.raw_object()?.map(Box::new); },
+                2337 => if r.first(&mut seen[26])? { f26 = r.number::<f32>()?; },
+                266 => if r.first(&mut seen[27])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<AuthenticationAndIdentificationEnum>()? { f27.push(v); } } },
+                1401 => if r.first(&mut seen[28])? { f28 = r.number::<u64>()?; },
+                2529 => if r.first(&mut seen[29])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f29.push(v); } } },
+                1853 => if r.first(&mut seen[30])? { f30 = r.boolean()?; },
+                668 => if r.first(&mut seen[31])? { f31 = afac::Organisation::read_json(r)?; },
+                1338 => if r.first(&mut seen[32])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Organisation::read_json(r)? { f32.push(v); } } },
+                1989 => if r.first(&mut seen[33])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Organisation::read_json(r)? { f33.push(v); } } },
+                959 => if r.first(&mut seen[34])? { f34 = Hydrogen::read_json(r)?.map(Box::new); },
+                2040 => if r.first(&mut seen[35])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ServiceType::read_json(r)? { f35.push(v); } } },
+                1828 => if r.first(&mut seen[36])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = RefillPoint::read_json(r)? { f36.push(v); } } },
+                677 => if r.first(&mut seen[37])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyEnergyProduct::read_json(r)? { f37.push(v); } } },
+                646 => if r.first(&mut seen[37])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ElectricEnergy::read_json(r)?.map(|v| AnyEnergyProduct::ElectricEnergy(Box::new(v))) { f37.push(v); } } },
+                89 => if r.first(&mut seen[38])? { f38 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            supplemental_facility: f23,
+            dedicated_parking_spaces: f24,
+            facility_extension: f25,
+            total_maximum_power: f26,
+            authentication_and_identification_methods: f27,
+            number_of_refill_points: f28,
+            user_interface_language: f29,
+            renewable_sources: f30,
+            energy_distributor: f31,
+            mobility_service_provider: f32,
+            roaming_platform: f33,
+            hydrogen: f34,
+            service_type: f35,
+            refill_point: f36,
+            energy_product: f37,
+            energy_infrastructure_station_extension: f38,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(24)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility.is_empty() {
+            w.key(2218)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.dedicated_parking_spaces.is_empty() {
+            w.key(525)?;
+            w.begin_array()?;
+            for v in &self.dedicated_parking_spaces {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_extension {
+            w.key(130)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.total_maximum_power {
+            w.key(2337)?;
+            w.float32(*v)?;
+        }
+        if !self.authentication_and_identification_methods.is_empty() {
+            w.key(266)?;
+            w.begin_array()?;
+            for v in &self.authentication_and_identification_methods {
+                w.item()?;
+                w.enumeration(2, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.number_of_refill_points {
+            w.key(1401)?;
+            w.integer(*v)?;
+        }
+        if !self.user_interface_language.is_empty() {
+            w.key(2529)?;
+            w.begin_array()?;
+            for v in &self.user_interface_language {
+                w.item()?;
+                w.pattern("userInterfaceLanguage", v, Pattern::Language)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.renewable_sources {
+            w.key(1853)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.energy_distributor {
+            w.key(668)?;
+            v.write_json(w)?;
+        }
+        if !self.mobility_service_provider.is_empty() {
+            w.key(1338)?;
+            w.begin_array()?;
+            for v in &self.mobility_service_provider {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.roaming_platform.is_empty() {
+            w.key(1989)?;
+            w.begin_array()?;
+            for v in &self.roaming_platform {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.hydrogen {
+            w.key(959)?;
+            v.write_json(w, None)?;
+        }
+        if !self.service_type.is_empty() {
+            w.key(2040)?;
+            w.begin_array()?;
+            for v in &self.service_type {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.refill_point.is_empty() {
+            w.key(1828)?;
+            w.begin_array()?;
+            for v in &self.refill_point {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.energy_product.is_empty() {
+            w.key(677)?;
+            w.begin_array()?;
+            for v in &self.energy_product {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_infrastructure_station_extension {
+            w.key(89)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyInfrastructureStationStatus`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyInfrastructureStationStatus {
@@ -4221,10 +7764,10 @@ pub struct EnergyInfrastructureStationStatus {
 }
 
 impl EnergyInfrastructureStationStatus {
-    const FIELDS: &'static [u32] = &[0x20aba, 0x208ba, 0x209a8, 0x209ce, 0x20aca, 0x20b77, 0x20958, 0x20959, 0x2080d, 0x20498, 0x20b91, 0x20499, 0x10898, 0x108c9, 0x10ac5, 0x10b34, 0x107dc, 0x10487];
+    const FIELDS: &'static [u32] = &[0x20b01, 0x208f8, 0x209ec, 0x20a13, 0x20b13, 0x20bd2, 0x2099a, 0x2099b, 0x20849, 0x204b8, 0x20bef, 0x204b9, 0x108d6, 0x10907, 0x10b0e, 0x10b89, 0x10811, 0x104a5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1009d);
+        r.expect_type(0x100a1);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4247,24 +7790,24 @@ impl EnergyInfrastructureStationStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20aba => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2746); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e1, v, 2234); }
-                    0x209a8 => { let v = r.enumeration::<afac::OpeningStatusEnum>()?; r.set(&mut e2, v, 2472); }
-                    0x209ce => { let v = r.enumeration::<afac::OperationStatusEnum>()?; r.set(&mut e3, v, 2510); }
-                    0x20aca => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2762); }
-                    0x20b77 => { let v = r.multilingual()?; r.set(&mut e5, v, 2935); }
-                    0x20958 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e6, v, 2392); }
-                    0x20959 => { let v = afac::Rates::read(r)?; r.set(&mut e7, v, 2393); }
-                    0x2080d => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2061); }
-                    0x20498 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1176); }
-                    0x20b91 => { let v = Some(afac::SupplementalFacilityStatus::read(r)?); e10.extend(v); }
-                    0x20499 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1177); }
-                    0x10898 => { let v = r.value::<bool>()?; r.set(&mut e12, v, 2200); }
-                    0x108c9 => { let v = r.value::<bool>()?; r.set(&mut e13, v, 2249); }
-                    0x10ac5 => { let v = AnyRefillPointStatus::read(r)?; e14.extend(v); }
-                    0x10b34 => { let v = Some(ServiceType::read(r)?); e15.extend(v); }
-                    0x107dc => { let v = Some(EnergyRateUpdate::read(r)?); e16.extend(v); }
-                    0x10487 => { let v = r.raw()?; r.set(&mut e17, v.map(Box::new), 1159); }
+                    0x20b01 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2817); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e1, v, 2296); }
+                    0x209ec => { let v = r.enumeration::<afac::OpeningStatusEnum>()?; r.set(&mut e2, v, 2540); }
+                    0x20a13 => { let v = r.enumeration::<afac::OperationStatusEnum>()?; r.set(&mut e3, v, 2579); }
+                    0x20b13 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2835); }
+                    0x20bd2 => { let v = r.multilingual()?; r.set(&mut e5, v, 3026); }
+                    0x2099a => { let v = afac::OperatingHours::read(r)?; r.set(&mut e6, v, 2458); }
+                    0x2099b => { let v = afac::Rates::read(r)?; r.set(&mut e7, v, 2459); }
+                    0x20849 => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2121); }
+                    0x204b8 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1208); }
+                    0x20bef => { let v = Some(afac::SupplementalFacilityStatus::read(r)?); e10.extend(v); }
+                    0x204b9 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1209); }
+                    0x108d6 => { let v = r.value::<bool>()?; r.set(&mut e12, v, 2262); }
+                    0x10907 => { let v = r.value::<bool>()?; r.set(&mut e13, v, 2311); }
+                    0x10b0e => { let v = AnyRefillPointStatus::read(r)?; e14.extend(v); }
+                    0x10b89 => { let v = Some(ServiceType::read(r)?); e15.extend(v); }
+                    0x10811 => { let v = Some(EnergyRateUpdate::read(r)?); e16.extend(v); }
+                    0x104a5 => { let v = r.raw()?; r.set(&mut e17, v.map(Box::new), 1189); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4273,7 +7816,7 @@ impl EnergyInfrastructureStationStatus {
                 break;
             }
         }
-        r.required(&e0, 2746);
+        r.required(&e0, 2817);
         let v = Self {
             reference: e0,
             last_updated: e1,
@@ -4329,6 +7872,193 @@ impl EnergyInfrastructureStationStatus {
     }
 }
 
+impl EnergyInfrastructureStationStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 18];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = Vec::new();
+        let mut f15 = Vec::new();
+        let mut f16 = Vec::new();
+        let mut f17 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1817 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1043 => if r.first(&mut seen[1])? { f1 = r.date_time()?; },
+                1440 => if r.first(&mut seen[2])? { f2 = r.enumeration::<afac::OpeningStatusEnum>()?; },
+                1479 => if r.first(&mut seen[3])? { f3 = r.enumeration::<afac::OperationStatusEnum>()?; },
+                1835 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                2191 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1358 => if r.first(&mut seen[6])? { f6 = afac::OperatingHours::read_json(r)?; },
+                1359 => if r.first(&mut seen[7])? { f7 = afac::Rates::read_json(r)?; },
+                831 => if r.first(&mut seen[8])? { f8 = com::AnyFault::read_json(r)?; },
+                132 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                2219 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacilityStatus::read_json(r)? { f10.push(v); } } },
+                133 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                1009 => if r.first(&mut seen[12])? { f12 = r.boolean()?; },
+                1058 => if r.first(&mut seen[13])? { f13 = r.boolean()?; },
+                1830 => if r.first(&mut seen[14])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyRefillPointStatus::read_json(r)? { f14.push(v); } } },
+                2040 => if r.first(&mut seen[15])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ServiceType::read_json(r)? { f15.push(v); } } },
+                684 => if r.first(&mut seen[16])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyRateUpdate::read_json(r)? { f16.push(v); } } },
+                90 => if r.first(&mut seen[17])? { f17 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1817);
+        Ok(Self {
+            reference: f0,
+            last_updated: f1,
+            opening_status: f2,
+            operation_status: f3,
+            regular_operating_hours_in_force: f4,
+            status_description: f5,
+            new_operating_hours: f6,
+            new_rates: f7,
+            fault: f8,
+            facility_object_status_extension: f9,
+            supplemental_facility_status: f10,
+            facility_status_extension: f11,
+            is_available: f12,
+            limited_hydrogen_amount: f13,
+            refill_point_status: f14,
+            service_type: f15,
+            energy_rate_update: f16,
+            energy_infrastructure_station_status_extension: f17,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(25)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.reference {
+            Some(v) => {
+                w.key(1817)?;
+                v.write_json(w, Some("FacilityObject"))?;
+            }
+            None => w.absent(1817, w.missing("reference"))?,
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.opening_status {
+            w.key(1440)?;
+            w.enumeration(88, v.literal())?;
+        }
+        if let Some(v) = &self.operation_status {
+            w.key(1479)?;
+            w.enumeration(94, v.literal())?;
+        }
+        if let Some(v) = &self.regular_operating_hours_in_force {
+            w.key(1835)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.status_description {
+            w.key(2191)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.new_operating_hours {
+            w.key(1358)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.new_rates {
+            w.key(1359)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.fault {
+            w.key(831)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.facility_object_status_extension {
+            w.key(132)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility_status.is_empty() {
+            w.key(2219)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_status_extension {
+            w.key(133)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.is_available {
+            w.key(1009)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.limited_hydrogen_amount {
+            w.key(1058)?;
+            w.boolean(*v)?;
+        }
+        if !self.refill_point_status.is_empty() {
+            w.key(1830)?;
+            w.begin_array()?;
+            for v in &self.refill_point_status {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.service_type.is_empty() {
+            w.key(2040)?;
+            w.begin_array()?;
+            for v in &self.service_type {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.energy_rate_update.is_empty() {
+            w.key(684)?;
+            w.begin_array()?;
+            for v in &self.energy_rate_update {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_infrastructure_station_status_extension {
+            w.key(90)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyInfrastructureStatusPublication`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyInfrastructureStatusPublication {
@@ -4363,16 +8093,16 @@ pub struct EnergyInfrastructureStatusPublication {
 }
 
 impl EnergyInfrastructureStatusPublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x10b9b, 0x10857, 0x107ce, 0x10488];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x10bfa, 0x10893, 0x10803, 0x104a6];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1009e);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0x100a2);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4386,15 +8116,15 @@ impl EnergyInfrastructureStatusPublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x10b9b => { let v = Some(com::VersionedReference::read(r)?); e5.extend(v); }
-                    0x10857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2135); }
-                    0x107ce => { let v = Some(EnergyInfrastructureSiteStatus::read(r)?); e7.extend(v); }
-                    0x10488 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1160); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x10bfa => { let v = Some(com::VersionedReference::read(r)?); e5.extend(v); }
+                    0x10893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e6, v.map(Box::new), 2195); }
+                    0x10803 => { let v = Some(EnergyInfrastructureSiteStatus::read(r)?); e7.extend(v); }
+                    0x104a6 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1190); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4403,8 +8133,8 @@ impl EnergyInfrastructureStatusPublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -4459,6 +8189,143 @@ impl EnergyInfrastructureStatusPublication {
     }
 }
 
+impl EnergyInfrastructureStatusPublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 14];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        let mut f12 = Vec::new();
+        let mut f13 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                2229 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VersionedReference::read_json(r)? { f10.push(v); } } },
+                940 => if r.first(&mut seen[11])? { f11 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                670 => if r.first(&mut seen[12])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyInfrastructureSiteStatus::read_json(r)? { f12.push(v); } } },
+                92 => if r.first(&mut seen[13])? { f13 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            table_reference: f10,
+            header_information: f11,
+            energy_infrastructure_site_status: f12,
+            energy_infrastructure_status_publication_extension: f13,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(26)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        if !self.table_reference.is_empty() {
+            w.key(2229)?;
+            w.begin_array()?;
+            for v in &self.table_reference {
+                w.item()?;
+                v.write_json(w, Some("EnergyInfrastructureTable"))?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.header_information {
+            w.key(940)?;
+            v.write_json(w, None)?;
+        }
+        if !self.energy_infrastructure_site_status.is_empty() {
+            w.key(670)?;
+            w.begin_array()?;
+            for v in &self.energy_infrastructure_site_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_infrastructure_status_publication_extension {
+            w.key(92)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyInfrastructureTable`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyInfrastructureTable {
@@ -4475,12 +8342,12 @@ pub struct EnergyInfrastructureTable {
 }
 
 impl EnergyInfrastructureTable {
-    const FIELDS: &'static [u32] = &[0x10b9a, 0x107cd, 0x10489];
+    const FIELDS: &'static [u32] = &[0x10bf9, 0x10802, 0x104a7];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1009f);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x100a3);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -4488,9 +8355,9 @@ impl EnergyInfrastructureTable {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10b9a => { let v = r.string()?; r.set(&mut e0, v, 2970); }
-                    0x107cd => { let v = Some(EnergyInfrastructureSite::read(r)?); e1.extend(v); }
-                    0x10489 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1161); }
+                    0x10bf9 => { let v = r.string()?; r.set(&mut e0, v, 3065); }
+                    0x10802 => { let v = Some(EnergyInfrastructureSite::read(r)?); e1.extend(v); }
+                    0x104a7 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1191); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4532,6 +8399,92 @@ impl EnergyInfrastructureTable {
     }
 }
 
+impl EnergyInfrastructureTable {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                2228 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                669 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyInfrastructureSite::read_json(r)? { f3.push(v); } } },
+                93 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            table_name: f2,
+            energy_infrastructure_site: f3,
+            energy_infrastructure_table_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(27)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.table_name {
+            w.key(2228)?;
+            w.max_len("tableName", v, 1024)?; w.string(v)?;
+        }
+        w.count("energyInfrastructureSite", self.energy_infrastructure_site.len(), 1, usize::MAX)?;
+        if !self.energy_infrastructure_site.is_empty() {
+            w.key(669)?;
+            w.begin_array()?;
+            for v in &self.energy_infrastructure_site {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_infrastructure_table_extension {
+            w.key(93)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyInfrastructureTablePublication`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyInfrastructureTablePublication {
@@ -4564,16 +8517,16 @@ pub struct EnergyInfrastructureTablePublication {
 }
 
 impl EnergyInfrastructureTablePublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x10857, 0x107d1, 0x1048a];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x10893, 0x10806, 0x104a8];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100a0);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0x100a4);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4586,14 +8539,14 @@ impl EnergyInfrastructureTablePublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x10857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2135); }
-                    0x107d1 => { let v = Some(EnergyInfrastructureTable::read(r)?); e6.extend(v); }
-                    0x1048a => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1162); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x10893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2195); }
+                    0x10806 => { let v = Some(EnergyInfrastructureTable::read(r)?); e6.extend(v); }
+                    0x104a8 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1192); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4602,8 +8555,8 @@ impl EnergyInfrastructureTablePublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -4657,6 +8610,132 @@ impl EnergyInfrastructureTablePublication {
     }
 }
 
+impl EnergyInfrastructureTablePublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                940 => if r.first(&mut seen[10])? { f10 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                673 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyInfrastructureTable::read_json(r)? { f11.push(v); } } },
+                95 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            header_information: f10,
+            energy_infrastructure_table: f11,
+            energy_infrastructure_table_publication_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(28)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.header_information {
+            w.key(940)?;
+            v.write_json(w, None)?;
+        }
+        w.count("energyInfrastructureTable", self.energy_infrastructure_table.len(), 1, usize::MAX)?;
+        if !self.energy_infrastructure_table.is_empty() {
+            w.key(673)?;
+            w.begin_array()?;
+            for v in &self.energy_infrastructure_table {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_infrastructure_table_publication_extension {
+            w.key(95)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyPrice`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyPrice {
@@ -4685,10 +8764,10 @@ pub struct EnergyPrice {
 }
 
 impl EnergyPrice {
-    const FIELDS: &'static [u32] = &[0x10a73, 0x10a74, 0x10c2c, 0x10a72, 0x10ba1, 0x10ba2, 0x10690, 0x109f1, 0x10bb4, 0x107cb, 0x1048b];
+    const FIELDS: &'static [u32] = &[0x10aba, 0x10abb, 0x10c8c, 0x10ab9, 0x10c00, 0x10c01, 0x106b9, 0x10a36, 0x10c13, 0x10800, 0x104a9];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100a1);
+        r.expect_type(0x100a5);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4704,17 +8783,17 @@ impl EnergyPrice {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10a73 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2675); }
-                    0x10a74 => { let v = r.enumeration::<PriceTypeEnum>()?; r.set(&mut e1, v, 2676); }
-                    0x10c2c => { let v = r.value::<Decimal>()?; r.set(&mut e2, v, 3116); }
-                    0x10a72 => { let v = r.value::<Decimal>()?; r.set(&mut e3, v, 2674); }
-                    0x10ba1 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2977); }
-                    0x10ba2 => { let v = r.value::<f32>()?; r.set(&mut e5, v, 2978); }
-                    0x10690 => { let v = r.multilingual()?; r.set(&mut e6, v, 1680); }
-                    0x109f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e7, v.map(Box::new), 2545); }
-                    0x10bb4 => { let v = Some(TimeBasedApplicability::read(r)?); r.set(&mut e8, v.map(Box::new), 2996); }
-                    0x107cb => { let v = Some(EnergyBasedApplicability::read(r)?); r.set(&mut e9, v.map(Box::new), 1995); }
-                    0x1048b => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1163); }
+                    0x10aba => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2746); }
+                    0x10abb => { let v = r.enumeration::<PriceTypeEnum>()?; r.set(&mut e1, v, 2747); }
+                    0x10c8c => { let v = r.value::<Decimal>()?; r.set(&mut e2, v, 3212); }
+                    0x10ab9 => { let v = r.value::<Decimal>()?; r.set(&mut e3, v, 2745); }
+                    0x10c00 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 3072); }
+                    0x10c01 => { let v = r.value::<f32>()?; r.set(&mut e5, v, 3073); }
+                    0x106b9 => { let v = r.multilingual()?; r.set(&mut e6, v, 1721); }
+                    0x10a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e7, v.map(Box::new), 2614); }
+                    0x10c13 => { let v = Some(TimeBasedApplicability::read(r)?); r.set(&mut e8, v.map(Box::new), 3091); }
+                    0x10800 => { let v = Some(EnergyBasedApplicability::read(r)?); r.set(&mut e9, v.map(Box::new), 2048); }
+                    0x104a9 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1193); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4723,9 +8802,9 @@ impl EnergyPrice {
                 break;
             }
         }
-        r.required(&e0, 2675);
-        r.required(&e1, 2676);
-        r.required(&e2, 3116);
+        r.required(&e0, 2746);
+        r.required(&e1, 2747);
+        r.required(&e2, 3212);
         let v = Self {
             price_group_index: e0,
             price_type: e1,
@@ -4773,6 +8852,131 @@ impl EnergyPrice {
     }
 }
 
+impl EnergyPrice {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1644 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                1645 => if r.first(&mut seen[1])? { f1 = r.enumeration::<PriceTypeEnum>()?; },
+                2545 => if r.first(&mut seen[2])? { f2 = r.number::<Decimal>()?; },
+                1643 => if r.first(&mut seen[3])? { f3 = r.number::<Decimal>()?; },
+                2235 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                2236 => if r.first(&mut seen[5])? { f5 = r.number::<f32>()?; },
+                61 => if r.first(&mut seen[6])? { f6 = r.multilingual()?; },
+                1513 => if r.first(&mut seen[7])? { f7 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                2254 => if r.first(&mut seen[8])? { f8 = TimeBasedApplicability::read_json(r)?.map(Box::new); },
+                667 => if r.first(&mut seen[9])? { f9 = EnergyBasedApplicability::read_json(r)?.map(Box::new); },
+                96 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1645);
+        r.required(&f2, 2545);
+        Ok(Self {
+            price_group_index: f0,
+            price_type: f1,
+            value: f2,
+            price_cap: f3,
+            tax_included: f4,
+            tax_rate: f5,
+            additional_information: f6,
+            overall_period: f7,
+            time_based_applicability: f8,
+            energy_based_applicability: f9,
+            energy_price_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(29)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.price_group_index {
+            Some(v) => {
+                w.key(1644)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1644, w.missing("priceGroupIndex"))?,
+        }
+        match &self.price_type {
+            Some(v) => {
+                w.key(1645)?;
+                w.enumeration(42, v.literal())?;
+            }
+            None => w.absent(1645, w.missing("priceType"))?,
+        }
+        match &self.value {
+            Some(v) => {
+                w.key(2545)?;
+                w.digits("value", v, 8, 2)?; w.decimal(v)?;
+            }
+            None => w.absent(2545, w.missing("value"))?,
+        }
+        if let Some(v) = &self.price_cap {
+            w.key(1643)?;
+            w.digits("priceCap", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.tax_included {
+            w.key(2235)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.tax_rate {
+            w.key(2236)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.additional_information {
+            w.key(61)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.time_based_applicability {
+            w.key(2254)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.energy_based_applicability {
+            w.key(667)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.energy_price_extension {
+            w.key(96)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyProduct`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyProduct {
@@ -4795,10 +8999,10 @@ pub struct EnergyProduct {
 }
 
 impl EnergyProduct {
-    const FIELDS: &'static [u32] = &[0x107d7, 0x1089b, 0x107da, 0x107d6, 0x10adb, 0x10942, 0x107d9, 0x1048d];
+    const FIELDS: &'static [u32] = &[0x1080c, 0x108d9, 0x1080f, 0x1080b, 0x10b24, 0x10984, 0x1080e, 0x104ab];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100a3);
+        r.expect_type(0x100a7);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4811,14 +9015,14 @@ impl EnergyProduct {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x107d7 => { let v = r.multilingual()?; r.set(&mut e0, v, 2007); }
-                    0x1089b => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2203); }
-                    0x107da => { let v = Some(com::Reference::read(r)?); e2.extend(v); }
-                    0x107d6 => { let v = r.string()?; r.set(&mut e3, v, 2006); }
-                    0x10adb => { let v = r.string()?; r.set(&mut e4, v, 2779); }
-                    0x10942 => { let v = afac::Organisation::read(r)?; e5.extend(v); }
-                    0x107d9 => { let v = Some(EnergyRate::read(r)?); e6.extend(v); }
-                    0x1048d => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1165); }
+                    0x1080c => { let v = r.multilingual()?; r.set(&mut e0, v, 2060); }
+                    0x108d9 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2265); }
+                    0x1080f => { let v = Some(com::Reference::read(r)?); e2.extend(v); }
+                    0x1080b => { let v = r.string()?; r.set(&mut e3, v, 2059); }
+                    0x10b24 => { let v = r.string()?; r.set(&mut e4, v, 2852); }
+                    0x10984 => { let v = afac::Organisation::read(r)?; e5.extend(v); }
+                    0x1080e => { let v = Some(EnergyRate::read(r)?); e6.extend(v); }
+                    0x104ab => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1195); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4859,6 +9063,114 @@ impl EnergyProduct {
     }
 }
 
+impl EnergyProduct {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = Vec::new();
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                679 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1012 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                682 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::Reference::read_json(r)? { f2.push(v); } } },
+                678 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1852 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                1338 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Organisation::read_json(r)? { f5.push(v); } } },
+                681 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyRate::read_json(r)? { f6.push(v); } } },
+                98 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            energy_product_name: f0,
+            is_green_energy: f1,
+            energy_rate_by_reference: f2,
+            energy_product_information: f3,
+            renewable_energy_evidence: f4,
+            mobility_service_provider: f5,
+            energy_rate: f6,
+            energy_product_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(30)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.energy_product_name {
+            w.key(679)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.is_green_energy {
+            w.key(1012)?;
+            w.boolean(*v)?;
+        }
+        if !self.energy_rate_by_reference.is_empty() {
+            w.key(682)?;
+            w.begin_array()?;
+            for v in &self.energy_rate_by_reference {
+                w.item()?;
+                v.write_json(w, Some("EnergyRate"))?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_product_information {
+            w.key(678)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.renewable_energy_evidence {
+            w.key(1852)?;
+            w.string(v)?;
+        }
+        if !self.mobility_service_provider.is_empty() {
+            w.key(1338)?;
+            w.begin_array()?;
+            for v in &self.mobility_service_provider {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.energy_rate.is_empty() {
+            w.key(681)?;
+            w.begin_array()?;
+            for v in &self.energy_rate {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_product_extension {
+            w.key(98)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyRate`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyRate {
@@ -4893,11 +9205,11 @@ pub struct EnergyRate {
 }
 
 impl EnergyRate {
-    const FIELDS: &'static [u32] = &[0x10aa7, 0x108ba, 0x106bf, 0x10aa6, 0x10725, 0x10908, 0x10937, 0x10792, 0x10690, 0x10a10, 0x107d3, 0x109f1, 0x1048e];
+    const FIELDS: &'static [u32] = &[0x10aee, 0x108f8, 0x106e8, 0x10aed, 0x10752, 0x10947, 0x10979, 0x107c3, 0x106b9, 0x10a56, 0x10808, 0x10a36, 0x104ac];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100a4);
-        let a0 = r.req_attr(2159);
+        r.expect_type(0x100a8);
+        let a0 = r.req_attr(2219);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4915,19 +9227,19 @@ impl EnergyRate {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10aa7 => { let v = r.enumeration::<RatePolicyEnum>()?; r.set(&mut e0, v, 2727); }
-                    0x108ba => { let v = r.date_time()?; r.set(&mut e1, v, 2234); }
-                    0x106bf => { let v = r.string()?; e2.extend(v); }
-                    0x10aa6 => { let v = r.multilingual()?; r.set(&mut e3, v, 2726); }
-                    0x10725 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 1829); }
-                    0x10908 => { let v = r.value::<Decimal>()?; r.set(&mut e5, v, 2312); }
-                    0x10937 => { let v = r.value::<Decimal>()?; r.set(&mut e6, v, 2359); }
-                    0x10792 => { let v = r.value::<f32>()?; r.set(&mut e7, v, 1938); }
-                    0x10690 => { let v = r.multilingual()?; r.set(&mut e8, v, 1680); }
-                    0x10a10 => { let v = Some(afac::Payment::read(r)?); r.set(&mut e9, v.map(Box::new), 2576); }
-                    0x107d3 => { let v = Some(EnergyPrice::read(r)?); e10.extend(v); }
-                    0x109f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e11, v.map(Box::new), 2545); }
-                    0x1048e => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1166); }
+                    0x10aee => { let v = r.enumeration::<RatePolicyEnum>()?; r.set(&mut e0, v, 2798); }
+                    0x108f8 => { let v = r.date_time()?; r.set(&mut e1, v, 2296); }
+                    0x106e8 => { let v = r.string()?; e2.extend(v); }
+                    0x10aed => { let v = r.multilingual()?; r.set(&mut e3, v, 2797); }
+                    0x10752 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 1874); }
+                    0x10947 => { let v = r.value::<Decimal>()?; r.set(&mut e5, v, 2375); }
+                    0x10979 => { let v = r.value::<Decimal>()?; r.set(&mut e6, v, 2425); }
+                    0x107c3 => { let v = r.value::<f32>()?; r.set(&mut e7, v, 1987); }
+                    0x106b9 => { let v = r.multilingual()?; r.set(&mut e8, v, 1721); }
+                    0x10a56 => { let v = Some(afac::Payment::read(r)?); r.set(&mut e9, v.map(Box::new), 2646); }
+                    0x10808 => { let v = Some(EnergyPrice::read(r)?); e10.extend(v); }
+                    0x10a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e11, v.map(Box::new), 2614); }
+                    0x104ac => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1196); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4936,8 +9248,8 @@ impl EnergyRate {
                 break;
             }
         }
-        r.required(&e0, 2727);
-        r.required(&e1, 2234);
+        r.required(&e0, 2798);
+        r.required(&e1, 2296);
         let v = Self {
             id: a0,
             rate_policy: e0,
@@ -4992,6 +9304,164 @@ impl EnergyRate {
     }
 }
 
+impl EnergyRate {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 14];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                1798 => if r.first(&mut seen[1])? { f1 = r.enumeration::<RatePolicyEnum>()?; },
+                1043 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                243 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f3.push(v); } } },
+                1797 => if r.first(&mut seen[4])? { f4 = r.multilingual()?; },
+                416 => if r.first(&mut seen[5])? { f5 = r.boolean()?; },
+                1276 => if r.first(&mut seen[6])? { f6 = r.number::<Decimal>()?; },
+                1327 => if r.first(&mut seen[7])? { f7 = r.number::<Decimal>()?; },
+                572 => if r.first(&mut seen[8])? { f8 = r.number::<f32>()?; },
+                61 => if r.first(&mut seen[9])? { f9 = r.multilingual()?; },
+                1545 => if r.first(&mut seen[10])? { f10 = afac::Payment::read_json(r)?.map(Box::new); },
+                675 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyPrice::read_json(r)? { f11.push(v); } } },
+                1513 => if r.first(&mut seen[12])? { f12 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                99 => if r.first(&mut seen[13])? { f13 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 1798);
+        r.required(&f2, 1043);
+        Ok(Self {
+            id: f0,
+            rate_policy: f1,
+            last_updated: f2,
+            applicable_currency: f3,
+            rate_name: f4,
+            combination_with_parking_fee: f5,
+            maximum_delivery_fee: f6,
+            minimum_delivery_fee: f7,
+            discount: f8,
+            additional_information: f9,
+            payment: f10,
+            energy_price: f11,
+            overall_period: f12,
+            energy_rate_extension: f13,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(32)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.rate_policy {
+            Some(v) => {
+                w.key(1798)?;
+                w.enumeration(43, v.literal())?;
+            }
+            None => w.absent(1798, w.missing("ratePolicy"))?,
+        }
+        match &self.last_updated {
+            Some(v) => {
+                w.key(1043)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1043, w.missing("lastUpdated"))?,
+        }
+        w.count("applicableCurrency", self.applicable_currency.len(), 1, usize::MAX)?;
+        if !self.applicable_currency.is_empty() {
+            w.key(243)?;
+            w.begin_array()?;
+            for v in &self.applicable_currency {
+                w.item()?;
+                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rate_name {
+            w.key(1797)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.combination_with_parking_fee {
+            w.key(416)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.maximum_delivery_fee {
+            w.key(1276)?;
+            w.digits("maximumDeliveryFee", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.minimum_delivery_fee {
+            w.key(1327)?;
+            w.digits("minimumDeliveryFee", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.discount {
+            w.key(572)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.additional_information {
+            w.key(61)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.payment {
+            w.key(1545)?;
+            v.write_json(w, None)?;
+        }
+        if !self.energy_price.is_empty() {
+            w.key(675)?;
+            w.begin_array()?;
+            for v in &self.energy_price {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.energy_rate_extension {
+            w.key(99)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:EnergyRateUpdate`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct EnergyRateUpdate {
@@ -5008,10 +9478,10 @@ pub struct EnergyRateUpdate {
 }
 
 impl EnergyRateUpdate {
-    const FIELDS: &'static [u32] = &[0x108ba, 0x107db, 0x10690, 0x107d3, 0x1048f];
+    const FIELDS: &'static [u32] = &[0x108f8, 0x10810, 0x106b9, 0x10808, 0x104ad];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100a5);
+        r.expect_type(0x100a9);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5021,11 +9491,11 @@ impl EnergyRateUpdate {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x108ba => { let v = r.date_time()?; r.set(&mut e0, v, 2234); }
-                    0x107db => { let v = Some(com::Reference::read(r)?); r.set(&mut e1, v.map(Box::new), 2011); }
-                    0x10690 => { let v = r.multilingual()?; r.set(&mut e2, v, 1680); }
-                    0x107d3 => { let v = Some(EnergyPrice::read(r)?); e3.extend(v); }
-                    0x1048f => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1167); }
+                    0x108f8 => { let v = r.date_time()?; r.set(&mut e0, v, 2296); }
+                    0x10810 => { let v = Some(com::Reference::read(r)?); r.set(&mut e1, v.map(Box::new), 2064); }
+                    0x106b9 => { let v = r.multilingual()?; r.set(&mut e2, v, 1721); }
+                    0x10808 => { let v = Some(EnergyPrice::read(r)?); e3.extend(v); }
+                    0x104ad => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1197); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5034,8 +9504,8 @@ impl EnergyRateUpdate {
                 break;
             }
         }
-        r.required(&e0, 2234);
-        r.required(&e1, 2011);
+        r.required(&e0, 2296);
+        r.required(&e1, 2064);
         let v = Self {
             last_updated: e0,
             energy_rate_reference: e1,
@@ -5068,6 +9538,91 @@ impl EnergyRateUpdate {
     }
 }
 
+impl EnergyRateUpdate {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1043 => if r.first(&mut seen[0])? { f0 = r.date_time()?; },
+                683 => if r.first(&mut seen[1])? { f1 = com::Reference::read_json(r)?.map(Box::new); },
+                61 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                675 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyPrice::read_json(r)? { f3.push(v); } } },
+                100 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1043);
+        r.required(&f1, 683);
+        Ok(Self {
+            last_updated: f0,
+            energy_rate_reference: f1,
+            additional_information: f2,
+            energy_price: f3,
+            energy_rate_update_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(33)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.last_updated {
+            Some(v) => {
+                w.key(1043)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1043, w.missing("lastUpdated"))?,
+        }
+        match &self.energy_rate_reference {
+            Some(v) => {
+                w.key(683)?;
+                v.write_json(w, Some("EnergyRate"))?;
+            }
+            None => w.absent(683, w.missing("energyRateReference"))?,
+        }
+        if let Some(v) = &self.additional_information {
+            w.key(61)?;
+            w.multilingual(v)?;
+        }
+        if !self.energy_price.is_empty() {
+            w.key(675)?;
+            w.begin_array()?;
+            for v in &self.energy_price {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.energy_rate_update_extension {
+            w.key(100)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:Hydrogen`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Hydrogen {
@@ -5080,10 +9635,10 @@ pub struct Hydrogen {
 }
 
 impl Hydrogen {
-    const FIELDS: &'static [u32] = &[0x10ac7, 0x1074f, 0x104c1];
+    const FIELDS: &'static [u32] = &[0x10b10, 0x1077e, 0x104e1];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x100d7);
+        r.expect_type(0x100dd);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -5091,9 +9646,9 @@ impl Hydrogen {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10ac7 => { let v = r.enumeration::<HydrogenRefuellingModeEnum>()?; e0.extend(v); }
-                    0x1074f => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1871); }
-                    0x104c1 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1217); }
+                    0x10b10 => { let v = r.enumeration::<HydrogenRefuellingModeEnum>()?; e0.extend(v); }
+                    0x1077e => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1918); }
+                    0x104e1 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1249); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5102,7 +9657,7 @@ impl Hydrogen {
                 break;
             }
         }
-        r.required(&e1, 1871);
+        r.required(&e1, 1918);
         let v = Self {
             refuelling_mode: e0,
             cumulative_capacityper_day: e1,
@@ -5126,6 +9681,74 @@ impl Hydrogen {
         }
         if let Some(v) = &self.hydrogen_extension { w.extension("aegi:_hydrogenExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl Hydrogen {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1832 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<HydrogenRefuellingModeEnum>()? { f0.push(v); } } },
+                476 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                101 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 476);
+        Ok(Self {
+            refuelling_mode: f0,
+            cumulative_capacityper_day: f1,
+            hydrogen_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(35)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        w.count("refuellingMode", self.refuelling_mode.len(), 1, usize::MAX)?;
+        if !self.refuelling_mode.is_empty() {
+            w.key(1832)?;
+            w.begin_array()?;
+            for v in &self.refuelling_mode {
+                w.item()?;
+                w.enumeration(37, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        match &self.cumulative_capacityper_day {
+            Some(v) => {
+                w.key(476)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(476, w.missing("cumulativeCapacityperDay"))?,
+        }
+        if let Some(v) = &self.hydrogen_extension {
+            w.key(101)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -5213,12 +9836,12 @@ pub struct PetrolRefillPoint {
 }
 
 impl PetrolRefillPoint {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x20b90, 0x20764, 0x20496, 0x1076d, 0x10907, 0x10936, 0x10946, 0x10ae4, 0x107d5, 0x10592, 0x10a2b, 0x109a3, 0x109a2, 0x106f8, 0x106f9, 0x10554];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x20bee, 0x20794, 0x204b6, 0x1079d, 0x10946, 0x10978, 0x10988, 0x10b2e, 0x1080a, 0x105b5, 0x10a71, 0x109e7, 0x109e6, 0x10721, 0x10722, 0x10577];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10171);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x1017a);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -5260,43 +9883,43 @@ impl PetrolRefillPoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x20b90 => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
-                    0x20764 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
-                    0x20496 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1174); }
-                    0x1076d => { let v = r.enumeration::<DeliveryUnitEnum>()?; r.set(&mut e24, v, 1901); }
-                    0x10907 => { let v = r.value::<f32>()?; r.set(&mut e25, v, 2311); }
-                    0x10936 => { let v = r.value::<f32>()?; r.set(&mut e26, v, 2358); }
-                    0x10946 => { let v = r.multilingual()?; r.set(&mut e27, v, 2374); }
-                    0x10ae4 => { let v = r.enumeration::<afac::ReservationTypeEnum>()?; r.set(&mut e28, v, 2788); }
-                    0x107d5 => { let v = AnyEnergyProduct::read(r)?; e29.extend(v); }
-                    0x10592 => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1426); }
-                    0x10a2b => { let v = r.enumeration::<PetrolTypeEnum>()?; r.set(&mut e31, v, 2603); }
-                    0x109a3 => { let v = r.enumeration::<OctaneTypeEnum>()?; r.set(&mut e32, v, 2467); }
-                    0x109a2 => { let v = r.value::<u64>()?; r.set(&mut e33, v, 2466); }
-                    0x106f8 => { let v = r.value::<f32>()?; r.set(&mut e34, v, 1784); }
-                    0x106f9 => { let v = r.enumeration::<BioethanolTypeEnum>()?; r.set(&mut e35, v, 1785); }
-                    0x10554 => { let v = r.raw()?; r.set(&mut e36, v.map(Box::new), 1364); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<afac::AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(afac::ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(afac::Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = afac::Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = afac::Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = afac::Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = afac::AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = afac::Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(afac::Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(afac::Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x20bee => { let v = afac::SupplementalFacility::read(r)?; e21.extend(v); }
+                    0x20794 => { let v = Some(DedicatedParkingSpaces::read(r)?); e22.extend(v); }
+                    0x204b6 => { let v = r.raw()?; r.set(&mut e23, v.map(Box::new), 1206); }
+                    0x1079d => { let v = r.enumeration::<DeliveryUnitEnum>()?; r.set(&mut e24, v, 1949); }
+                    0x10946 => { let v = r.value::<f32>()?; r.set(&mut e25, v, 2374); }
+                    0x10978 => { let v = r.value::<f32>()?; r.set(&mut e26, v, 2424); }
+                    0x10988 => { let v = r.multilingual()?; r.set(&mut e27, v, 2440); }
+                    0x10b2e => { let v = r.enumeration::<afac::ReservationTypeEnum>()?; r.set(&mut e28, v, 2862); }
+                    0x1080a => { let v = AnyEnergyProduct::read(r)?; e29.extend(v); }
+                    0x105b5 => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1461); }
+                    0x10a71 => { let v = r.enumeration::<PetrolTypeEnum>()?; r.set(&mut e31, v, 2673); }
+                    0x109e7 => { let v = r.enumeration::<OctaneTypeEnum>()?; r.set(&mut e32, v, 2535); }
+                    0x109e6 => { let v = r.value::<u64>()?; r.set(&mut e33, v, 2534); }
+                    0x10721 => { let v = r.value::<f32>()?; r.set(&mut e34, v, 1825); }
+                    0x10722 => { let v = r.enumeration::<BioethanolTypeEnum>()?; r.set(&mut e35, v, 1826); }
+                    0x10577 => { let v = r.raw()?; r.set(&mut e36, v.map(Box::new), 1399); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5305,7 +9928,7 @@ impl PetrolRefillPoint {
                 break;
             }
         }
-        r.required(&e24, 1901);
+        r.required(&e24, 1949);
         let v = Self {
             id: a0,
             version: a1,
@@ -5409,6 +10032,388 @@ impl PetrolRefillPoint {
     }
 }
 
+impl PetrolRefillPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 39];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = Vec::new();
+        let mut f24 = Vec::new();
+        let mut f25 = None;
+        let mut f26 = None;
+        let mut f27 = None;
+        let mut f28 = None;
+        let mut f29 = None;
+        let mut f30 = None;
+        let mut f31 = Vec::new();
+        let mut f32 = None;
+        let mut f33 = None;
+        let mut f34 = None;
+        let mut f35 = None;
+        let mut f36 = None;
+        let mut f37 = None;
+        let mut f38 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<afac::AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = afac::OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = afac::Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = afac::Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = afac::Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = afac::Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = afac::Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = afac::Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                2218 => if r.first(&mut seen[23])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacility::read_json(r)? { f23.push(v); } } },
+                525 => if r.first(&mut seen[24])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = DedicatedParkingSpaces::read_json(r)? { f24.push(v); } } },
+                130 => if r.first(&mut seen[25])? { f25 = r.raw_object()?.map(Box::new); },
+                534 => if r.first(&mut seen[26])? { f26 = r.enumeration::<DeliveryUnitEnum>()?; },
+                1275 => if r.first(&mut seen[27])? { f27 = r.number::<f32>()?; },
+                1326 => if r.first(&mut seen[28])? { f28 = r.number::<f32>()?; },
+                1342 => if r.first(&mut seen[29])? { f29 = r.multilingual()?; },
+                1885 => if r.first(&mut seen[30])? { f30 = r.enumeration::<afac::ReservationTypeEnum>()?; },
+                677 => if r.first(&mut seen[31])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyEnergyProduct::read_json(r)? { f31.push(v); } } },
+                105 => if r.first(&mut seen[32])? { f32 = r.raw_object()?.map(Box::new); },
+                1571 => if r.first(&mut seen[33])? { f33 = r.enumeration::<PetrolTypeEnum>()?; },
+                1435 => if r.first(&mut seen[34])? { f34 = r.enumeration::<OctaneTypeEnum>()?; },
+                1434 => if r.first(&mut seen[35])? { f35 = r.number::<u64>()?; },
+                300 => if r.first(&mut seen[36])? { f36 = r.number::<f32>()?; },
+                301 => if r.first(&mut seen[37])? { f37 = r.enumeration::<BioethanolTypeEnum>()?; },
+                103 => if r.first(&mut seen[38])? { f38 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f26, 534);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            supplemental_facility: f23,
+            dedicated_parking_spaces: f24,
+            facility_extension: f25,
+            delivery_unit: f26,
+            maximum_delivery_amount: f27,
+            minimum_delivery_amount: f28,
+            model_type: f29,
+            reservation: f30,
+            energy_product: f31,
+            refill_point_extension: f32,
+            petrol_type: f33,
+            octane_type: f34,
+            octane: f35,
+            bioethanol_share: f36,
+            bioethanol_type: f37,
+            petrol_refill_point_extension: f38,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(39)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility.is_empty() {
+            w.key(2218)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.dedicated_parking_spaces.is_empty() {
+            w.key(525)?;
+            w.begin_array()?;
+            for v in &self.dedicated_parking_spaces {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_extension {
+            w.key(130)?;
+            w.extension(v)?;
+        }
+        match &self.delivery_unit {
+            Some(v) => {
+                w.key(534)?;
+                w.enumeration(11, v.literal())?;
+            }
+            None => w.absent(534, w.missing("deliveryUnit"))?,
+        }
+        if let Some(v) = &self.maximum_delivery_amount {
+            w.key(1275)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.minimum_delivery_amount {
+            w.key(1326)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.model_type {
+            w.key(1342)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.reservation {
+            w.key(1885)?;
+            w.enumeration(124, v.literal())?;
+        }
+        if !self.energy_product.is_empty() {
+            w.key(677)?;
+            w.begin_array()?;
+            for v in &self.energy_product {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.refill_point_extension {
+            w.key(105)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.petrol_type {
+            w.key(1571)?;
+            w.enumeration(40, v.literal())?;
+        }
+        if let Some(v) = &self.octane_type {
+            w.key(1435)?;
+            w.enumeration(38, v.literal())?;
+        }
+        if let Some(v) = &self.octane {
+            w.key(1434)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.bioethanol_share {
+            w.key(300)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.bioethanol_type {
+            w.key(301)?;
+            w.enumeration(3, v.literal())?;
+        }
+        if let Some(v) = &self.petrol_refill_point_extension {
+            w.key(103)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:PlannedRefillPointStatus`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PlannedRefillPointStatus {
@@ -5421,10 +10426,10 @@ pub struct PlannedRefillPointStatus {
 }
 
 impl PlannedRefillPointStatus {
-    const FIELDS: &'static [u32] = &[0x10b73, 0x109f1, 0x1055d];
+    const FIELDS: &'static [u32] = &[0x10bce, 0x10a36, 0x10580];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x1017a);
+        r.expect_type(0x10183);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5432,9 +10437,9 @@ impl PlannedRefillPointStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10b73 => { let v = r.enumeration::<RefillPointStatusEnum>()?; r.set(&mut e0, v, 2931); }
-                    0x109f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e1, v.map(Box::new), 2545); }
-                    0x1055d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1373); }
+                    0x10bce => { let v = r.enumeration::<RefillPointStatusEnum>()?; r.set(&mut e0, v, 3022); }
+                    0x10a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e1, v.map(Box::new), 2614); }
+                    0x10580 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1408); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5443,8 +10448,8 @@ impl PlannedRefillPointStatus {
                 break;
             }
         }
-        r.required(&e0, 2931);
-        r.required(&e1, 2545);
+        r.required(&e0, 3022);
+        r.required(&e1, 2614);
         let v = Self {
             status: e0,
             overall_period: e1,
@@ -5470,6 +10475,72 @@ impl PlannedRefillPointStatus {
         }
         if let Some(v) = &self.planned_refill_point_status_extension { w.extension("aegi:_plannedRefillPointStatusExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl PlannedRefillPointStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2187 => if r.first(&mut seen[0])? { f0 = r.enumeration::<RefillPointStatusEnum>()?; },
+                1513 => if r.first(&mut seen[1])? { f1 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                104 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2187);
+        r.required(&f1, 1513);
+        Ok(Self {
+            status: f0,
+            overall_period: f1,
+            planned_refill_point_status_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(41)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.status {
+            Some(v) => {
+                w.key(2187)?;
+                w.enumeration(46, v.literal())?;
+            }
+            None => w.absent(2187, w.missing("status"))?,
+        }
+        match &self.overall_period {
+            Some(v) => {
+                w.key(1513)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1513, w.missing("overallPeriod"))?,
+        }
+        if let Some(v) = &self.planned_refill_point_status_extension {
+            w.key(104)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -5515,10 +10586,10 @@ pub struct RefillPointStatus {
 }
 
 impl RefillPointStatus {
-    const FIELDS: &'static [u32] = &[0x20aba, 0x208ba, 0x209a8, 0x209ce, 0x20aca, 0x20b77, 0x20958, 0x20959, 0x2080d, 0x20498, 0x20b91, 0x20499, 0x10b73, 0x10c0a, 0x107dc, 0x10c6b, 0x10a42, 0x10593];
+    const FIELDS: &'static [u32] = &[0x20b01, 0x208f8, 0x209ec, 0x20a13, 0x20b13, 0x20bd2, 0x2099a, 0x2099b, 0x20849, 0x204b8, 0x20bef, 0x204b9, 0x10bce, 0x10c69, 0x10811, 0x10ccd, 0x10a88, 0x105b6];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x101b1);
+        r.expect_type(0x101ba);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5541,24 +10612,24 @@ impl RefillPointStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20aba => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2746); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e1, v, 2234); }
-                    0x209a8 => { let v = r.enumeration::<afac::OpeningStatusEnum>()?; r.set(&mut e2, v, 2472); }
-                    0x209ce => { let v = r.enumeration::<afac::OperationStatusEnum>()?; r.set(&mut e3, v, 2510); }
-                    0x20aca => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2762); }
-                    0x20b77 => { let v = r.multilingual()?; r.set(&mut e5, v, 2935); }
-                    0x20958 => { let v = afac::OperatingHours::read(r)?; r.set(&mut e6, v, 2392); }
-                    0x20959 => { let v = afac::Rates::read(r)?; r.set(&mut e7, v, 2393); }
-                    0x2080d => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2061); }
-                    0x20498 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1176); }
-                    0x20b91 => { let v = Some(afac::SupplementalFacilityStatus::read(r)?); e10.extend(v); }
-                    0x20499 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1177); }
-                    0x10b73 => { let v = r.enumeration::<RefillPointStatusEnum>()?; r.set(&mut e12, v, 2931); }
-                    0x10c0a => { let v = r.value::<f32>()?; r.set(&mut e13, v, 3082); }
-                    0x107dc => { let v = Some(EnergyRateUpdate::read(r)?); e14.extend(v); }
-                    0x10c6b => { let v = Some(afac::DurationValue::read(r)?); r.set(&mut e15, v.map(Box::new), 3179); }
-                    0x10a42 => { let v = Some(PlannedRefillPointStatus::read(r)?); e16.extend(v); }
-                    0x10593 => { let v = r.raw()?; r.set(&mut e17, v.map(Box::new), 1427); }
+                    0x20b01 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2817); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e1, v, 2296); }
+                    0x209ec => { let v = r.enumeration::<afac::OpeningStatusEnum>()?; r.set(&mut e2, v, 2540); }
+                    0x20a13 => { let v = r.enumeration::<afac::OperationStatusEnum>()?; r.set(&mut e3, v, 2579); }
+                    0x20b13 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2835); }
+                    0x20bd2 => { let v = r.multilingual()?; r.set(&mut e5, v, 3026); }
+                    0x2099a => { let v = afac::OperatingHours::read(r)?; r.set(&mut e6, v, 2458); }
+                    0x2099b => { let v = afac::Rates::read(r)?; r.set(&mut e7, v, 2459); }
+                    0x20849 => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2121); }
+                    0x204b8 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1208); }
+                    0x20bef => { let v = Some(afac::SupplementalFacilityStatus::read(r)?); e10.extend(v); }
+                    0x204b9 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1209); }
+                    0x10bce => { let v = r.enumeration::<RefillPointStatusEnum>()?; r.set(&mut e12, v, 3022); }
+                    0x10c69 => { let v = r.value::<f32>()?; r.set(&mut e13, v, 3177); }
+                    0x10811 => { let v = Some(EnergyRateUpdate::read(r)?); e14.extend(v); }
+                    0x10ccd => { let v = Some(afac::DurationValue::read(r)?); r.set(&mut e15, v.map(Box::new), 3277); }
+                    0x10a88 => { let v = Some(PlannedRefillPointStatus::read(r)?); e16.extend(v); }
+                    0x105b6 => { let v = r.raw()?; r.set(&mut e17, v.map(Box::new), 1462); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5567,8 +10638,8 @@ impl RefillPointStatus {
                 break;
             }
         }
-        r.required(&e0, 2746);
-        r.required(&e12, 2931);
+        r.required(&e0, 2817);
+        r.required(&e12, 3022);
         let v = Self {
             reference: e0,
             last_updated: e1,
@@ -5627,6 +10698,192 @@ impl RefillPointStatus {
     }
 }
 
+impl RefillPointStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 18];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = Vec::new();
+        let mut f15 = None;
+        let mut f16 = Vec::new();
+        let mut f17 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1817 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1043 => if r.first(&mut seen[1])? { f1 = r.date_time()?; },
+                1440 => if r.first(&mut seen[2])? { f2 = r.enumeration::<afac::OpeningStatusEnum>()?; },
+                1479 => if r.first(&mut seen[3])? { f3 = r.enumeration::<afac::OperationStatusEnum>()?; },
+                1835 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                2191 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1358 => if r.first(&mut seen[6])? { f6 = afac::OperatingHours::read_json(r)?; },
+                1359 => if r.first(&mut seen[7])? { f7 = afac::Rates::read_json(r)?; },
+                831 => if r.first(&mut seen[8])? { f8 = com::AnyFault::read_json(r)?; },
+                132 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                2219 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = afac::SupplementalFacilityStatus::read_json(r)? { f10.push(v); } } },
+                133 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                2187 => if r.first(&mut seen[12])? { f12 = r.enumeration::<RefillPointStatusEnum>()?; },
+                2510 => if r.first(&mut seen[13])? { f13 = r.number::<f32>()?; },
+                684 => if r.first(&mut seen[14])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = EnergyRateUpdate::read_json(r)? { f14.push(v); } } },
+                2658 => if r.first(&mut seen[15])? { f15 = afac::DurationValue::read_json(r)?.map(Box::new); },
+                1594 => if r.first(&mut seen[16])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = PlannedRefillPointStatus::read_json(r)? { f16.push(v); } } },
+                107 => if r.first(&mut seen[17])? { f17 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1817);
+        r.required(&f12, 2187);
+        Ok(Self {
+            reference: f0,
+            last_updated: f1,
+            opening_status: f2,
+            operation_status: f3,
+            regular_operating_hours_in_force: f4,
+            status_description: f5,
+            new_operating_hours: f6,
+            new_rates: f7,
+            fault: f8,
+            facility_object_status_extension: f9,
+            supplemental_facility_status: f10,
+            facility_status_extension: f11,
+            status: f12,
+            units_in_stock: f13,
+            energy_rate_update: f14,
+            waiting_time: f15,
+            planned_refill_point_status: f16,
+            refill_point_status_extension: f17,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(45)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.reference {
+            Some(v) => {
+                w.key(1817)?;
+                v.write_json(w, Some("FacilityObject"))?;
+            }
+            None => w.absent(1817, w.missing("reference"))?,
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.opening_status {
+            w.key(1440)?;
+            w.enumeration(88, v.literal())?;
+        }
+        if let Some(v) = &self.operation_status {
+            w.key(1479)?;
+            w.enumeration(94, v.literal())?;
+        }
+        if let Some(v) = &self.regular_operating_hours_in_force {
+            w.key(1835)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.status_description {
+            w.key(2191)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.new_operating_hours {
+            w.key(1358)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.new_rates {
+            w.key(1359)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.fault {
+            w.key(831)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.facility_object_status_extension {
+            w.key(132)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility_status.is_empty() {
+            w.key(2219)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_status_extension {
+            w.key(133)?;
+            w.extension(v)?;
+        }
+        match &self.status {
+            Some(v) => {
+                w.key(2187)?;
+                w.enumeration(46, v.literal())?;
+            }
+            None => w.absent(2187, w.missing("status"))?,
+        }
+        if let Some(v) = &self.units_in_stock {
+            w.key(2510)?;
+            w.float32(*v)?;
+        }
+        if !self.energy_rate_update.is_empty() {
+            w.key(684)?;
+            w.begin_array()?;
+            for v in &self.energy_rate_update {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.waiting_time {
+            w.key(2658)?;
+            v.write_json(w, None)?;
+        }
+        if !self.planned_refill_point_status.is_empty() {
+            w.key(1594)?;
+            w.begin_array()?;
+            for v in &self.planned_refill_point_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.refill_point_status_extension {
+            w.key(107)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:ServiceType`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ServiceType {
@@ -5639,10 +10896,10 @@ pub struct ServiceType {
 }
 
 impl ServiceType {
-    const FIELDS: &'static [u32] = &[0x10b34, 0x109f1, 0x105b7];
+    const FIELDS: &'static [u32] = &[0x10b89, 0x10a36, 0x105de];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x101d6);
+        r.expect_type(0x101e3);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5650,9 +10907,9 @@ impl ServiceType {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10b34 => { let v = r.enumeration::<ServiceTypeEnum>()?; r.set(&mut e0, v, 2868); }
-                    0x109f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e1, v.map(Box::new), 2545); }
-                    0x105b7 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1463); }
+                    0x10b89 => { let v = r.enumeration::<ServiceTypeEnum>()?; r.set(&mut e0, v, 2953); }
+                    0x10a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e1, v.map(Box::new), 2614); }
+                    0x105de => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1502); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5661,7 +10918,7 @@ impl ServiceType {
                 break;
             }
         }
-        r.required(&e0, 2868);
+        r.required(&e0, 2953);
         let v = Self {
             service_type: e0,
             overall_period: e1,
@@ -5687,6 +10944,68 @@ impl ServiceType {
     }
 }
 
+impl ServiceType {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2040 => if r.first(&mut seen[0])? { f0 = r.enumeration::<ServiceTypeEnum>()?; },
+                1513 => if r.first(&mut seen[1])? { f1 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                108 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2040);
+        Ok(Self {
+            service_type: f0,
+            overall_period: f1,
+            service_type_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(48)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.service_type {
+            Some(v) => {
+                w.key(2040)?;
+                w.enumeration(49, v.literal())?;
+            }
+            None => w.absent(2040, w.missing("serviceType"))?,
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.service_type_extension {
+            w.key(108)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `aegi:TimeBasedApplicability`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TimeBasedApplicability {
@@ -5699,10 +11018,10 @@ pub struct TimeBasedApplicability {
 }
 
 impl TimeBasedApplicability {
-    const FIELDS: &'static [u32] = &[0x10832, 0x10bc6, 0x105f2];
+    const FIELDS: &'static [u32] = &[0x1086e, 0x10c25, 0x1061b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x10214);
+        r.expect_type(0x10223);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5710,9 +11029,9 @@ impl TimeBasedApplicability {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x10832 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2098); }
-                    0x10bc6 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3014); }
-                    0x105f2 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1522); }
+                    0x1086e => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2158); }
+                    0x10c25 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3109); }
+                    0x1061b => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1563); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5743,6 +11062,64 @@ impl TimeBasedApplicability {
     }
 }
 
+impl TimeBasedApplicability {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                868 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                2334 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                109 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            from_minute: f0,
+            to_minute: f1,
+            time_based_applicability_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(51)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.from_minute {
+            w.key(868)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.to_minute {
+            w.key(2334)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.time_based_applicability_extension {
+            w.key(109)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// Any concrete kind of XML type `aegi:EnergyProduct`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyEnergyProduct {
@@ -5759,8 +11136,8 @@ impl AnyEnergyProduct {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x100a3) => Self::EnergyProduct(Box::new(EnergyProduct::read(r)?)),
-            Some(0x10093) => Self::ElectricEnergy(Box::new(ElectricEnergy::read(r)?)),
+            Some(0x100a7) => Self::EnergyProduct(Box::new(EnergyProduct::read(r)?)),
+            Some(0x10096) => Self::ElectricEnergy(Box::new(ElectricEnergy::read(r)?)),
             None => Self::EnergyProduct(Box::new(EnergyProduct::read(r)?)),
             _ => {
                 r.unknown_type_as("EnergyProduct");
@@ -5843,6 +11220,66 @@ impl AnyEnergyProduct {
     }
 }
 
+impl AnyEnergyProduct {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 97 | 83) {
+                return EnergyProduct::read_json_members(r, Some(key)).map(|v| Some(Self::EnergyProduct(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                97 => if r.first(&mut seen)? { value = EnergyProduct::read_json(r)?.map(|v| Self::EnergyProduct(Box::new(v))); },
+                83 => if r.first(&mut seen)? { value = ElectricEnergy::read_json(r)?.map(|v| Self::ElectricEnergy(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of EnergyProduct in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::EnergyProduct(v) => {
+                if w.wrapper(97)? {
+                    w.begin_object(31)?;
+                    w.key(97)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ElectricEnergy(v) => {
+                if w.wrapper(83)? {
+                    w.begin_object(31)?;
+                    w.key(83)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `aegi:RefillPoint`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum RefillPoint {
@@ -5863,10 +11300,10 @@ impl RefillPoint {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x1002b) => Self::AlternativeFuelsRefillPoint(Box::new(AlternativeFuelsRefillPoint::read(r)?)),
-            Some(0x1007c) => Self::DieselRefillPoint(Box::new(DieselRefillPoint::read(r)?)),
-            Some(0x10091) => Self::ElectricChargingPoint(Box::new(ElectricChargingPoint::read(r)?)),
-            Some(0x10171) => Self::PetrolRefillPoint(Box::new(PetrolRefillPoint::read(r)?)),
+            Some(0x1002c) => Self::AlternativeFuelsRefillPoint(Box::new(AlternativeFuelsRefillPoint::read(r)?)),
+            Some(0x1007e) => Self::DieselRefillPoint(Box::new(DieselRefillPoint::read(r)?)),
+            Some(0x10094) => Self::ElectricChargingPoint(Box::new(ElectricChargingPoint::read(r)?)),
+            Some(0x1017a) => Self::PetrolRefillPoint(Box::new(PetrolRefillPoint::read(r)?)),
             _ => {
                 r.unknown_type("RefillPoint")?;
                 return Ok(None);
@@ -6216,6 +11653,82 @@ impl RefillPoint {
     }
 }
 
+impl RefillPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                69 => if r.first(&mut seen)? { value = AlternativeFuelsRefillPoint::read_json(r)?.map(|v| Self::AlternativeFuelsRefillPoint(Box::new(v))); },
+                75 => if r.first(&mut seen)? { value = DieselRefillPoint::read_json(r)?.map(|v| Self::DieselRefillPoint(Box::new(v))); },
+                79 => if r.first(&mut seen)? { value = ElectricChargingPoint::read_json(r)?.map(|v| Self::ElectricChargingPoint(Box::new(v))); },
+                102 => if r.first(&mut seen)? { value = PetrolRefillPoint::read_json(r)?.map(|v| Self::PetrolRefillPoint(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of RefillPoint in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::AlternativeFuelsRefillPoint(v) => {
+                if w.wrapper(69)? {
+                    w.begin_object(44)?;
+                    w.key(69)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::DieselRefillPoint(v) => {
+                if w.wrapper(75)? {
+                    w.begin_object(44)?;
+                    w.key(75)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ElectricChargingPoint(v) => {
+                if w.wrapper(79)? {
+                    w.begin_object(44)?;
+                    w.key(79)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PetrolRefillPoint(v) => {
+                if w.wrapper(102)? {
+                    w.begin_object(44)?;
+                    w.key(102)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `aegi:RefillPointStatus`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyRefillPointStatus {
@@ -6232,8 +11745,8 @@ impl AnyRefillPointStatus {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x101b1) => Self::RefillPointStatus(Box::new(RefillPointStatus::read(r)?)),
-            Some(0x10092) => Self::ElectricChargingPointStatus(Box::new(ElectricChargingPointStatus::read(r)?)),
+            Some(0x101ba) => Self::RefillPointStatus(Box::new(RefillPointStatus::read(r)?)),
+            Some(0x10095) => Self::ElectricChargingPointStatus(Box::new(ElectricChargingPointStatus::read(r)?)),
             None => Self::RefillPointStatus(Box::new(RefillPointStatus::read(r)?)),
             _ => {
                 r.unknown_type_as("RefillPointStatus");
@@ -6392,6 +11905,66 @@ impl AnyRefillPointStatus {
         match self {
             Self::RefillPointStatus(v) => v.write(w, tag, "", ""),
             Self::ElectricChargingPointStatus(v) => v.write(w, tag, " xsi:type=\"aegi:ElectricChargingPointStatus\"", ""),
+        }
+    }
+}
+
+impl AnyRefillPointStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 106 | 81) {
+                return RefillPointStatus::read_json_members(r, Some(key)).map(|v| Some(Self::RefillPointStatus(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                106 => if r.first(&mut seen)? { value = RefillPointStatus::read_json(r)?.map(|v| Self::RefillPointStatus(Box::new(v))); },
+                81 => if r.first(&mut seen)? { value = ElectricChargingPointStatus::read_json(r)?.map(|v| Self::ElectricChargingPointStatus(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of RefillPointStatus in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::RefillPointStatus(v) => {
+                if w.wrapper(106)? {
+                    w.begin_object(47)?;
+                    w.key(106)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ElectricChargingPointStatus(v) => {
+                if w.wrapper(81)? {
+                    w.begin_object(47)?;
+                    w.key(81)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
         }
     }
 }

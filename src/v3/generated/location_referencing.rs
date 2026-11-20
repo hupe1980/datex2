@@ -4,9 +4,13 @@
 //! Names follow the standard; see <https://docs.datex2.eu/> for what each one means.
 
 #[allow(unused_imports)]
-use super::{common as com, common_extension as comx, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst};
+use super::{common as com, common_extension as comx, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, afir_facilities as afac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst, message_container as con, exchange_information as ex, information_management as inf, cis_information as cis};
 #[allow(unused_imports)]
-use crate::out::{Out, Pattern};
+use crate::out::{Out, Pattern, Rules};
+#[allow(unused_imports)]
+use crate::json::{JsonReader, JsonWriter};
+#[allow(unused_imports)]
+use crate::{ErrorKind, WarningKind};
 #[allow(unused_imports)]
 use crate::xml::{Enumeration, Xml};
 #[allow(unused_imports)]
@@ -2556,10 +2560,10 @@ pub struct AlertCArea {
 }
 
 impl AlertCArea {
-    const FIELDS: &'static [u32] = &[0xb06a4, 0xb06a6, 0xb06a7, 0xb06cc, 0xb0408];
+    const FIELDS: &'static [u32] = &[0xe06cd, 0xe06cf, 0xe06d0, 0xe06f5, 0xe0423];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb001b);
+        r.expect_type(0xe001c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2569,11 +2573,11 @@ impl AlertCArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a4 => { let v = r.string()?; r.set(&mut e0, v, 1700); }
-                    0xb06a6 => { let v = r.string()?; r.set(&mut e1, v, 1702); }
-                    0xb06a7 => { let v = r.string()?; r.set(&mut e2, v, 1703); }
-                    0xb06cc => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e3, v.map(Box::new), 1740); }
-                    0xb0408 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1032); }
+                    0xe06cd => { let v = r.string()?; r.set(&mut e0, v, 1741); }
+                    0xe06cf => { let v = r.string()?; r.set(&mut e1, v, 1743); }
+                    0xe06d0 => { let v = r.string()?; r.set(&mut e2, v, 1744); }
+                    0xe06f5 => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e3, v.map(Box::new), 1781); }
+                    0xe0423 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1059); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2582,10 +2586,10 @@ impl AlertCArea {
                 break;
             }
         }
-        r.required(&e0, 1700);
-        r.required(&e1, 1702);
-        r.required(&e2, 1703);
-        r.required(&e3, 1740);
+        r.required(&e0, 1741);
+        r.required(&e1, 1743);
+        r.required(&e2, 1744);
+        r.required(&e3, 1781);
         let v = Self {
             alert_c_location_country_code: e0,
             alert_c_location_table_number: e1,
@@ -2624,6 +2628,94 @@ impl AlertCArea {
     }
 }
 
+impl AlertCArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                216 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                218 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                219 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                256 => if r.first(&mut seen[3])? { f3 = AlertCLocation::read_json(r)?.map(Box::new); },
+                1076 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 216);
+        r.required(&f1, 218);
+        r.required(&f2, 219);
+        r.required(&f3, 256);
+        Ok(Self {
+            alert_c_location_country_code: f0,
+            alert_c_location_table_number: f1,
+            alert_c_location_table_version: f2,
+            area_location: f3,
+            alert_c_area_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(480)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location_country_code {
+            Some(v) => {
+                w.key(216)?;
+                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
+        }
+        match &self.alert_c_location_table_number {
+            Some(v) => {
+                w.key(218)?;
+                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
+        }
+        match &self.alert_c_location_table_version {
+            Some(v) => {
+                w.key(219)?;
+                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
+        }
+        match &self.area_location {
+            Some(v) => {
+                w.key(256)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(256, w.missing("areaLocation"))?,
+        }
+        if let Some(v) = &self.alert_c_area_extension {
+            w.key(1076)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCDirection`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCDirection {
@@ -2638,10 +2730,10 @@ pub struct AlertCDirection {
 }
 
 impl AlertCDirection {
-    const FIELDS: &'static [u32] = &[0xb06a0, 0xb06a1, 0xb069d, 0xb0409];
+    const FIELDS: &'static [u32] = &[0xe06c9, 0xe06ca, 0xe06c6, 0xe0424];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb001c);
+        r.expect_type(0xe001d);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2650,10 +2742,10 @@ impl AlertCDirection {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a0 => { let v = r.enumeration::<AlertCDirectionEnum>()?; r.set(&mut e0, v, 1696); }
-                    0xb06a1 => { let v = r.multilingual()?; r.set(&mut e1, v, 1697); }
-                    0xb069d => { let v = r.enumeration::<LinearDirectionEnum>()?; r.set(&mut e2, v, 1693); }
-                    0xb0409 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1033); }
+                    0xe06c9 => { let v = r.enumeration::<AlertCDirectionEnum>()?; r.set(&mut e0, v, 1737); }
+                    0xe06ca => { let v = r.multilingual()?; r.set(&mut e1, v, 1738); }
+                    0xe06c6 => { let v = r.enumeration::<LinearDirectionEnum>()?; r.set(&mut e2, v, 1734); }
+                    0xe0424 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1060); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2662,8 +2754,8 @@ impl AlertCDirection {
                 break;
             }
         }
-        r.required(&e0, 1696);
-        r.required(&e2, 1693);
+        r.required(&e0, 1737);
+        r.required(&e2, 1734);
         let v = Self {
             alert_c_direction_coded: e0,
             alert_c_direction_named: e1,
@@ -2694,6 +2786,79 @@ impl AlertCDirection {
     }
 }
 
+impl AlertCDirection {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                212 => if r.first(&mut seen[0])? { f0 = r.enumeration::<AlertCDirectionEnum>()?; },
+                213 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                209 => if r.first(&mut seen[2])? { f2 = r.enumeration::<LinearDirectionEnum>()?; },
+                1077 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 212);
+        r.required(&f2, 209);
+        Ok(Self {
+            alert_c_direction_coded: f0,
+            alert_c_direction_named: f1,
+            alert_c_affected_direction: f2,
+            alert_c_direction_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(481)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_direction_coded {
+            Some(v) => {
+                w.key(212)?;
+                w.enumeration(482, v.literal())?;
+            }
+            None => w.absent(212, w.missing("alertCDirectionCoded"))?,
+        }
+        if let Some(v) = &self.alert_c_direction_named {
+            w.key(213)?;
+            w.multilingual(v)?;
+        }
+        match &self.alert_c_affected_direction {
+            Some(v) => {
+                w.key(209)?;
+                w.enumeration(525, v.literal())?;
+            }
+            None => w.absent(209, w.missing("alertCAffectedDirection"))?,
+        }
+        if let Some(v) = &self.alert_c_direction_extension {
+            w.key(1077)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCLinearByCode`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCLinearByCode {
@@ -2714,10 +2879,10 @@ pub struct AlertCLinearByCode {
 }
 
 impl AlertCLinearByCode {
-    const FIELDS: &'static [u32] = &[0xb06a4, 0xb06a6, 0xb06a7, 0xb040b, 0xb069f, 0xb08de, 0xb040a];
+    const FIELDS: &'static [u32] = &[0xe06cd, 0xe06cf, 0xe06d0, 0xe0426, 0xe06c8, 0xe091c, 0xe0425];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb001e);
+        r.expect_type(0xe001f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2729,13 +2894,13 @@ impl AlertCLinearByCode {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a4 => { let v = r.string()?; r.set(&mut e0, v, 1700); }
-                    0xb06a6 => { let v = r.string()?; r.set(&mut e1, v, 1702); }
-                    0xb06a7 => { let v = r.string()?; r.set(&mut e2, v, 1703); }
-                    0xb040b => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1035); }
-                    0xb069f => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1695); }
-                    0xb08de => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 2270); }
-                    0xb040a => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1034); }
+                    0xe06cd => { let v = r.string()?; r.set(&mut e0, v, 1741); }
+                    0xe06cf => { let v = r.string()?; r.set(&mut e1, v, 1743); }
+                    0xe06d0 => { let v = r.string()?; r.set(&mut e2, v, 1744); }
+                    0xe0426 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1062); }
+                    0xe06c8 => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1736); }
+                    0xe091c => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 2332); }
+                    0xe0425 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1061); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2744,11 +2909,11 @@ impl AlertCLinearByCode {
                 break;
             }
         }
-        r.required(&e0, 1700);
-        r.required(&e1, 1702);
-        r.required(&e2, 1703);
-        r.required(&e4, 1695);
-        r.required(&e5, 2270);
+        r.required(&e0, 1741);
+        r.required(&e1, 1743);
+        r.required(&e2, 1744);
+        r.required(&e4, 1736);
+        r.required(&e5, 2332);
         let v = Self {
             alert_c_location_country_code: e0,
             alert_c_location_table_number: e1,
@@ -2794,6 +2959,112 @@ impl AlertCLinearByCode {
     }
 }
 
+impl AlertCLinearByCode {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                216 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                218 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                219 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1080 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                211 => if r.first(&mut seen[4])? { f4 = AlertCDirection::read_json(r)?.map(Box::new); },
+                1230 => if r.first(&mut seen[5])? { f5 = AlertCLocation::read_json(r)?.map(Box::new); },
+                1079 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 216);
+        r.required(&f1, 218);
+        r.required(&f2, 219);
+        r.required(&f4, 211);
+        r.required(&f5, 1230);
+        Ok(Self {
+            alert_c_location_country_code: f0,
+            alert_c_location_table_number: f1,
+            alert_c_location_table_version: f2,
+            alert_c_linear_extension: f3,
+            alert_c_direction: f4,
+            location_code_for_linear_location: f5,
+            alert_c_linear_by_code_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(483)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location_country_code {
+            Some(v) => {
+                w.key(216)?;
+                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
+        }
+        match &self.alert_c_location_table_number {
+            Some(v) => {
+                w.key(218)?;
+                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
+        }
+        match &self.alert_c_location_table_version {
+            Some(v) => {
+                w.key(219)?;
+                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
+        }
+        if let Some(v) = &self.alert_c_linear_extension {
+            w.key(1080)?;
+            w.extension(v)?;
+        }
+        match &self.alert_c_direction {
+            Some(v) => {
+                w.key(211)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(211, w.missing("alertCDirection"))?,
+        }
+        match &self.location_code_for_linear_location {
+            Some(v) => {
+                w.key(1230)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1230, w.missing("locationCodeForLinearLocation"))?,
+        }
+        if let Some(v) = &self.alert_c_linear_by_code_extension {
+            w.key(1079)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCLocation {
@@ -2806,10 +3077,10 @@ pub struct AlertCLocation {
 }
 
 impl AlertCLocation {
-    const FIELDS: &'static [u32] = &[0xb06a5, 0xb0b5f, 0xb040c];
+    const FIELDS: &'static [u32] = &[0xe06ce, 0xe0bb9, 0xe0427];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb001f);
+        r.expect_type(0xe0020);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2817,9 +3088,9 @@ impl AlertCLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a5 => { let v = r.multilingual()?; r.set(&mut e0, v, 1701); }
-                    0xb0b5f => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2911); }
-                    0xb040c => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1036); }
+                    0xe06ce => { let v = r.multilingual()?; r.set(&mut e0, v, 1742); }
+                    0xe0bb9 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 3001); }
+                    0xe0427 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1063); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2828,7 +3099,7 @@ impl AlertCLocation {
                 break;
             }
         }
-        r.required(&e1, 2911);
+        r.required(&e1, 3001);
         let v = Self {
             alert_c_location_name: e0,
             specific_location: e1,
@@ -2854,6 +3125,68 @@ impl AlertCLocation {
     }
 }
 
+impl AlertCLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                217 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                2166 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1081 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 2166);
+        Ok(Self {
+            alert_c_location_name: f0,
+            specific_location: f1,
+            alert_c_location_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(485)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.alert_c_location_name {
+            w.key(217)?;
+            w.multilingual(v)?;
+        }
+        match &self.specific_location {
+            Some(v) => {
+                w.key(2166)?;
+                w.range("specificLocation", *v, 1, 63487)?; w.integer(*v)?;
+            }
+            None => w.absent(2166, w.missing("specificLocation"))?,
+        }
+        if let Some(v) = &self.alert_c_location_extension {
+            w.key(1081)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCMethod2Linear`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCMethod2Linear {
@@ -2876,10 +3209,10 @@ pub struct AlertCMethod2Linear {
 }
 
 impl AlertCMethod2Linear {
-    const FIELDS: &'static [u32] = &[0xb06a4, 0xb06a6, 0xb06a7, 0xb040b, 0xb069f, 0xb06a8, 0xb06a9, 0xb040d];
+    const FIELDS: &'static [u32] = &[0xe06cd, 0xe06cf, 0xe06d0, 0xe0426, 0xe06c8, 0xe06d1, 0xe06d2, 0xe0428];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0020);
+        r.expect_type(0xe0021);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2892,14 +3225,14 @@ impl AlertCMethod2Linear {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a4 => { let v = r.string()?; r.set(&mut e0, v, 1700); }
-                    0xb06a6 => { let v = r.string()?; r.set(&mut e1, v, 1702); }
-                    0xb06a7 => { let v = r.string()?; r.set(&mut e2, v, 1703); }
-                    0xb040b => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1035); }
-                    0xb069f => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1695); }
-                    0xb06a8 => { let v = Some(AlertCMethod2PrimaryPointLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 1704); }
-                    0xb06a9 => { let v = Some(AlertCMethod2SecondaryPointLocation::read(r)?); r.set(&mut e6, v.map(Box::new), 1705); }
-                    0xb040d => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1037); }
+                    0xe06cd => { let v = r.string()?; r.set(&mut e0, v, 1741); }
+                    0xe06cf => { let v = r.string()?; r.set(&mut e1, v, 1743); }
+                    0xe06d0 => { let v = r.string()?; r.set(&mut e2, v, 1744); }
+                    0xe0426 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1062); }
+                    0xe06c8 => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1736); }
+                    0xe06d1 => { let v = Some(AlertCMethod2PrimaryPointLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 1745); }
+                    0xe06d2 => { let v = Some(AlertCMethod2SecondaryPointLocation::read(r)?); r.set(&mut e6, v.map(Box::new), 1746); }
+                    0xe0428 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1064); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2908,12 +3241,12 @@ impl AlertCMethod2Linear {
                 break;
             }
         }
-        r.required(&e0, 1700);
-        r.required(&e1, 1702);
-        r.required(&e2, 1703);
-        r.required(&e4, 1695);
-        r.required(&e5, 1704);
-        r.required(&e6, 1705);
+        r.required(&e0, 1741);
+        r.required(&e1, 1743);
+        r.required(&e2, 1744);
+        r.required(&e4, 1736);
+        r.required(&e5, 1745);
+        r.required(&e6, 1746);
         let v = Self {
             alert_c_location_country_code: e0,
             alert_c_location_table_number: e1,
@@ -2964,6 +3297,123 @@ impl AlertCMethod2Linear {
     }
 }
 
+impl AlertCMethod2Linear {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                216 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                218 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                219 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1080 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                211 => if r.first(&mut seen[4])? { f4 = AlertCDirection::read_json(r)?.map(Box::new); },
+                220 => if r.first(&mut seen[5])? { f5 = AlertCMethod2PrimaryPointLocation::read_json(r)?.map(Box::new); },
+                221 => if r.first(&mut seen[6])? { f6 = AlertCMethod2SecondaryPointLocation::read_json(r)?.map(Box::new); },
+                1083 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 216);
+        r.required(&f1, 218);
+        r.required(&f2, 219);
+        r.required(&f4, 211);
+        r.required(&f5, 220);
+        r.required(&f6, 221);
+        Ok(Self {
+            alert_c_location_country_code: f0,
+            alert_c_location_table_number: f1,
+            alert_c_location_table_version: f2,
+            alert_c_linear_extension: f3,
+            alert_c_direction: f4,
+            alert_c_method2_primary_point_location: f5,
+            alert_c_method2_secondary_point_location: f6,
+            alert_c_method2_linear_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(486)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location_country_code {
+            Some(v) => {
+                w.key(216)?;
+                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
+        }
+        match &self.alert_c_location_table_number {
+            Some(v) => {
+                w.key(218)?;
+                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
+        }
+        match &self.alert_c_location_table_version {
+            Some(v) => {
+                w.key(219)?;
+                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
+        }
+        if let Some(v) = &self.alert_c_linear_extension {
+            w.key(1080)?;
+            w.extension(v)?;
+        }
+        match &self.alert_c_direction {
+            Some(v) => {
+                w.key(211)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(211, w.missing("alertCDirection"))?,
+        }
+        match &self.alert_c_method2_primary_point_location {
+            Some(v) => {
+                w.key(220)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(220, w.missing("alertCMethod2PrimaryPointLocation"))?,
+        }
+        match &self.alert_c_method2_secondary_point_location {
+            Some(v) => {
+                w.key(221)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(221, w.missing("alertCMethod2SecondaryPointLocation"))?,
+        }
+        if let Some(v) = &self.alert_c_method2_linear_extension {
+            w.key(1083)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCMethod2Point`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCMethod2Point {
@@ -2984,10 +3434,10 @@ pub struct AlertCMethod2Point {
 }
 
 impl AlertCMethod2Point {
-    const FIELDS: &'static [u32] = &[0xb06a4, 0xb06a6, 0xb06a7, 0xb0415, 0xb069f, 0xb06a8, 0xb040e];
+    const FIELDS: &'static [u32] = &[0xe06cd, 0xe06cf, 0xe06d0, 0xe0430, 0xe06c8, 0xe06d1, 0xe0429];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0021);
+        r.expect_type(0xe0022);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2999,13 +3449,13 @@ impl AlertCMethod2Point {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a4 => { let v = r.string()?; r.set(&mut e0, v, 1700); }
-                    0xb06a6 => { let v = r.string()?; r.set(&mut e1, v, 1702); }
-                    0xb06a7 => { let v = r.string()?; r.set(&mut e2, v, 1703); }
-                    0xb0415 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1045); }
-                    0xb069f => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1695); }
-                    0xb06a8 => { let v = Some(AlertCMethod2PrimaryPointLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 1704); }
-                    0xb040e => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1038); }
+                    0xe06cd => { let v = r.string()?; r.set(&mut e0, v, 1741); }
+                    0xe06cf => { let v = r.string()?; r.set(&mut e1, v, 1743); }
+                    0xe06d0 => { let v = r.string()?; r.set(&mut e2, v, 1744); }
+                    0xe0430 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1072); }
+                    0xe06c8 => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1736); }
+                    0xe06d1 => { let v = Some(AlertCMethod2PrimaryPointLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 1745); }
+                    0xe0429 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1065); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3014,11 +3464,11 @@ impl AlertCMethod2Point {
                 break;
             }
         }
-        r.required(&e0, 1700);
-        r.required(&e1, 1702);
-        r.required(&e2, 1703);
-        r.required(&e4, 1695);
-        r.required(&e5, 1704);
+        r.required(&e0, 1741);
+        r.required(&e1, 1743);
+        r.required(&e2, 1744);
+        r.required(&e4, 1736);
+        r.required(&e5, 1745);
         let v = Self {
             alert_c_location_country_code: e0,
             alert_c_location_table_number: e1,
@@ -3064,6 +3514,112 @@ impl AlertCMethod2Point {
     }
 }
 
+impl AlertCMethod2Point {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                216 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                218 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                219 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1094 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                211 => if r.first(&mut seen[4])? { f4 = AlertCDirection::read_json(r)?.map(Box::new); },
+                220 => if r.first(&mut seen[5])? { f5 = AlertCMethod2PrimaryPointLocation::read_json(r)?.map(Box::new); },
+                1085 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 216);
+        r.required(&f1, 218);
+        r.required(&f2, 219);
+        r.required(&f4, 211);
+        r.required(&f5, 220);
+        Ok(Self {
+            alert_c_location_country_code: f0,
+            alert_c_location_table_number: f1,
+            alert_c_location_table_version: f2,
+            alert_c_point_extension: f3,
+            alert_c_direction: f4,
+            alert_c_method2_primary_point_location: f5,
+            alert_c_method2_point_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(487)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location_country_code {
+            Some(v) => {
+                w.key(216)?;
+                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
+        }
+        match &self.alert_c_location_table_number {
+            Some(v) => {
+                w.key(218)?;
+                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
+        }
+        match &self.alert_c_location_table_version {
+            Some(v) => {
+                w.key(219)?;
+                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
+        }
+        if let Some(v) = &self.alert_c_point_extension {
+            w.key(1094)?;
+            w.extension(v)?;
+        }
+        match &self.alert_c_direction {
+            Some(v) => {
+                w.key(211)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(211, w.missing("alertCDirection"))?,
+        }
+        match &self.alert_c_method2_primary_point_location {
+            Some(v) => {
+                w.key(220)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(220, w.missing("alertCMethod2PrimaryPointLocation"))?,
+        }
+        if let Some(v) = &self.alert_c_method2_point_extension {
+            w.key(1085)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCMethod2PrimaryPointLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCMethod2PrimaryPointLocation {
@@ -3074,18 +3630,18 @@ pub struct AlertCMethod2PrimaryPointLocation {
 }
 
 impl AlertCMethod2PrimaryPointLocation {
-    const FIELDS: &'static [u32] = &[0xb06a3, 0xb040f];
+    const FIELDS: &'static [u32] = &[0xe06cc, 0xe042a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0022);
+        r.expect_type(0xe0023);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a3 => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1699); }
-                    0xb040f => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1039); }
+                    0xe06cc => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1740); }
+                    0xe042a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1066); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3094,7 +3650,7 @@ impl AlertCMethod2PrimaryPointLocation {
                 break;
             }
         }
-        r.required(&e0, 1699);
+        r.required(&e0, 1740);
         let v = Self {
             alert_c_location: e0,
             alert_c_method2_primary_point_location_extension: e1,
@@ -3118,6 +3674,61 @@ impl AlertCMethod2PrimaryPointLocation {
     }
 }
 
+impl AlertCMethod2PrimaryPointLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                215 => if r.first(&mut seen[0])? { f0 = AlertCLocation::read_json(r)?.map(Box::new); },
+                1086 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 215);
+        Ok(Self {
+            alert_c_location: f0,
+            alert_c_method2_primary_point_location_extension: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(488)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location {
+            Some(v) => {
+                w.key(215)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(215, w.missing("alertCLocation"))?,
+        }
+        if let Some(v) = &self.alert_c_method2_primary_point_location_extension {
+            w.key(1086)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCMethod2SecondaryPointLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCMethod2SecondaryPointLocation {
@@ -3128,18 +3739,18 @@ pub struct AlertCMethod2SecondaryPointLocation {
 }
 
 impl AlertCMethod2SecondaryPointLocation {
-    const FIELDS: &'static [u32] = &[0xb06a3, 0xb0410];
+    const FIELDS: &'static [u32] = &[0xe06cc, 0xe042b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0023);
+        r.expect_type(0xe0024);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a3 => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1699); }
-                    0xb0410 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1040); }
+                    0xe06cc => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1740); }
+                    0xe042b => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1067); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3148,7 +3759,7 @@ impl AlertCMethod2SecondaryPointLocation {
                 break;
             }
         }
-        r.required(&e0, 1699);
+        r.required(&e0, 1740);
         let v = Self {
             alert_c_location: e0,
             alert_c_method2_secondary_point_location_extension: e1,
@@ -3169,6 +3780,61 @@ impl AlertCMethod2SecondaryPointLocation {
         }
         if let Some(v) = &self.alert_c_method2_secondary_point_location_extension { w.extension("loc:_alertCMethod2SecondaryPointLocationExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl AlertCMethod2SecondaryPointLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                215 => if r.first(&mut seen[0])? { f0 = AlertCLocation::read_json(r)?.map(Box::new); },
+                1087 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 215);
+        Ok(Self {
+            alert_c_location: f0,
+            alert_c_method2_secondary_point_location_extension: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(489)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location {
+            Some(v) => {
+                w.key(215)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(215, w.missing("alertCLocation"))?,
+        }
+        if let Some(v) = &self.alert_c_method2_secondary_point_location_extension {
+            w.key(1087)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -3194,10 +3860,10 @@ pub struct AlertCMethod4Linear {
 }
 
 impl AlertCMethod4Linear {
-    const FIELDS: &'static [u32] = &[0xb06a4, 0xb06a6, 0xb06a7, 0xb040b, 0xb069f, 0xb06aa, 0xb06ab, 0xb0411];
+    const FIELDS: &'static [u32] = &[0xe06cd, 0xe06cf, 0xe06d0, 0xe0426, 0xe06c8, 0xe06d3, 0xe06d4, 0xe042c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0024);
+        r.expect_type(0xe0025);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3210,14 +3876,14 @@ impl AlertCMethod4Linear {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a4 => { let v = r.string()?; r.set(&mut e0, v, 1700); }
-                    0xb06a6 => { let v = r.string()?; r.set(&mut e1, v, 1702); }
-                    0xb06a7 => { let v = r.string()?; r.set(&mut e2, v, 1703); }
-                    0xb040b => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1035); }
-                    0xb069f => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1695); }
-                    0xb06aa => { let v = Some(AlertCMethod4PrimaryPointLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 1706); }
-                    0xb06ab => { let v = Some(AlertCMethod4SecondaryPointLocation::read(r)?); r.set(&mut e6, v.map(Box::new), 1707); }
-                    0xb0411 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1041); }
+                    0xe06cd => { let v = r.string()?; r.set(&mut e0, v, 1741); }
+                    0xe06cf => { let v = r.string()?; r.set(&mut e1, v, 1743); }
+                    0xe06d0 => { let v = r.string()?; r.set(&mut e2, v, 1744); }
+                    0xe0426 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1062); }
+                    0xe06c8 => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1736); }
+                    0xe06d3 => { let v = Some(AlertCMethod4PrimaryPointLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 1747); }
+                    0xe06d4 => { let v = Some(AlertCMethod4SecondaryPointLocation::read(r)?); r.set(&mut e6, v.map(Box::new), 1748); }
+                    0xe042c => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1068); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3226,12 +3892,12 @@ impl AlertCMethod4Linear {
                 break;
             }
         }
-        r.required(&e0, 1700);
-        r.required(&e1, 1702);
-        r.required(&e2, 1703);
-        r.required(&e4, 1695);
-        r.required(&e5, 1706);
-        r.required(&e6, 1707);
+        r.required(&e0, 1741);
+        r.required(&e1, 1743);
+        r.required(&e2, 1744);
+        r.required(&e4, 1736);
+        r.required(&e5, 1747);
+        r.required(&e6, 1748);
         let v = Self {
             alert_c_location_country_code: e0,
             alert_c_location_table_number: e1,
@@ -3282,6 +3948,123 @@ impl AlertCMethod4Linear {
     }
 }
 
+impl AlertCMethod4Linear {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                216 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                218 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                219 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1080 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                211 => if r.first(&mut seen[4])? { f4 = AlertCDirection::read_json(r)?.map(Box::new); },
+                222 => if r.first(&mut seen[5])? { f5 = AlertCMethod4PrimaryPointLocation::read_json(r)?.map(Box::new); },
+                223 => if r.first(&mut seen[6])? { f6 = AlertCMethod4SecondaryPointLocation::read_json(r)?.map(Box::new); },
+                1089 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 216);
+        r.required(&f1, 218);
+        r.required(&f2, 219);
+        r.required(&f4, 211);
+        r.required(&f5, 222);
+        r.required(&f6, 223);
+        Ok(Self {
+            alert_c_location_country_code: f0,
+            alert_c_location_table_number: f1,
+            alert_c_location_table_version: f2,
+            alert_c_linear_extension: f3,
+            alert_c_direction: f4,
+            alert_c_method4_primary_point_location: f5,
+            alert_c_method4_secondary_point_location: f6,
+            alert_c_method4_linear_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(490)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location_country_code {
+            Some(v) => {
+                w.key(216)?;
+                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
+        }
+        match &self.alert_c_location_table_number {
+            Some(v) => {
+                w.key(218)?;
+                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
+        }
+        match &self.alert_c_location_table_version {
+            Some(v) => {
+                w.key(219)?;
+                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
+        }
+        if let Some(v) = &self.alert_c_linear_extension {
+            w.key(1080)?;
+            w.extension(v)?;
+        }
+        match &self.alert_c_direction {
+            Some(v) => {
+                w.key(211)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(211, w.missing("alertCDirection"))?,
+        }
+        match &self.alert_c_method4_primary_point_location {
+            Some(v) => {
+                w.key(222)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(222, w.missing("alertCMethod4PrimaryPointLocation"))?,
+        }
+        match &self.alert_c_method4_secondary_point_location {
+            Some(v) => {
+                w.key(223)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(223, w.missing("alertCMethod4SecondaryPointLocation"))?,
+        }
+        if let Some(v) = &self.alert_c_method4_linear_extension {
+            w.key(1089)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCMethod4Point`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCMethod4Point {
@@ -3302,10 +4085,10 @@ pub struct AlertCMethod4Point {
 }
 
 impl AlertCMethod4Point {
-    const FIELDS: &'static [u32] = &[0xb06a4, 0xb06a6, 0xb06a7, 0xb0415, 0xb069f, 0xb06aa, 0xb0412];
+    const FIELDS: &'static [u32] = &[0xe06cd, 0xe06cf, 0xe06d0, 0xe0430, 0xe06c8, 0xe06d3, 0xe042d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0025);
+        r.expect_type(0xe0026);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3317,13 +4100,13 @@ impl AlertCMethod4Point {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a4 => { let v = r.string()?; r.set(&mut e0, v, 1700); }
-                    0xb06a6 => { let v = r.string()?; r.set(&mut e1, v, 1702); }
-                    0xb06a7 => { let v = r.string()?; r.set(&mut e2, v, 1703); }
-                    0xb0415 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1045); }
-                    0xb069f => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1695); }
-                    0xb06aa => { let v = Some(AlertCMethod4PrimaryPointLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 1706); }
-                    0xb0412 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1042); }
+                    0xe06cd => { let v = r.string()?; r.set(&mut e0, v, 1741); }
+                    0xe06cf => { let v = r.string()?; r.set(&mut e1, v, 1743); }
+                    0xe06d0 => { let v = r.string()?; r.set(&mut e2, v, 1744); }
+                    0xe0430 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1072); }
+                    0xe06c8 => { let v = Some(AlertCDirection::read(r)?); r.set(&mut e4, v.map(Box::new), 1736); }
+                    0xe06d3 => { let v = Some(AlertCMethod4PrimaryPointLocation::read(r)?); r.set(&mut e5, v.map(Box::new), 1747); }
+                    0xe042d => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1069); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3332,11 +4115,11 @@ impl AlertCMethod4Point {
                 break;
             }
         }
-        r.required(&e0, 1700);
-        r.required(&e1, 1702);
-        r.required(&e2, 1703);
-        r.required(&e4, 1695);
-        r.required(&e5, 1706);
+        r.required(&e0, 1741);
+        r.required(&e1, 1743);
+        r.required(&e2, 1744);
+        r.required(&e4, 1736);
+        r.required(&e5, 1747);
         let v = Self {
             alert_c_location_country_code: e0,
             alert_c_location_table_number: e1,
@@ -3382,6 +4165,112 @@ impl AlertCMethod4Point {
     }
 }
 
+impl AlertCMethod4Point {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                216 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                218 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                219 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1094 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                211 => if r.first(&mut seen[4])? { f4 = AlertCDirection::read_json(r)?.map(Box::new); },
+                222 => if r.first(&mut seen[5])? { f5 = AlertCMethod4PrimaryPointLocation::read_json(r)?.map(Box::new); },
+                1091 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 216);
+        r.required(&f1, 218);
+        r.required(&f2, 219);
+        r.required(&f4, 211);
+        r.required(&f5, 222);
+        Ok(Self {
+            alert_c_location_country_code: f0,
+            alert_c_location_table_number: f1,
+            alert_c_location_table_version: f2,
+            alert_c_point_extension: f3,
+            alert_c_direction: f4,
+            alert_c_method4_primary_point_location: f5,
+            alert_c_method4_point_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(491)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location_country_code {
+            Some(v) => {
+                w.key(216)?;
+                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
+        }
+        match &self.alert_c_location_table_number {
+            Some(v) => {
+                w.key(218)?;
+                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
+        }
+        match &self.alert_c_location_table_version {
+            Some(v) => {
+                w.key(219)?;
+                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
+        }
+        if let Some(v) = &self.alert_c_point_extension {
+            w.key(1094)?;
+            w.extension(v)?;
+        }
+        match &self.alert_c_direction {
+            Some(v) => {
+                w.key(211)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(211, w.missing("alertCDirection"))?,
+        }
+        match &self.alert_c_method4_primary_point_location {
+            Some(v) => {
+                w.key(222)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(222, w.missing("alertCMethod4PrimaryPointLocation"))?,
+        }
+        if let Some(v) = &self.alert_c_method4_point_extension {
+            w.key(1091)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCMethod4PrimaryPointLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCMethod4PrimaryPointLocation {
@@ -3394,10 +4283,10 @@ pub struct AlertCMethod4PrimaryPointLocation {
 }
 
 impl AlertCMethod4PrimaryPointLocation {
-    const FIELDS: &'static [u32] = &[0xb06a3, 0xb09a5, 0xb0413];
+    const FIELDS: &'static [u32] = &[0xe06cc, 0xe09e9, 0xe042e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0026);
+        r.expect_type(0xe0027);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3405,9 +4294,9 @@ impl AlertCMethod4PrimaryPointLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a3 => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1699); }
-                    0xb09a5 => { let v = Some(OffsetDistance::read(r)?); r.set(&mut e1, v.map(Box::new), 2469); }
-                    0xb0413 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1043); }
+                    0xe06cc => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1740); }
+                    0xe09e9 => { let v = Some(OffsetDistance::read(r)?); r.set(&mut e1, v.map(Box::new), 2537); }
+                    0xe042e => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1070); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3416,8 +4305,8 @@ impl AlertCMethod4PrimaryPointLocation {
                 break;
             }
         }
-        r.required(&e0, 1699);
-        r.required(&e1, 2469);
+        r.required(&e0, 1740);
+        r.required(&e1, 2537);
         let v = Self {
             alert_c_location: e0,
             offset_distance: e1,
@@ -3446,6 +4335,72 @@ impl AlertCMethod4PrimaryPointLocation {
     }
 }
 
+impl AlertCMethod4PrimaryPointLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                215 => if r.first(&mut seen[0])? { f0 = AlertCLocation::read_json(r)?.map(Box::new); },
+                1437 => if r.first(&mut seen[1])? { f1 = OffsetDistance::read_json(r)?.map(Box::new); },
+                1092 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 215);
+        r.required(&f1, 1437);
+        Ok(Self {
+            alert_c_location: f0,
+            offset_distance: f1,
+            alert_c_method4_primary_point_location_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(492)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location {
+            Some(v) => {
+                w.key(215)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(215, w.missing("alertCLocation"))?,
+        }
+        match &self.offset_distance {
+            Some(v) => {
+                w.key(1437)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1437, w.missing("offsetDistance"))?,
+        }
+        if let Some(v) = &self.alert_c_method4_primary_point_location_extension {
+            w.key(1092)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AlertCMethod4SecondaryPointLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AlertCMethod4SecondaryPointLocation {
@@ -3458,10 +4413,10 @@ pub struct AlertCMethod4SecondaryPointLocation {
 }
 
 impl AlertCMethod4SecondaryPointLocation {
-    const FIELDS: &'static [u32] = &[0xb06a3, 0xb09a5, 0xb0414];
+    const FIELDS: &'static [u32] = &[0xe06cc, 0xe09e9, 0xe042f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0027);
+        r.expect_type(0xe0028);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3469,9 +4424,9 @@ impl AlertCMethod4SecondaryPointLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06a3 => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1699); }
-                    0xb09a5 => { let v = Some(OffsetDistance::read(r)?); r.set(&mut e1, v.map(Box::new), 2469); }
-                    0xb0414 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1044); }
+                    0xe06cc => { let v = Some(AlertCLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1740); }
+                    0xe09e9 => { let v = Some(OffsetDistance::read(r)?); r.set(&mut e1, v.map(Box::new), 2537); }
+                    0xe042f => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1071); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3480,8 +4435,8 @@ impl AlertCMethod4SecondaryPointLocation {
                 break;
             }
         }
-        r.required(&e0, 1699);
-        r.required(&e1, 2469);
+        r.required(&e0, 1740);
+        r.required(&e1, 2537);
         let v = Self {
             alert_c_location: e0,
             offset_distance: e1,
@@ -3510,6 +4465,72 @@ impl AlertCMethod4SecondaryPointLocation {
     }
 }
 
+impl AlertCMethod4SecondaryPointLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                215 => if r.first(&mut seen[0])? { f0 = AlertCLocation::read_json(r)?.map(Box::new); },
+                1437 => if r.first(&mut seen[1])? { f1 = OffsetDistance::read_json(r)?.map(Box::new); },
+                1093 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 215);
+        r.required(&f1, 1437);
+        Ok(Self {
+            alert_c_location: f0,
+            offset_distance: f1,
+            alert_c_method4_secondary_point_location_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(493)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.alert_c_location {
+            Some(v) => {
+                w.key(215)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(215, w.missing("alertCLocation"))?,
+        }
+        match &self.offset_distance {
+            Some(v) => {
+                w.key(1437)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1437, w.missing("offsetDistance"))?,
+        }
+        if let Some(v) = &self.alert_c_method4_secondary_point_location_extension {
+            w.key(1093)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AltitudeConfidence`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AltitudeConfidence {
@@ -3522,10 +4543,10 @@ pub struct AltitudeConfidence {
 }
 
 impl AltitudeConfidence {
-    const FIELDS: &'static [u32] = &[0xb06b5, 0xb06b4, 0xb041a];
+    const FIELDS: &'static [u32] = &[0xe06de, 0xe06dd, 0xe0435];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb002d);
+        r.expect_type(0xe002e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3533,9 +4554,9 @@ impl AltitudeConfidence {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06b5 => { let v = r.enumeration::<AltitudeAccuracyEnum>()?; r.set(&mut e0, v, 1717); }
-                    0xb06b4 => { let v = r.enumeration::<PositionConfidenceCodedErrorEnum>()?; r.set(&mut e1, v, 1716); }
-                    0xb041a => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1050); }
+                    0xe06de => { let v = r.enumeration::<AltitudeAccuracyEnum>()?; r.set(&mut e0, v, 1758); }
+                    0xe06dd => { let v = r.enumeration::<PositionConfidenceCodedErrorEnum>()?; r.set(&mut e1, v, 1757); }
+                    0xe0435 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1077); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3566,6 +4587,64 @@ impl AltitudeConfidence {
     }
 }
 
+impl AltitudeConfidence {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                233 => if r.first(&mut seen[0])? { f0 = r.enumeration::<AltitudeAccuracyEnum>()?; },
+                232 => if r.first(&mut seen[1])? { f1 = r.enumeration::<PositionConfidenceCodedErrorEnum>()?; },
+                1095 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            altitude_accuracy_coded_value: f0,
+            altitude_accuracy_coded_error: f1,
+            altitude_confidence_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(496)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.altitude_accuracy_coded_value {
+            w.key(233)?;
+            w.enumeration(495, v.literal())?;
+        }
+        if let Some(v) = &self.altitude_accuracy_coded_error {
+            w.key(232)?;
+            w.enumeration(581, v.literal())?;
+        }
+        if let Some(v) = &self.altitude_confidence_extension {
+            w.key(1095)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:AreaDestination`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AreaDestination {
@@ -3578,10 +4657,10 @@ pub struct AreaDestination {
 }
 
 impl AreaDestination {
-    const FIELDS: &'static [u32] = &[0xb045d, 0xb06cc, 0xb0421];
+    const FIELDS: &'static [u32] = &[0xe0479, 0xe06f5, 0xe043c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0034);
+        r.expect_type(0xe0035);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3589,9 +4668,9 @@ impl AreaDestination {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb045d => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1117); }
-                    0xb06cc => { let v = Some(AreaLocation::read(r)?); r.set(&mut e1, v.map(Box::new), 1740); }
-                    0xb0421 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1057); }
+                    0xe0479 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1145); }
+                    0xe06f5 => { let v = Some(AreaLocation::read(r)?); r.set(&mut e1, v.map(Box::new), 1781); }
+                    0xe043c => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1084); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3600,7 +4679,7 @@ impl AreaDestination {
                 break;
             }
         }
-        r.required(&e1, 1740);
+        r.required(&e1, 1781);
         let v = Self {
             destination_extension: e0,
             area_location: e1,
@@ -3623,6 +4702,68 @@ impl AreaDestination {
         }
         if let Some(v) = &self.area_destination_extension { w.extension("loc:_areaDestinationExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl AreaDestination {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1101 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                256 => if r.first(&mut seen[1])? { f1 = AreaLocation::read_json(r)?.map(Box::new); },
+                1097 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 256);
+        Ok(Self {
+            destination_extension: f0,
+            area_location: f1,
+            area_destination_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(497)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.destination_extension {
+            w.key(1101)?;
+            w.extension(v)?;
+        }
+        match &self.area_location {
+            Some(v) => {
+                w.key(256)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(256, w.missing("areaLocation"))?,
+        }
+        if let Some(v) = &self.area_destination_extension {
+            w.key(1097)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -3654,10 +4795,10 @@ pub struct AreaLocation {
 }
 
 impl AreaLocation {
-    const FIELDS: &'static [u32] = &[0xb04e3, 0xb0809, 0xb0743, 0xb04df, 0xb06ce, 0xb069e, 0xb0bce, 0xb094b, 0xb0846, 0xb09a9, 0xb0422];
+    const FIELDS: &'static [u32] = &[0xe0505, 0xe0845, 0xe0772, 0xe0501, 0xe06f7, 0xe06c7, 0xe0c2d, 0xe098d, 0xe0882, 0xe09ed, 0xe043d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0035);
+        r.expect_type(0xe0036);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -3673,17 +4814,17 @@ impl AreaLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb04e3 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1251); }
-                    0xb0809 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
-                    0xb0743 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1859); }
-                    0xb04df => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1247); }
-                    0xb06ce => { let v = r.enumeration::<AreaPlacesEnum>()?; r.set(&mut e4, v, 1742); }
-                    0xb069e => { let v = Some(AlertCArea::read(r)?); e5.extend(v); }
-                    0xb0bce => { let v = TpegAreaLocation::read(r)?; r.set(&mut e6, v, 3022); }
-                    0xb094b => { let v = AnyNamedArea::read(r)?; r.set(&mut e7, v, 2379); }
-                    0xb0846 => { let v = Some(GmlMultiPolygon::read(r)?); r.set(&mut e8, v.map(Box::new), 2118); }
-                    0xb09a9 => { let v = OpenlrAreaLocationReference::read(r)?; r.set(&mut e9, v, 2473); }
-                    0xb0422 => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1058); }
+                    0xe0505 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1285); }
+                    0xe0845 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
+                    0xe0772 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1906); }
+                    0xe0501 => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1281); }
+                    0xe06f7 => { let v = r.enumeration::<AreaPlacesEnum>()?; r.set(&mut e4, v, 1783); }
+                    0xe06c7 => { let v = Some(AlertCArea::read(r)?); e5.extend(v); }
+                    0xe0c2d => { let v = TpegAreaLocation::read(r)?; r.set(&mut e6, v, 3117); }
+                    0xe098d => { let v = AnyNamedArea::read(r)?; r.set(&mut e7, v, 2445); }
+                    0xe0882 => { let v = Some(GmlMultiPolygon::read(r)?); r.set(&mut e8, v.map(Box::new), 2178); }
+                    0xe09ed => { let v = OpenlrAreaLocationReference::read(r)?; r.set(&mut e9, v, 2541); }
+                    0xe043d => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1085); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3730,6 +4871,130 @@ impl AreaLocation {
     }
 }
 
+impl AreaLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1142 => if r.first(&mut seen[0])? { f0 = LocationReferenceExtensionType::read_json(r)?.map(Box::new); },
+                744 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ExternalReferencing::read_json(r)? { f1.push(v); } } },
+                464 => if r.first(&mut seen[2])? { f2 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1136 => if r.first(&mut seen[3])? { f3 = LocationExtensionType::read_json(r)?.map(Box::new); },
+                258 => if r.first(&mut seen[4])? { f4 = r.enumeration::<AreaPlacesEnum>()?; },
+                210 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AlertCArea::read_json(r)? { f5.push(v); } } },
+                2342 => if r.first(&mut seen[6])? { f6 = TpegAreaLocation::read_json(r)?; },
+                1347 => if r.first(&mut seen[7])? { f7 = AnyNamedArea::read_json(r)?; },
+                923 => if r.first(&mut seen[8])? { f8 = GmlMultiPolygon::read_json(r)?.map(Box::new); },
+                1441 => if r.first(&mut seen[9])? { f9 = OpenlrAreaLocationReference::read_json(r)?; },
+                1099 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            location_reference_extension: f0,
+            external_referencing: f1,
+            coordinates_for_display: f2,
+            location_extension: f3,
+            areas_at_which_applicable: f4,
+            alert_c_area: f5,
+            tpeg_area_location: f6,
+            named_area: f7,
+            gml_multi_polygon: f8,
+            openlr_area_location_reference: f9,
+            area_location_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(498)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_reference_extension {
+            w.key(1142)?;
+            v.write_json(w, None)?;
+        }
+        if !self.external_referencing.is_empty() {
+            w.key(744)?;
+            w.begin_array()?;
+            for v in &self.external_referencing {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.coordinates_for_display {
+            w.key(464)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.location_extension {
+            w.key(1136)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.areas_at_which_applicable {
+            w.key(258)?;
+            w.enumeration(499, v.literal())?;
+        }
+        if !self.alert_c_area.is_empty() {
+            w.key(210)?;
+            w.begin_array()?;
+            for v in &self.alert_c_area {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.tpeg_area_location {
+            w.key(2342)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.named_area {
+            w.key(1347)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.gml_multi_polygon {
+            w.key(923)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.openlr_area_location_reference {
+            w.key(1441)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.area_location_extension {
+            w.key(1099)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:Carriageway`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Carriageway {
@@ -3744,10 +5009,10 @@ pub struct Carriageway {
 }
 
 impl Carriageway {
-    const FIELDS: &'static [u32] = &[0xb070a, 0xb09e2, 0xb08ab, 0xb0435];
+    const FIELDS: &'static [u32] = &[0xe0733, 0xe0a27, 0xe08e9, 0xe0450];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0049);
+        r.expect_type(0xe004b);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3756,10 +5021,10 @@ impl Carriageway {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb070a => { let v = r.enumeration::<CarriagewayEnum>()?; r.set(&mut e0, v, 1802); }
-                    0xb09e2 => { let v = r.value::<i64>()?; r.set(&mut e1, v, 2530); }
-                    0xb08ab => { let v = Some(Lane::read(r)?); e2.extend(v); }
-                    0xb0435 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1077); }
+                    0xe0733 => { let v = r.enumeration::<CarriagewayEnum>()?; r.set(&mut e0, v, 1843); }
+                    0xe0a27 => { let v = r.value::<i64>()?; r.set(&mut e1, v, 2599); }
+                    0xe08e9 => { let v = Some(Lane::read(r)?); e2.extend(v); }
+                    0xe0450 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1104); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3768,7 +5033,7 @@ impl Carriageway {
                 break;
             }
         }
-        r.required(&e0, 1802);
+        r.required(&e0, 1843);
         let v = Self {
             carriageway: e0,
             original_number_of_lanes: e1,
@@ -3796,6 +5061,80 @@ impl Carriageway {
     }
 }
 
+impl Carriageway {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                317 => if r.first(&mut seen[0])? { f0 = r.enumeration::<CarriagewayEnum>()?; },
+                1498 => if r.first(&mut seen[1])? { f1 = r.number::<i64>()?; },
+                1028 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Lane::read_json(r)? { f2.push(v); } } },
+                1100 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 317);
+        Ok(Self {
+            carriageway: f0,
+            original_number_of_lanes: f1,
+            lane: f2,
+            carriageway_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(500)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.carriageway {
+            Some(v) => {
+                w.key(317)?;
+                w.enumeration(501, v.literal())?;
+            }
+            None => w.absent(317, w.missing("carriageway"))?,
+        }
+        if let Some(v) = &self.original_number_of_lanes {
+            w.key(1498)?;
+            w.integer(*v)?;
+        }
+        if !self.lane.is_empty() {
+            w.key(1028)?;
+            w.begin_array()?;
+            for v in &self.lane {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.carriageway_extension {
+            w.key(1100)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:DistanceFromLinearElementReferent`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DistanceFromLinearElementReferent {
@@ -3812,10 +5151,10 @@ pub struct DistanceFromLinearElementReferent {
 }
 
 impl DistanceFromLinearElementReferent {
-    const FIELDS: &'static [u32] = &[0xb0470, 0xb079c, 0xb0834, 0xb0bcc, 0xb0471];
+    const FIELDS: &'static [u32] = &[0xe048c, 0xe07cd, 0xe0870, 0xe0c2b, 0xe048d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0086);
+        r.expect_type(0xe0088);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3825,11 +5164,11 @@ impl DistanceFromLinearElementReferent {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0470 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1136); }
-                    0xb079c => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1948); }
-                    0xb0834 => { let v = Some(Referent::read(r)?); r.set(&mut e2, v.map(Box::new), 2100); }
-                    0xb0bcc => { let v = Some(Referent::read(r)?); r.set(&mut e3, v.map(Box::new), 3020); }
-                    0xb0471 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1137); }
+                    0xe048c => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1164); }
+                    0xe07cd => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1997); }
+                    0xe0870 => { let v = Some(Referent::read(r)?); r.set(&mut e2, v.map(Box::new), 2160); }
+                    0xe0c2b => { let v = Some(Referent::read(r)?); r.set(&mut e3, v.map(Box::new), 3115); }
+                    0xe048d => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1165); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3838,8 +5177,8 @@ impl DistanceFromLinearElementReferent {
                 break;
             }
         }
-        r.required(&e1, 1948);
-        r.required(&e2, 2100);
+        r.required(&e1, 1997);
+        r.required(&e2, 2160);
         let v = Self {
             distance_along_linear_element_extension: e0,
             distance_along: e1,
@@ -3872,6 +5211,86 @@ impl DistanceFromLinearElementReferent {
     }
 }
 
+impl DistanceFromLinearElementReferent {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1102 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                582 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                870 => if r.first(&mut seen[2])? { f2 = Referent::read_json(r)?.map(Box::new); },
+                2340 => if r.first(&mut seen[3])? { f3 = Referent::read_json(r)?.map(Box::new); },
+                1104 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 582);
+        r.required(&f2, 870);
+        Ok(Self {
+            distance_along_linear_element_extension: f0,
+            distance_along: f1,
+            from_referent: f2,
+            towards_referent: f3,
+            distance_from_linear_element_referent_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(506)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.distance_along_linear_element_extension {
+            w.key(1102)?;
+            w.extension(v)?;
+        }
+        match &self.distance_along {
+            Some(v) => {
+                w.key(582)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(582, w.missing("distanceAlong"))?,
+        }
+        match &self.from_referent {
+            Some(v) => {
+                w.key(870)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(870, w.missing("fromReferent"))?,
+        }
+        if let Some(v) = &self.towards_referent {
+            w.key(2340)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.distance_from_linear_element_referent_extension {
+            w.key(1104)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:DistanceFromLinearElementStart`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DistanceFromLinearElementStart {
@@ -3884,10 +5303,10 @@ pub struct DistanceFromLinearElementStart {
 }
 
 impl DistanceFromLinearElementStart {
-    const FIELDS: &'static [u32] = &[0xb0470, 0xb079c, 0xb0472];
+    const FIELDS: &'static [u32] = &[0xe048c, 0xe07cd, 0xe048e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0087);
+        r.expect_type(0xe0089);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3895,9 +5314,9 @@ impl DistanceFromLinearElementStart {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0470 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1136); }
-                    0xb079c => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1948); }
-                    0xb0472 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1138); }
+                    0xe048c => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1164); }
+                    0xe07cd => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1997); }
+                    0xe048e => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1166); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3906,7 +5325,7 @@ impl DistanceFromLinearElementStart {
                 break;
             }
         }
-        r.required(&e1, 1948);
+        r.required(&e1, 1997);
         let v = Self {
             distance_along_linear_element_extension: e0,
             distance_along: e1,
@@ -3932,6 +5351,68 @@ impl DistanceFromLinearElementStart {
     }
 }
 
+impl DistanceFromLinearElementStart {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1102 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                582 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                1106 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 582);
+        Ok(Self {
+            distance_along_linear_element_extension: f0,
+            distance_along: f1,
+            distance_from_linear_element_start_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(507)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.distance_along_linear_element_extension {
+            w.key(1102)?;
+            w.extension(v)?;
+        }
+        match &self.distance_along {
+            Some(v) => {
+                w.key(582)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(582, w.missing("distanceAlong"))?,
+        }
+        if let Some(v) = &self.distance_from_linear_element_start_extension {
+            w.key(1106)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:ExternalReferencing`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ExternalReferencing {
@@ -3944,10 +5425,10 @@ pub struct ExternalReferencing {
 }
 
 impl ExternalReferencing {
-    const FIELDS: &'static [u32] = &[0xb0806, 0xb080a, 0xb0495];
+    const FIELDS: &'static [u32] = &[0xe0841, 0xe0846, 0xe04b5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00aa);
+        r.expect_type(0xe00b0);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3955,9 +5436,9 @@ impl ExternalReferencing {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0806 => { let v = r.string()?; r.set(&mut e0, v, 2054); }
-                    0xb080a => { let v = r.string()?; r.set(&mut e1, v, 2058); }
-                    0xb0495 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1173); }
+                    0xe0841 => { let v = r.string()?; r.set(&mut e0, v, 2113); }
+                    0xe0846 => { let v = r.string()?; r.set(&mut e1, v, 2118); }
+                    0xe04b5 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1205); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3966,8 +5447,8 @@ impl ExternalReferencing {
                 break;
             }
         }
-        r.required(&e0, 2054);
-        r.required(&e1, 2058);
+        r.required(&e0, 2113);
+        r.required(&e1, 2118);
         let v = Self {
             external_location_code: e0,
             external_referencing_system: e1,
@@ -3996,6 +5477,72 @@ impl ExternalReferencing {
     }
 }
 
+impl ExternalReferencing {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                740 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                745 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1107 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 740);
+        r.required(&f1, 745);
+        Ok(Self {
+            external_location_code: f0,
+            external_referencing_system: f1,
+            external_referencing_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(508)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.external_location_code {
+            Some(v) => {
+                w.key(740)?;
+                w.max_len("externalLocationCode", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(740, w.missing("externalLocationCode"))?,
+        }
+        match &self.external_referencing_system {
+            Some(v) => {
+                w.key(745)?;
+                w.max_len("externalReferencingSystem", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(745, w.missing("externalReferencingSystem"))?,
+        }
+        if let Some(v) = &self.external_referencing_extension {
+            w.key(1107)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:GmlLineString`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GmlLineString {
@@ -4010,20 +5557,20 @@ pub struct GmlLineString {
 }
 
 impl GmlLineString {
-    const FIELDS: &'static [u32] = &[0xb0a4d, 0xb04af];
+    const FIELDS: &'static [u32] = &[0xe0a93, 0xe04cf];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00c5);
-        let a0 = r.attr_value::<u64>(2918)?;
-        let a1 = r.attr(2919);
+        r.expect_type(0xe00cb);
+        let a0 = r.attr_value::<u64>(3008)?;
+        let a1 = r.attr(3009);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0a4d => { let v = r.string()?; r.set(&mut e0, v, 2637); }
-                    0xb04af => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1199); }
+                    0xe0a93 => { let v = r.string()?; r.set(&mut e0, v, 2707); }
+                    0xe04cf => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1231); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4032,7 +5579,7 @@ impl GmlLineString {
                 break;
             }
         }
-        r.required(&e0, 2637);
+        r.required(&e0, 2707);
         let v = Self {
             srs_dimension: a0,
             srs_name: a1,
@@ -4060,6 +5607,75 @@ impl GmlLineString {
     }
 }
 
+impl GmlLineString {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2173 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                2174 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1605 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1109 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 1605);
+        Ok(Self {
+            srs_dimension: f0,
+            srs_name: f1,
+            pos_list: f2,
+            gml_line_string_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(510)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.srs_dimension {
+            w.key(2173)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.srs_name {
+            w.key(2174)?;
+            w.max_len("srsName", v, 1024)?; w.string(v)?;
+        }
+        match &self.pos_list {
+            Some(v) => {
+                w.key(1605)?;
+                w.pattern("posList", v, Pattern::GmlPosList)?; w.string(v)?;
+            }
+            None => w.absent(1605, w.missing("posList"))?,
+        }
+        if let Some(v) = &self.gml_line_string_extension {
+            w.key(1109)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:GmlLinearRing`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GmlLinearRing {
@@ -4076,12 +5692,12 @@ pub struct GmlLinearRing {
 }
 
 impl GmlLinearRing {
-    const FIELDS: &'static [u32] = &[0xb0a4d, 0xb04af, 0xb04b0];
+    const FIELDS: &'static [u32] = &[0xe0a93, 0xe04cf, 0xe04d0];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00c6);
-        let a0 = r.attr_value::<u64>(2918)?;
-        let a1 = r.attr(2919);
+        r.expect_type(0xe00cc);
+        let a0 = r.attr_value::<u64>(3008)?;
+        let a1 = r.attr(3009);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4089,9 +5705,9 @@ impl GmlLinearRing {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0a4d => { let v = r.string()?; r.set(&mut e0, v, 2637); }
-                    0xb04af => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1199); }
-                    0xb04b0 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1200); }
+                    0xe0a93 => { let v = r.string()?; r.set(&mut e0, v, 2707); }
+                    0xe04cf => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1231); }
+                    0xe04d0 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1232); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4100,7 +5716,7 @@ impl GmlLinearRing {
                 break;
             }
         }
-        r.required(&e0, 2637);
+        r.required(&e0, 2707);
         let v = Self {
             srs_dimension: a0,
             srs_name: a1,
@@ -4130,6 +5746,82 @@ impl GmlLinearRing {
     }
 }
 
+impl GmlLinearRing {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2173 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                2174 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1605 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1109 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                1111 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 1605);
+        Ok(Self {
+            srs_dimension: f0,
+            srs_name: f1,
+            pos_list: f2,
+            gml_line_string_extension: f3,
+            gml_linear_ring_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(512)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.srs_dimension {
+            w.key(2173)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.srs_name {
+            w.key(2174)?;
+            w.max_len("srsName", v, 1024)?; w.string(v)?;
+        }
+        match &self.pos_list {
+            Some(v) => {
+                w.key(1605)?;
+                w.pattern("posList", v, Pattern::GmlPosList)?; w.string(v)?;
+            }
+            None => w.absent(1605, w.missing("posList"))?,
+        }
+        if let Some(v) = &self.gml_line_string_extension {
+            w.key(1109)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.gml_linear_ring_extension {
+            w.key(1111)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:GmlMultiPolygon`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GmlMultiPolygon {
@@ -4142,10 +5834,10 @@ pub struct GmlMultiPolygon {
 }
 
 impl GmlMultiPolygon {
-    const FIELDS: &'static [u32] = &[0xb0844, 0xb0847, 0xb04b1];
+    const FIELDS: &'static [u32] = &[0xe0880, 0xe0883, 0xe04d1];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00c7);
+        r.expect_type(0xe00cd);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -4153,9 +5845,9 @@ impl GmlMultiPolygon {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0844 => { let v = r.multilingual()?; r.set(&mut e0, v, 2116); }
-                    0xb0847 => { let v = Some(GmlPolygon::read(r)?); e1.extend(v); }
-                    0xb04b1 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1201); }
+                    0xe0880 => { let v = r.multilingual()?; r.set(&mut e0, v, 2176); }
+                    0xe0883 => { let v = Some(GmlPolygon::read(r)?); e1.extend(v); }
+                    0xe04d1 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1233); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4187,6 +5879,70 @@ impl GmlMultiPolygon {
     }
 }
 
+impl GmlMultiPolygon {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                921 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                924 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = GmlPolygon::read_json(r)? { f1.push(v); } } },
+                1112 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            gml_area_name: f0,
+            gml_polygon: f1,
+            gml_multi_polygon_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(513)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.gml_area_name {
+            w.key(921)?;
+            w.multilingual(v)?;
+        }
+        w.count("gmlPolygon", self.gml_polygon.len(), 1, usize::MAX)?;
+        if !self.gml_polygon.is_empty() {
+            w.key(924)?;
+            w.begin_array()?;
+            for v in &self.gml_polygon {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.gml_multi_polygon_extension {
+            w.key(1112)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:GmlPolygon`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GmlPolygon {
@@ -4199,10 +5955,10 @@ pub struct GmlPolygon {
 }
 
 impl GmlPolygon {
-    const FIELDS: &'static [u32] = &[0xb0800, 0xb088e, 0xb04b2];
+    const FIELDS: &'static [u32] = &[0xe083a, 0xe08cc, 0xe04d2];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00c8);
+        r.expect_type(0xe00ce);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -4210,9 +5966,9 @@ impl GmlPolygon {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0800 => { let v = Some(GmlLinearRing::read(r)?); r.set(&mut e0, v.map(Box::new), 2048); }
-                    0xb088e => { let v = Some(GmlLinearRing::read(r)?); e1.extend(v); }
-                    0xb04b2 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1202); }
+                    0xe083a => { let v = Some(GmlLinearRing::read(r)?); r.set(&mut e0, v.map(Box::new), 2106); }
+                    0xe08cc => { let v = Some(GmlLinearRing::read(r)?); e1.extend(v); }
+                    0xe04d2 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1234); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4221,7 +5977,7 @@ impl GmlPolygon {
                 break;
             }
         }
-        r.required(&e0, 2048);
+        r.required(&e0, 2106);
         let v = Self {
             exterior: e0,
             interior: e1,
@@ -4247,6 +6003,73 @@ impl GmlPolygon {
     }
 }
 
+impl GmlPolygon {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                733 => if r.first(&mut seen[0])? { f0 = GmlLinearRing::read_json(r)?.map(Box::new); },
+                999 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = GmlLinearRing::read_json(r)? { f1.push(v); } } },
+                1113 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 733);
+        Ok(Self {
+            exterior: f0,
+            interior: f1,
+            gml_polygon_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(514)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.exterior {
+            Some(v) => {
+                w.key(733)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(733, w.missing("exterior"))?,
+        }
+        if !self.interior.is_empty() {
+            w.key(999)?;
+            w.begin_array()?;
+            for v in &self.interior {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.gml_polygon_extension {
+            w.key(1113)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:HeightCoordinate`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct HeightCoordinate {
@@ -4263,10 +6086,10 @@ pub struct HeightCoordinate {
 }
 
 impl HeightCoordinate {
-    const FIELDS: &'static [u32] = &[0xb0863, 0xb0862, 0xb06b6, 0xb0c4f, 0xb04bd];
+    const FIELDS: &'static [u32] = &[0xe089f, 0xe089e, 0xe06df, 0xe0cb1, 0xe04dd];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00d3);
+        r.expect_type(0xe00d9);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4276,11 +6099,11 @@ impl HeightCoordinate {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0863 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2147); }
-                    0xb0862 => { let v = r.enumeration::<HeightTypeEnum>()?; r.set(&mut e1, v, 2146); }
-                    0xb06b6 => { let v = Some(AltitudeConfidence::read(r)?); r.set(&mut e2, v.map(Box::new), 1718); }
-                    0xb0c4f => { let v = Some(PositionAccuracy::read(r)?); r.set(&mut e3, v.map(Box::new), 3151); }
-                    0xb04bd => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1213); }
+                    0xe089f => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2207); }
+                    0xe089e => { let v = r.enumeration::<HeightTypeEnum>()?; r.set(&mut e1, v, 2206); }
+                    0xe06df => { let v = Some(AltitudeConfidence::read(r)?); r.set(&mut e2, v.map(Box::new), 1759); }
+                    0xe0cb1 => { let v = Some(PositionAccuracy::read(r)?); r.set(&mut e3, v.map(Box::new), 3249); }
+                    0xe04dd => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1245); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4289,7 +6112,7 @@ impl HeightCoordinate {
                 break;
             }
         }
-        r.required(&e0, 2147);
+        r.required(&e0, 2207);
         let v = Self {
             height_value: e0,
             height_type: e1,
@@ -4319,6 +6142,82 @@ impl HeightCoordinate {
     }
 }
 
+impl HeightCoordinate {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                952 => if r.first(&mut seen[0])? { f0 = r.number::<f32>()?; },
+                951 => if r.first(&mut seen[1])? { f1 = r.enumeration::<HeightTypeEnum>()?; },
+                234 => if r.first(&mut seen[2])? { f2 = AltitudeConfidence::read_json(r)?.map(Box::new); },
+                2582 => if r.first(&mut seen[3])? { f3 = PositionAccuracy::read_json(r)?.map(Box::new); },
+                1114 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 952);
+        Ok(Self {
+            height_value: f0,
+            height_type: f1,
+            altitude_confidence: f2,
+            vertical_position_accuracy: f3,
+            height_coordinate_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(515)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.height_value {
+            Some(v) => {
+                w.key(952)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(952, w.missing("heightValue"))?,
+        }
+        if let Some(v) = &self.height_type {
+            w.key(951)?;
+            w.enumeration(517, v.literal())?;
+        }
+        if let Some(v) = &self.altitude_confidence {
+            w.key(234)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.vertical_position_accuracy {
+            w.key(2582)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.height_coordinate_extension {
+            w.key(1114)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:IsoNamedArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct IsoNamedArea {
@@ -4341,10 +6240,10 @@ pub struct IsoNamedArea {
 }
 
 impl IsoNamedArea {
-    const FIELDS: &'static [u32] = &[0x304fa, 0xb06cd, 0xb094e, 0xb0747, 0xb04fa, 0xb0b8b, 0xb0b8a, 0xb04cd];
+    const FIELDS: &'static [u32] = &[0x4051d, 0xe06f6, 0xe0990, 0xe0776, 0xe051d, 0xe0be6, 0xe0be5, 0xe04ef];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00e4);
+        r.expect_type(0xe00ec);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4357,14 +6256,14 @@ impl IsoNamedArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x304fa => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1274); }
-                    0xb06cd => { let v = r.multilingual()?; r.set(&mut e1, v, 1741); }
-                    0xb094e => { let v = r.enumeration::<NamedAreaTypeEnum>()?; r.set(&mut e2, v, 2382); }
-                    0xb0747 => { let v = r.string()?; r.set(&mut e3, v, 1863); }
-                    0xb04fa => { let v = Some(NamedAreaExtensionType::read(r)?); r.set(&mut e4, v.map(Box::new), 1274); }
-                    0xb0b8b => { let v = r.enumeration::<SubdivisionTypeEnum>()?; r.set(&mut e5, v, 2955); }
-                    0xb0b8a => { let v = r.string()?; r.set(&mut e6, v, 2954); }
-                    0xb04cd => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1229); }
+                    0x4051d => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1309); }
+                    0xe06f6 => { let v = r.multilingual()?; r.set(&mut e1, v, 1782); }
+                    0xe0990 => { let v = r.enumeration::<NamedAreaTypeEnum>()?; r.set(&mut e2, v, 2448); }
+                    0xe0776 => { let v = r.string()?; r.set(&mut e3, v, 1910); }
+                    0xe051d => { let v = Some(NamedAreaExtensionType::read(r)?); r.set(&mut e4, v.map(Box::new), 1309); }
+                    0xe0be6 => { let v = r.enumeration::<SubdivisionTypeEnum>()?; r.set(&mut e5, v, 3046); }
+                    0xe0be5 => { let v = r.string()?; r.set(&mut e6, v, 3045); }
+                    0xe04ef => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1263); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4373,9 +6272,9 @@ impl IsoNamedArea {
                 break;
             }
         }
-        r.required(&e1, 1741);
-        r.required(&e5, 2955);
-        r.required(&e6, 2954);
+        r.required(&e1, 1782);
+        r.required(&e5, 3046);
+        r.required(&e6, 3045);
         let v = Self {
             named_area_extension: e0,
             area_name: e1,
@@ -4417,6 +6316,111 @@ impl IsoNamedArea {
     }
 }
 
+impl IsoNamedArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                384 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                257 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                1349 => if r.first(&mut seen[2])? { f2 = r.enumeration::<NamedAreaTypeEnum>()?; },
+                468 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1144 => if r.first(&mut seen[4])? { f4 = NamedAreaExtensionType::read_json(r)?.map(Box::new); },
+                2210 => if r.first(&mut seen[5])? { f5 = r.enumeration::<SubdivisionTypeEnum>()?; },
+                2209 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1116 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 257);
+        r.required(&f5, 2210);
+        r.required(&f6, 2209);
+        Ok(Self {
+            named_area_extension: f0,
+            area_name: f1,
+            named_area_type: f2,
+            country: f3,
+            loc_named_area_extension: f4,
+            subdivision_type: f5,
+            subdivision_code: f6,
+            iso_named_area_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(519)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.named_area_extension {
+            w.key(384)?;
+            w.extension(v)?;
+        }
+        match &self.area_name {
+            Some(v) => {
+                w.key(257)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(257, w.missing("areaName"))?,
+        }
+        if let Some(v) = &self.named_area_type {
+            w.key(1349)?;
+            w.enumeration(545, v.literal())?;
+        }
+        if let Some(v) = &self.country {
+            w.key(468)?;
+            w.max_len("country", v, 2)?; w.string(v)?;
+        }
+        if let Some(v) = &self.loc_named_area_extension {
+            w.key(1144)?;
+            v.write_json(w, None)?;
+        }
+        match &self.subdivision_type {
+            Some(v) => {
+                w.key(2210)?;
+                w.enumeration(594, v.literal())?;
+            }
+            None => w.absent(2210, w.missing("subdivisionType"))?,
+        }
+        match &self.subdivision_code {
+            Some(v) => {
+                w.key(2209)?;
+                w.max_len("subdivisionCode", v, 3)?; w.string(v)?;
+            }
+            None => w.absent(2209, w.missing("subdivisionCode"))?,
+        }
+        if let Some(v) = &self.iso_named_area_extension {
+            w.key(1116)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:ItineraryByIndexedLocations`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ItineraryByIndexedLocations {
@@ -4433,10 +6437,10 @@ pub struct ItineraryByIndexedLocations {
 }
 
 impl ItineraryByIndexedLocations {
-    const FIELDS: &'static [u32] = &[0xb04e3, 0xb0b10, 0xb04d0, 0xb08e0, 0xb04ce];
+    const FIELDS: &'static [u32] = &[0xe0505, 0xe0b5d, 0xe04f2, 0xe091e, 0xe04f0];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00e6);
+        r.expect_type(0xe00ee);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -4446,11 +6450,11 @@ impl ItineraryByIndexedLocations {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb04e3 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1251); }
-                    0xb0b10 => { let v = Destination::read(r)?; e1.extend(v); }
-                    0xb04d0 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1232); }
-                    0xb08e0 => { let v = Some(LocationContainedInItinerary::read(r)?); e3.extend(v); }
-                    0xb04ce => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1230); }
+                    0xe0505 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1285); }
+                    0xe0b5d => { let v = Destination::read(r)?; e1.extend(v); }
+                    0xe04f2 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1266); }
+                    0xe091e => { let v = Some(LocationContainedInItinerary::read(r)?); e3.extend(v); }
+                    0xe04f0 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1264); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4485,6 +6489,88 @@ impl ItineraryByIndexedLocations {
     }
 }
 
+impl ItineraryByIndexedLocations {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1142 => if r.first(&mut seen[0])? { f0 = LocationReferenceExtensionType::read_json(r)?.map(Box::new); },
+                1996 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Destination::read_json(r)? { f1.push(v); } } },
+                1121 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1232 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = LocationContainedInItinerary::read_json(r)? { f3.push(v); } } },
+                1118 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            location_reference_extension: f0,
+            route_destination: f1,
+            itinerary_extension: f2,
+            location_contained_in_itinerary: f3,
+            itinerary_by_indexed_locations_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(520)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_reference_extension {
+            w.key(1142)?;
+            v.write_json(w, None)?;
+        }
+        if !self.route_destination.is_empty() {
+            w.key(1996)?;
+            w.begin_array()?;
+            for v in &self.route_destination {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.itinerary_extension {
+            w.key(1121)?;
+            w.extension(v)?;
+        }
+        if !self.location_contained_in_itinerary.is_empty() {
+            w.key(1232)?;
+            w.begin_array()?;
+            for v in &self.location_contained_in_itinerary {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.itinerary_by_indexed_locations_extension {
+            w.key(1118)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:ItineraryByReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ItineraryByReference {
@@ -4501,10 +6587,10 @@ pub struct ItineraryByReference {
 }
 
 impl ItineraryByReference {
-    const FIELDS: &'static [u32] = &[0xb04e3, 0xb0b10, 0xb04d0, 0xb0a62, 0xb04cf];
+    const FIELDS: &'static [u32] = &[0xe0505, 0xe0b5d, 0xe04f2, 0xe0aa8, 0xe04f1];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00e7);
+        r.expect_type(0xe00ef);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -4514,11 +6600,11 @@ impl ItineraryByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb04e3 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1251); }
-                    0xb0b10 => { let v = Destination::read(r)?; e1.extend(v); }
-                    0xb04d0 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1232); }
-                    0xb0a62 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2658); }
-                    0xb04cf => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1231); }
+                    0xe0505 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1285); }
+                    0xe0b5d => { let v = Destination::read(r)?; e1.extend(v); }
+                    0xe04f2 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1266); }
+                    0xe0aa8 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2728); }
+                    0xe04f1 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1265); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4527,7 +6613,7 @@ impl ItineraryByReference {
                 break;
             }
         }
-        r.required(&e3, 2658);
+        r.required(&e3, 2728);
         let v = Self {
             location_reference_extension: e0,
             route_destination: e1,
@@ -4557,6 +6643,87 @@ impl ItineraryByReference {
     }
 }
 
+impl ItineraryByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1142 => if r.first(&mut seen[0])? { f0 = LocationReferenceExtensionType::read_json(r)?.map(Box::new); },
+                1996 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Destination::read_json(r)? { f1.push(v); } } },
+                1121 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1626 => if r.first(&mut seen[3])? { f3 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1120 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f3, 1626);
+        Ok(Self {
+            location_reference_extension: f0,
+            route_destination: f1,
+            itinerary_extension: f2,
+            predefined_itinerary_reference: f3,
+            itinerary_by_reference_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(521)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_reference_extension {
+            w.key(1142)?;
+            v.write_json(w, None)?;
+        }
+        if !self.route_destination.is_empty() {
+            w.key(1996)?;
+            w.begin_array()?;
+            for v in &self.route_destination {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.itinerary_extension {
+            w.key(1121)?;
+            w.extension(v)?;
+        }
+        match &self.predefined_itinerary_reference {
+            Some(v) => {
+                w.key(1626)?;
+                v.write_json(w, Some("PredefinedItinerary"))?;
+            }
+            None => w.absent(1626, w.missing("predefinedItineraryReference"))?,
+        }
+        if let Some(v) = &self.itinerary_by_reference_extension {
+            w.key(1120)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:Lane`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Lane {
@@ -4569,10 +6736,10 @@ pub struct Lane {
 }
 
 impl Lane {
-    const FIELDS: &'static [u32] = &[0xb08ac, 0xb08ae, 0xb04d3];
+    const FIELDS: &'static [u32] = &[0xe08ea, 0xe08ec, 0xe04f5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00ea);
+        r.expect_type(0xe00f2);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4580,9 +6747,9 @@ impl Lane {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb08ac => { let v = r.value::<i64>()?; r.set(&mut e0, v, 2220); }
-                    0xb08ae => { let v = r.enumeration::<LaneEnum>()?; r.set(&mut e1, v, 2222); }
-                    0xb04d3 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1235); }
+                    0xe08ea => { let v = r.value::<i64>()?; r.set(&mut e0, v, 2282); }
+                    0xe08ec => { let v = r.enumeration::<LaneEnum>()?; r.set(&mut e1, v, 2284); }
+                    0xe04f5 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1269); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4613,6 +6780,64 @@ impl Lane {
     }
 }
 
+impl Lane {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1029 => if r.first(&mut seen[0])? { f0 = r.number::<i64>()?; },
+                1031 => if r.first(&mut seen[1])? { f1 = r.enumeration::<LaneEnum>()?; },
+                1122 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            lane_number: f0,
+            lane_usage: f1,
+            lane_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(523)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.lane_number {
+            w.key(1029)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.lane_usage {
+            w.key(1031)?;
+            w.enumeration(524, v.literal())?;
+        }
+        if let Some(v) = &self.lane_extension {
+            w.key(1122)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:LinearElement`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LinearElement {
@@ -4631,10 +6856,10 @@ pub struct LinearElement {
 }
 
 impl LinearElement {
-    const FIELDS: &'static [u32] = &[0xb0af7, 0xb0af8, 0xb08d3, 0xb08d4, 0xb08d2, 0xb04d9];
+    const FIELDS: &'static [u32] = &[0xe0b44, 0xe0b45, 0xe0911, 0xe0912, 0xe0910, 0xe04fb];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00ed);
+        r.expect_type(0xe00f5);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4645,12 +6870,12 @@ impl LinearElement {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0af7 => { let v = r.multilingual()?; r.set(&mut e0, v, 2807); }
-                    0xb0af8 => { let v = r.string()?; r.set(&mut e1, v, 2808); }
-                    0xb08d3 => { let v = r.string()?; r.set(&mut e2, v, 2259); }
-                    0xb08d4 => { let v = r.string()?; r.set(&mut e3, v, 2260); }
-                    0xb08d2 => { let v = r.enumeration::<LinearElementNatureEnum>()?; r.set(&mut e4, v, 2258); }
-                    0xb04d9 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1241); }
+                    0xe0b44 => { let v = r.multilingual()?; r.set(&mut e0, v, 2884); }
+                    0xe0b45 => { let v = r.string()?; r.set(&mut e1, v, 2885); }
+                    0xe0911 => { let v = r.string()?; r.set(&mut e2, v, 2321); }
+                    0xe0912 => { let v = r.string()?; r.set(&mut e3, v, 2322); }
+                    0xe0910 => { let v = r.enumeration::<LinearElementNatureEnum>()?; r.set(&mut e4, v, 2320); }
+                    0xe04fb => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1275); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4687,6 +6912,85 @@ impl LinearElement {
     }
 }
 
+impl LinearElement {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1970 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1971 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1068 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1069 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1067 => if r.first(&mut seen[4])? { f4 = r.enumeration::<LinearElementNatureEnum>()?; },
+                1130 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            road_name: f0,
+            road_number: f1,
+            linear_element_reference_model: f2,
+            linear_element_reference_model_version: f3,
+            linear_element_nature: f4,
+            linear_element_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(526)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.road_name {
+            w.key(1970)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.road_number {
+            w.key(1971)?;
+            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_reference_model {
+            w.key(1068)?;
+            w.max_len("linearElementReferenceModel", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_reference_model_version {
+            w.key(1069)?;
+            w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_nature {
+            w.key(1067)?;
+            w.enumeration(531, v.literal())?;
+        }
+        if let Some(v) = &self.linear_element_extension {
+            w.key(1130)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:LinearElementByCode`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LinearElementByCode {
@@ -4709,10 +7013,10 @@ pub struct LinearElementByCode {
 }
 
 impl LinearElementByCode {
-    const FIELDS: &'static [u32] = &[0xb0af7, 0xb0af8, 0xb08d3, 0xb08d4, 0xb08d2, 0xb04d9, 0xb08d1, 0xb04d6];
+    const FIELDS: &'static [u32] = &[0xe0b44, 0xe0b45, 0xe0911, 0xe0912, 0xe0910, 0xe04fb, 0xe090f, 0xe04f8];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00ee);
+        r.expect_type(0xe00f6);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4725,14 +7029,14 @@ impl LinearElementByCode {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0af7 => { let v = r.multilingual()?; r.set(&mut e0, v, 2807); }
-                    0xb0af8 => { let v = r.string()?; r.set(&mut e1, v, 2808); }
-                    0xb08d3 => { let v = r.string()?; r.set(&mut e2, v, 2259); }
-                    0xb08d4 => { let v = r.string()?; r.set(&mut e3, v, 2260); }
-                    0xb08d2 => { let v = r.enumeration::<LinearElementNatureEnum>()?; r.set(&mut e4, v, 2258); }
-                    0xb04d9 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1241); }
-                    0xb08d1 => { let v = r.string()?; r.set(&mut e6, v, 2257); }
-                    0xb04d6 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1238); }
+                    0xe0b44 => { let v = r.multilingual()?; r.set(&mut e0, v, 2884); }
+                    0xe0b45 => { let v = r.string()?; r.set(&mut e1, v, 2885); }
+                    0xe0911 => { let v = r.string()?; r.set(&mut e2, v, 2321); }
+                    0xe0912 => { let v = r.string()?; r.set(&mut e3, v, 2322); }
+                    0xe0910 => { let v = r.enumeration::<LinearElementNatureEnum>()?; r.set(&mut e4, v, 2320); }
+                    0xe04fb => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1275); }
+                    0xe090f => { let v = r.string()?; r.set(&mut e6, v, 2319); }
+                    0xe04f8 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1272); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4741,7 +7045,7 @@ impl LinearElementByCode {
                 break;
             }
         }
-        r.required(&e6, 2257);
+        r.required(&e6, 2319);
         let v = Self {
             road_name: e0,
             road_number: e1,
@@ -4777,6 +7081,103 @@ impl LinearElementByCode {
     }
 }
 
+impl LinearElementByCode {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1970 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1971 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1068 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1069 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1067 => if r.first(&mut seen[4])? { f4 = r.enumeration::<LinearElementNatureEnum>()?; },
+                1130 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                1066 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1125 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f6, 1066);
+        Ok(Self {
+            road_name: f0,
+            road_number: f1,
+            linear_element_reference_model: f2,
+            linear_element_reference_model_version: f3,
+            linear_element_nature: f4,
+            linear_element_extension: f5,
+            linear_element_identifier: f6,
+            linear_element_by_code_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(527)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.road_name {
+            w.key(1970)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.road_number {
+            w.key(1971)?;
+            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_reference_model {
+            w.key(1068)?;
+            w.max_len("linearElementReferenceModel", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_reference_model_version {
+            w.key(1069)?;
+            w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_nature {
+            w.key(1067)?;
+            w.enumeration(531, v.literal())?;
+        }
+        if let Some(v) = &self.linear_element_extension {
+            w.key(1130)?;
+            w.extension(v)?;
+        }
+        match &self.linear_element_identifier {
+            Some(v) => {
+                w.key(1066)?;
+                w.max_len("linearElementIdentifier", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(1066, w.missing("linearElementIdentifier"))?,
+        }
+        if let Some(v) = &self.linear_element_by_code_extension {
+            w.key(1125)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:LinearElementByLineString`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LinearElementByLineString {
@@ -4799,10 +7200,10 @@ pub struct LinearElementByLineString {
 }
 
 impl LinearElementByLineString {
-    const FIELDS: &'static [u32] = &[0xb0af7, 0xb0af8, 0xb08d3, 0xb08d4, 0xb08d2, 0xb04d9, 0xb0845, 0xb04d7];
+    const FIELDS: &'static [u32] = &[0xe0b44, 0xe0b45, 0xe0911, 0xe0912, 0xe0910, 0xe04fb, 0xe0881, 0xe04f9];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00ef);
+        r.expect_type(0xe00f7);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4815,14 +7216,14 @@ impl LinearElementByLineString {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0af7 => { let v = r.multilingual()?; r.set(&mut e0, v, 2807); }
-                    0xb0af8 => { let v = r.string()?; r.set(&mut e1, v, 2808); }
-                    0xb08d3 => { let v = r.string()?; r.set(&mut e2, v, 2259); }
-                    0xb08d4 => { let v = r.string()?; r.set(&mut e3, v, 2260); }
-                    0xb08d2 => { let v = r.enumeration::<LinearElementNatureEnum>()?; r.set(&mut e4, v, 2258); }
-                    0xb04d9 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1241); }
-                    0xb0845 => { let v = AnyGmlLineString::read(r)?; r.set(&mut e6, v, 2117); }
-                    0xb04d7 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1239); }
+                    0xe0b44 => { let v = r.multilingual()?; r.set(&mut e0, v, 2884); }
+                    0xe0b45 => { let v = r.string()?; r.set(&mut e1, v, 2885); }
+                    0xe0911 => { let v = r.string()?; r.set(&mut e2, v, 2321); }
+                    0xe0912 => { let v = r.string()?; r.set(&mut e3, v, 2322); }
+                    0xe0910 => { let v = r.enumeration::<LinearElementNatureEnum>()?; r.set(&mut e4, v, 2320); }
+                    0xe04fb => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1275); }
+                    0xe0881 => { let v = AnyGmlLineString::read(r)?; r.set(&mut e6, v, 2177); }
+                    0xe04f9 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1273); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4831,7 +7232,7 @@ impl LinearElementByLineString {
                 break;
             }
         }
-        r.required(&e6, 2117);
+        r.required(&e6, 2177);
         let v = Self {
             road_name: e0,
             road_number: e1,
@@ -4867,6 +7268,103 @@ impl LinearElementByLineString {
     }
 }
 
+impl LinearElementByLineString {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1970 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1971 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1068 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1069 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1067 => if r.first(&mut seen[4])? { f4 = r.enumeration::<LinearElementNatureEnum>()?; },
+                1130 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                922 => if r.first(&mut seen[6])? { f6 = AnyGmlLineString::read_json(r)?; },
+                1127 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f6, 922);
+        Ok(Self {
+            road_name: f0,
+            road_number: f1,
+            linear_element_reference_model: f2,
+            linear_element_reference_model_version: f3,
+            linear_element_nature: f4,
+            linear_element_extension: f5,
+            gml_line_string: f6,
+            linear_element_by_line_string_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(528)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.road_name {
+            w.key(1970)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.road_number {
+            w.key(1971)?;
+            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_reference_model {
+            w.key(1068)?;
+            w.max_len("linearElementReferenceModel", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_reference_model_version {
+            w.key(1069)?;
+            w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_nature {
+            w.key(1067)?;
+            w.enumeration(531, v.literal())?;
+        }
+        if let Some(v) = &self.linear_element_extension {
+            w.key(1130)?;
+            w.extension(v)?;
+        }
+        match &self.gml_line_string {
+            Some(v) => {
+                w.key(922)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(922, w.missing("gmlLineString"))?,
+        }
+        if let Some(v) = &self.linear_element_by_line_string_extension {
+            w.key(1127)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:LinearElementByPoints`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LinearElementByPoints {
@@ -4893,10 +7391,10 @@ pub struct LinearElementByPoints {
 }
 
 impl LinearElementByPoints {
-    const FIELDS: &'static [u32] = &[0xb0af7, 0xb0af8, 0xb08d3, 0xb08d4, 0xb08d2, 0xb04d9, 0xb0b6f, 0xb088f, 0xb07c8, 0xb04d8];
+    const FIELDS: &'static [u32] = &[0xe0b44, 0xe0b45, 0xe0911, 0xe0912, 0xe0910, 0xe04fb, 0xe0bc9, 0xe08cd, 0xe07fd, 0xe04fa];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00f0);
+        r.expect_type(0xe00f8);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4911,16 +7409,16 @@ impl LinearElementByPoints {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0af7 => { let v = r.multilingual()?; r.set(&mut e0, v, 2807); }
-                    0xb0af8 => { let v = r.string()?; r.set(&mut e1, v, 2808); }
-                    0xb08d3 => { let v = r.string()?; r.set(&mut e2, v, 2259); }
-                    0xb08d4 => { let v = r.string()?; r.set(&mut e3, v, 2260); }
-                    0xb08d2 => { let v = r.enumeration::<LinearElementNatureEnum>()?; r.set(&mut e4, v, 2258); }
-                    0xb04d9 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1241); }
-                    0xb0b6f => { let v = Some(Referent::read(r)?); r.set(&mut e6, v.map(Box::new), 2927); }
-                    0xb088f => { let v = Some(IntermediatePointOnLinearElement::read(r)?); e7.extend(v); }
-                    0xb07c8 => { let v = Some(Referent::read(r)?); r.set(&mut e8, v.map(Box::new), 1992); }
-                    0xb04d8 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1240); }
+                    0xe0b44 => { let v = r.multilingual()?; r.set(&mut e0, v, 2884); }
+                    0xe0b45 => { let v = r.string()?; r.set(&mut e1, v, 2885); }
+                    0xe0911 => { let v = r.string()?; r.set(&mut e2, v, 2321); }
+                    0xe0912 => { let v = r.string()?; r.set(&mut e3, v, 2322); }
+                    0xe0910 => { let v = r.enumeration::<LinearElementNatureEnum>()?; r.set(&mut e4, v, 2320); }
+                    0xe04fb => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1275); }
+                    0xe0bc9 => { let v = Some(Referent::read(r)?); r.set(&mut e6, v.map(Box::new), 3017); }
+                    0xe08cd => { let v = Some(IntermediatePointOnLinearElement::read(r)?); e7.extend(v); }
+                    0xe07fd => { let v = Some(Referent::read(r)?); r.set(&mut e8, v.map(Box::new), 2045); }
+                    0xe04fa => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1274); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4929,8 +7427,8 @@ impl LinearElementByPoints {
                 break;
             }
         }
-        r.required(&e6, 2927);
-        r.required(&e8, 1992);
+        r.required(&e6, 3017);
+        r.required(&e8, 2045);
         let v = Self {
             road_name: e0,
             road_number: e1,
@@ -4973,6 +7471,126 @@ impl LinearElementByPoints {
     }
 }
 
+impl LinearElementByPoints {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 10];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        let mut f9 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1970 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1971 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1068 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1069 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1067 => if r.first(&mut seen[4])? { f4 = r.enumeration::<LinearElementNatureEnum>()?; },
+                1130 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                2182 => if r.first(&mut seen[6])? { f6 = Referent::read_json(r)?.map(Box::new); },
+                1000 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = IntermediatePointOnLinearElement::read_json(r)? { f7.push(v); } } },
+                664 => if r.first(&mut seen[8])? { f8 = Referent::read_json(r)?.map(Box::new); },
+                1129 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f6, 2182);
+        r.required(&f8, 664);
+        Ok(Self {
+            road_name: f0,
+            road_number: f1,
+            linear_element_reference_model: f2,
+            linear_element_reference_model_version: f3,
+            linear_element_nature: f4,
+            linear_element_extension: f5,
+            start_point_of_linear_element: f6,
+            intermediate_point_on_linear_element: f7,
+            end_point_of_linear_element: f8,
+            linear_element_by_points_extension: f9,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(529)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.road_name {
+            w.key(1970)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.road_number {
+            w.key(1971)?;
+            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_reference_model {
+            w.key(1068)?;
+            w.max_len("linearElementReferenceModel", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_reference_model_version {
+            w.key(1069)?;
+            w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.linear_element_nature {
+            w.key(1067)?;
+            w.enumeration(531, v.literal())?;
+        }
+        if let Some(v) = &self.linear_element_extension {
+            w.key(1130)?;
+            w.extension(v)?;
+        }
+        match &self.start_point_of_linear_element {
+            Some(v) => {
+                w.key(2182)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(2182, w.missing("startPointOfLinearElement"))?,
+        }
+        if !self.intermediate_point_on_linear_element.is_empty() {
+            w.key(1000)?;
+            w.begin_array()?;
+            for v in &self.intermediate_point_on_linear_element {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        match &self.end_point_of_linear_element {
+            Some(v) => {
+                w.key(664)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(664, w.missing("endPointOfLinearElement"))?,
+        }
+        if let Some(v) = &self.linear_element_by_points_extension {
+            w.key(1129)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:LinearLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LinearLocation {
@@ -5001,10 +7619,10 @@ pub struct LinearLocation {
 }
 
 impl LinearLocation {
-    const FIELDS: &'static [u32] = &[0xb04e3, 0xb0809, 0xb0743, 0xb04df, 0xb0b94, 0xb0779, 0xb04fb, 0xb09b3, 0xb0845, 0xb0b1f, 0xb04da];
+    const FIELDS: &'static [u32] = &[0xe0505, 0xe0845, 0xe0772, 0xe0501, 0xe0bf2, 0xe07aa, 0xe051e, 0xe09f7, 0xe0881, 0xe0b6c, 0xe04fc];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00f1);
+        r.expect_type(0xe00f9);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -5020,17 +7638,17 @@ impl LinearLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb04e3 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1251); }
-                    0xb0809 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
-                    0xb0743 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1859); }
-                    0xb04df => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1247); }
-                    0xb0b94 => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e4, v.map(Box::new), 2964); }
-                    0xb0779 => { let v = Destination::read(r)?; r.set(&mut e5, v, 1913); }
-                    0xb04fb => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1275); }
-                    0xb09b3 => { let v = Some(OpenlrLinear::read(r)?); r.set(&mut e7, v.map(Box::new), 2483); }
-                    0xb0845 => { let v = AnyGmlLineString::read(r)?; r.set(&mut e8, v, 2117); }
-                    0xb0b1f => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e9, v.map(Box::new), 2847); }
-                    0xb04da => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1242); }
+                    0xe0505 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1285); }
+                    0xe0845 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
+                    0xe0772 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1906); }
+                    0xe0501 => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1281); }
+                    0xe0bf2 => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e4, v.map(Box::new), 3058); }
+                    0xe07aa => { let v = Destination::read(r)?; r.set(&mut e5, v, 1962); }
+                    0xe051e => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1310); }
+                    0xe09f7 => { let v = Some(OpenlrLinear::read(r)?); r.set(&mut e7, v.map(Box::new), 2551); }
+                    0xe0881 => { let v = AnyGmlLineString::read(r)?; r.set(&mut e8, v, 2177); }
+                    0xe0b6c => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e9, v.map(Box::new), 2924); }
+                    0xe04fc => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1276); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5077,6 +7695,125 @@ impl LinearLocation {
     }
 }
 
+impl LinearLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1142 => if r.first(&mut seen[0])? { f0 = LocationReferenceExtensionType::read_json(r)?.map(Box::new); },
+                744 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ExternalReferencing::read_json(r)? { f1.push(v); } } },
+                464 => if r.first(&mut seen[2])? { f2 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1136 => if r.first(&mut seen[3])? { f3 = LocationExtensionType::read_json(r)?.map(Box::new); },
+                2222 => if r.first(&mut seen[4])? { f4 = SupplementaryPositionalDescription::read_json(r)?.map(Box::new); },
+                547 => if r.first(&mut seen[5])? { f5 = Destination::read_json(r)?; },
+                1145 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                1451 => if r.first(&mut seen[7])? { f7 = OpenlrLinear::read_json(r)?.map(Box::new); },
+                922 => if r.first(&mut seen[8])? { f8 = AnyGmlLineString::read_json(r)?; },
+                2011 => if r.first(&mut seen[9])? { f9 = SupplementaryPositionalDescription::read_json(r)?.map(Box::new); },
+                1132 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            location_reference_extension: f0,
+            external_referencing: f1,
+            coordinates_for_display: f2,
+            location_extension: f3,
+            supplementary_positional_description: f4,
+            destination: f5,
+            network_location_extension: f6,
+            openlr_linear: f7,
+            gml_line_string: f8,
+            secondary_supplementary_description: f9,
+            linear_location_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(532)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_reference_extension {
+            w.key(1142)?;
+            v.write_json(w, None)?;
+        }
+        if !self.external_referencing.is_empty() {
+            w.key(744)?;
+            w.begin_array()?;
+            for v in &self.external_referencing {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.coordinates_for_display {
+            w.key(464)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.location_extension {
+            w.key(1136)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.supplementary_positional_description {
+            w.key(2222)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.destination {
+            w.key(547)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.network_location_extension {
+            w.key(1145)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.openlr_linear {
+            w.key(1451)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.gml_line_string {
+            w.key(922)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.secondary_supplementary_description {
+            w.key(2011)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.linear_location_extension {
+            w.key(1132)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:LinearWithinLinearElement`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LinearWithinLinearElement {
@@ -5099,10 +7836,10 @@ pub struct LinearWithinLinearElement {
 }
 
 impl LinearWithinLinearElement {
-    const FIELDS: &'static [u32] = &[0xb0695, 0xb078b, 0xb078e, 0xb0860, 0xb08d0, 0xb0833, 0xb0bc7, 0xb04db];
+    const FIELDS: &'static [u32] = &[0xe06be, 0xe07bc, 0xe07bf, 0xe089c, 0xe090e, 0xe086f, 0xe0c26, 0xe04fd];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00f2);
+        r.expect_type(0xe00fa);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5115,14 +7852,14 @@ impl LinearWithinLinearElement {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0695 => { let v = r.multilingual()?; r.set(&mut e0, v, 1685); }
-                    0xb078b => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e1, v, 1931); }
-                    0xb078e => { let v = r.enumeration::<LinearDirectionEnum>()?; r.set(&mut e2, v, 1934); }
-                    0xb0860 => { let v = r.enumeration::<HeightGradeEnum>()?; r.set(&mut e3, v, 2144); }
-                    0xb08d0 => { let v = AnyLinearElement::read(r)?; r.set(&mut e4, v, 2256); }
-                    0xb0833 => { let v = DistanceAlongLinearElement::read(r)?; r.set(&mut e5, v, 2099); }
-                    0xb0bc7 => { let v = DistanceAlongLinearElement::read(r)?; r.set(&mut e6, v, 3015); }
-                    0xb04db => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1243); }
+                    0xe06be => { let v = r.multilingual()?; r.set(&mut e0, v, 1726); }
+                    0xe07bc => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e1, v, 1980); }
+                    0xe07bf => { let v = r.enumeration::<LinearDirectionEnum>()?; r.set(&mut e2, v, 1983); }
+                    0xe089c => { let v = r.enumeration::<HeightGradeEnum>()?; r.set(&mut e3, v, 2204); }
+                    0xe090e => { let v = AnyLinearElement::read(r)?; r.set(&mut e4, v, 2318); }
+                    0xe086f => { let v = DistanceAlongLinearElement::read(r)?; r.set(&mut e5, v, 2159); }
+                    0xe0c26 => { let v = DistanceAlongLinearElement::read(r)?; r.set(&mut e6, v, 3110); }
+                    0xe04fd => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1277); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5131,9 +7868,9 @@ impl LinearWithinLinearElement {
                 break;
             }
         }
-        r.required(&e4, 2256);
-        r.required(&e5, 2099);
-        r.required(&e6, 3015);
+        r.required(&e4, 2318);
+        r.required(&e5, 2159);
+        r.required(&e6, 3110);
         let v = Self {
             administrative_area_of_linear_section: e0,
             direction_on_linear_section: e1,
@@ -5175,6 +7912,111 @@ impl LinearWithinLinearElement {
     }
 }
 
+impl LinearWithinLinearElement {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                66 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                565 => if r.first(&mut seen[1])? { f1 = r.enumeration::<DirectionEnum>()?; },
+                568 => if r.first(&mut seen[2])? { f2 = r.enumeration::<LinearDirectionEnum>()?; },
+                949 => if r.first(&mut seen[3])? { f3 = r.enumeration::<HeightGradeEnum>()?; },
+                1065 => if r.first(&mut seen[4])? { f4 = AnyLinearElement::read_json(r)?; },
+                869 => if r.first(&mut seen[5])? { f5 = DistanceAlongLinearElement::read_json(r)?; },
+                2335 => if r.first(&mut seen[6])? { f6 = DistanceAlongLinearElement::read_json(r)?; },
+                1133 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f4, 1065);
+        r.required(&f5, 869);
+        r.required(&f6, 2335);
+        Ok(Self {
+            administrative_area_of_linear_section: f0,
+            direction_on_linear_section: f1,
+            direction_relative_on_linear_section: f2,
+            height_grade_of_linear_section: f3,
+            linear_element: f4,
+            from_point: f5,
+            to_point: f6,
+            linear_within_linear_element_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(533)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.administrative_area_of_linear_section {
+            w.key(66)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.direction_on_linear_section {
+            w.key(565)?;
+            w.enumeration(503, v.literal())?;
+        }
+        if let Some(v) = &self.direction_relative_on_linear_section {
+            w.key(568)?;
+            w.enumeration(525, v.literal())?;
+        }
+        if let Some(v) = &self.height_grade_of_linear_section {
+            w.key(949)?;
+            w.enumeration(516, v.literal())?;
+        }
+        match &self.linear_element {
+            Some(v) => {
+                w.key(1065)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(1065, w.missing("linearElement"))?,
+        }
+        match &self.from_point {
+            Some(v) => {
+                w.key(869)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(869, w.missing("fromPoint"))?,
+        }
+        match &self.to_point {
+            Some(v) => {
+                w.key(2335)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(2335, w.missing("toPoint"))?,
+        }
+        if let Some(v) = &self.linear_within_linear_element_extension {
+            w.key(1133)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:LocationByReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LocationByReference {
@@ -5193,10 +8035,10 @@ pub struct LocationByReference {
 }
 
 impl LocationByReference {
-    const FIELDS: &'static [u32] = &[0xb04e3, 0xb0809, 0xb0743, 0xb04df, 0xb0a67, 0xb04dd];
+    const FIELDS: &'static [u32] = &[0xe0505, 0xe0845, 0xe0772, 0xe0501, 0xe0aad, 0xe04ff];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00f5);
+        r.expect_type(0xe00fd);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -5207,12 +8049,12 @@ impl LocationByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb04e3 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1251); }
-                    0xb0809 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
-                    0xb0743 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1859); }
-                    0xb04df => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1247); }
-                    0xb0a67 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 2663); }
-                    0xb04dd => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1245); }
+                    0xe0505 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1285); }
+                    0xe0845 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
+                    0xe0772 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1906); }
+                    0xe0501 => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1281); }
+                    0xe0aad => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 2733); }
+                    0xe04ff => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1279); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5221,7 +8063,7 @@ impl LocationByReference {
                 break;
             }
         }
-        r.required(&e4, 2663);
+        r.required(&e4, 2733);
         let v = Self {
             location_reference_extension: e0,
             external_referencing: e1,
@@ -5253,6 +8095,94 @@ impl LocationByReference {
     }
 }
 
+impl LocationByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1142 => if r.first(&mut seen[0])? { f0 = LocationReferenceExtensionType::read_json(r)?.map(Box::new); },
+                744 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ExternalReferencing::read_json(r)? { f1.push(v); } } },
+                464 => if r.first(&mut seen[2])? { f2 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1136 => if r.first(&mut seen[3])? { f3 = LocationExtensionType::read_json(r)?.map(Box::new); },
+                1631 => if r.first(&mut seen[4])? { f4 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1135 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f4, 1631);
+        Ok(Self {
+            location_reference_extension: f0,
+            external_referencing: f1,
+            coordinates_for_display: f2,
+            location_extension: f3,
+            predefined_location_reference: f4,
+            location_by_reference_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(534)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_reference_extension {
+            w.key(1142)?;
+            v.write_json(w, None)?;
+        }
+        if !self.external_referencing.is_empty() {
+            w.key(744)?;
+            w.begin_array()?;
+            for v in &self.external_referencing {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.coordinates_for_display {
+            w.key(464)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.location_extension {
+            w.key(1136)?;
+            v.write_json(w, None)?;
+        }
+        match &self.predefined_location_reference {
+            Some(v) => {
+                w.key(1631)?;
+                v.write_json(w, Some("PredefinedLocation"))?;
+            }
+            None => w.absent(1631, w.missing("predefinedLocationReference"))?,
+        }
+        if let Some(v) = &self.location_by_reference_extension {
+            w.key(1135)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:LocationGroupByList`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LocationGroupByList {
@@ -5267,10 +8197,10 @@ pub struct LocationGroupByList {
 }
 
 impl LocationGroupByList {
-    const FIELDS: &'static [u32] = &[0xb04e3, 0xb04e2, 0xb08df, 0xb04e0];
+    const FIELDS: &'static [u32] = &[0xe0505, 0xe0504, 0xe091d, 0xe0502];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00f8);
+        r.expect_type(0xe0100);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5279,10 +8209,10 @@ impl LocationGroupByList {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb04e3 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1251); }
-                    0xb04e2 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1250); }
-                    0xb08df => { let v = Location::read(r)?; e2.extend(v); }
-                    0xb04e0 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1248); }
+                    0xe0505 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1285); }
+                    0xe0504 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1284); }
+                    0xe091d => { let v = Location::read(r)?; e2.extend(v); }
+                    0xe0502 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1282); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5316,6 +8246,77 @@ impl LocationGroupByList {
     }
 }
 
+impl LocationGroupByList {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1142 => if r.first(&mut seen[0])? { f0 = LocationReferenceExtensionType::read_json(r)?.map(Box::new); },
+                1141 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1231 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Location::read_json(r)? { f2.push(v); } } },
+                1138 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            location_reference_extension: f0,
+            location_group_extension: f1,
+            location_contained_in_group: f2,
+            location_group_by_list_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(537)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_reference_extension {
+            w.key(1142)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.location_group_extension {
+            w.key(1141)?;
+            w.extension(v)?;
+        }
+        w.count("locationContainedInGroup", self.location_contained_in_group.len(), 2, usize::MAX)?;
+        if !self.location_contained_in_group.is_empty() {
+            w.key(1231)?;
+            w.begin_array()?;
+            for v in &self.location_contained_in_group {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.location_group_by_list_extension {
+            w.key(1138)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:LocationGroupByReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LocationGroupByReference {
@@ -5330,10 +8331,10 @@ pub struct LocationGroupByReference {
 }
 
 impl LocationGroupByReference {
-    const FIELDS: &'static [u32] = &[0xb04e3, 0xb04e2, 0xb0a65, 0xb04e1];
+    const FIELDS: &'static [u32] = &[0xe0505, 0xe0504, 0xe0aab, 0xe0503];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb00f9);
+        r.expect_type(0xe0101);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5342,10 +8343,10 @@ impl LocationGroupByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb04e3 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1251); }
-                    0xb04e2 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1250); }
-                    0xb0a65 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2661); }
-                    0xb04e1 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1249); }
+                    0xe0505 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1285); }
+                    0xe0504 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1284); }
+                    0xe0aab => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2731); }
+                    0xe0503 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1283); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5354,7 +8355,7 @@ impl LocationGroupByReference {
                 break;
             }
         }
-        r.required(&e2, 2661);
+        r.required(&e2, 2731);
         let v = Self {
             location_reference_extension: e0,
             location_group_extension: e1,
@@ -5382,6 +8383,75 @@ impl LocationGroupByReference {
     }
 }
 
+impl LocationGroupByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1142 => if r.first(&mut seen[0])? { f0 = LocationReferenceExtensionType::read_json(r)?.map(Box::new); },
+                1141 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1629 => if r.first(&mut seen[2])? { f2 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1140 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 1629);
+        Ok(Self {
+            location_reference_extension: f0,
+            location_group_extension: f1,
+            predefined_location_group_reference: f2,
+            location_group_by_reference_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(538)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_reference_extension {
+            w.key(1142)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.location_group_extension {
+            w.key(1141)?;
+            w.extension(v)?;
+        }
+        match &self.predefined_location_group_reference {
+            Some(v) => {
+                w.key(1629)?;
+                v.write_json(w, Some("PredefinedLocationGroup"))?;
+            }
+            None => w.absent(1629, w.missing("predefinedLocationGroupReference"))?,
+        }
+        if let Some(v) = &self.location_group_by_reference_extension {
+            w.key(1140)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:NamedArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NamedArea {
@@ -5398,10 +8468,10 @@ pub struct NamedArea {
 }
 
 impl NamedArea {
-    const FIELDS: &'static [u32] = &[0x304fa, 0xb06cd, 0xb094e, 0xb0747, 0xb04fa];
+    const FIELDS: &'static [u32] = &[0x4051d, 0xe06f6, 0xe0990, 0xe0776, 0xe051d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0113);
+        r.expect_type(0xe011c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5411,11 +8481,11 @@ impl NamedArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x304fa => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1274); }
-                    0xb06cd => { let v = r.multilingual()?; r.set(&mut e1, v, 1741); }
-                    0xb094e => { let v = r.enumeration::<NamedAreaTypeEnum>()?; r.set(&mut e2, v, 2382); }
-                    0xb0747 => { let v = r.string()?; r.set(&mut e3, v, 1863); }
-                    0xb04fa => { let v = Some(NamedAreaExtensionType::read(r)?); r.set(&mut e4, v.map(Box::new), 1274); }
+                    0x4051d => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1309); }
+                    0xe06f6 => { let v = r.multilingual()?; r.set(&mut e1, v, 1782); }
+                    0xe0990 => { let v = r.enumeration::<NamedAreaTypeEnum>()?; r.set(&mut e2, v, 2448); }
+                    0xe0776 => { let v = r.string()?; r.set(&mut e3, v, 1910); }
+                    0xe051d => { let v = Some(NamedAreaExtensionType::read(r)?); r.set(&mut e4, v.map(Box::new), 1309); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5424,7 +8494,7 @@ impl NamedArea {
                 break;
             }
         }
-        r.required(&e1, 1741);
+        r.required(&e1, 1782);
         let v = Self {
             named_area_extension: e0,
             area_name: e1,
@@ -5454,6 +8524,82 @@ impl NamedArea {
     }
 }
 
+impl NamedArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                384 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                257 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                1349 => if r.first(&mut seen[2])? { f2 = r.enumeration::<NamedAreaTypeEnum>()?; },
+                468 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1144 => if r.first(&mut seen[4])? { f4 = NamedAreaExtensionType::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 257);
+        Ok(Self {
+            named_area_extension: f0,
+            area_name: f1,
+            named_area_type: f2,
+            country: f3,
+            loc_named_area_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(542)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.named_area_extension {
+            w.key(384)?;
+            w.extension(v)?;
+        }
+        match &self.area_name {
+            Some(v) => {
+                w.key(257)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(257, w.missing("areaName"))?,
+        }
+        if let Some(v) = &self.named_area_type {
+            w.key(1349)?;
+            w.enumeration(545, v.literal())?;
+        }
+        if let Some(v) = &self.country {
+            w.key(468)?;
+            w.max_len("country", v, 2)?; w.string(v)?;
+        }
+        if let Some(v) = &self.loc_named_area_extension {
+            w.key(1144)?;
+            v.write_json(w, None)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:NutsNamedArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NutsNamedArea {
@@ -5476,10 +8622,10 @@ pub struct NutsNamedArea {
 }
 
 impl NutsNamedArea {
-    const FIELDS: &'static [u32] = &[0x304fa, 0xb06cd, 0xb094e, 0xb0747, 0xb04fa, 0xb0995, 0xb0994, 0xb050b];
+    const FIELDS: &'static [u32] = &[0x4051d, 0xe06f6, 0xe0990, 0xe0776, 0xe051d, 0xe09d9, 0xe09d8, 0xe052e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0126);
+        r.expect_type(0xe012f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5492,14 +8638,14 @@ impl NutsNamedArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x304fa => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1274); }
-                    0xb06cd => { let v = r.multilingual()?; r.set(&mut e1, v, 1741); }
-                    0xb094e => { let v = r.enumeration::<NamedAreaTypeEnum>()?; r.set(&mut e2, v, 2382); }
-                    0xb0747 => { let v = r.string()?; r.set(&mut e3, v, 1863); }
-                    0xb04fa => { let v = Some(NamedAreaExtensionType::read(r)?); r.set(&mut e4, v.map(Box::new), 1274); }
-                    0xb0995 => { let v = r.enumeration::<NutsCodeTypeEnum>()?; r.set(&mut e5, v, 2453); }
-                    0xb0994 => { let v = r.string()?; r.set(&mut e6, v, 2452); }
-                    0xb050b => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1291); }
+                    0x4051d => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1309); }
+                    0xe06f6 => { let v = r.multilingual()?; r.set(&mut e1, v, 1782); }
+                    0xe0990 => { let v = r.enumeration::<NamedAreaTypeEnum>()?; r.set(&mut e2, v, 2448); }
+                    0xe0776 => { let v = r.string()?; r.set(&mut e3, v, 1910); }
+                    0xe051d => { let v = Some(NamedAreaExtensionType::read(r)?); r.set(&mut e4, v.map(Box::new), 1309); }
+                    0xe09d9 => { let v = r.enumeration::<NutsCodeTypeEnum>()?; r.set(&mut e5, v, 2521); }
+                    0xe09d8 => { let v = r.string()?; r.set(&mut e6, v, 2520); }
+                    0xe052e => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1326); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5508,9 +8654,9 @@ impl NutsNamedArea {
                 break;
             }
         }
-        r.required(&e1, 1741);
-        r.required(&e5, 2453);
-        r.required(&e6, 2452);
+        r.required(&e1, 1782);
+        r.required(&e5, 2521);
+        r.required(&e6, 2520);
         let v = Self {
             named_area_extension: e0,
             area_name: e1,
@@ -5552,6 +8698,111 @@ impl NutsNamedArea {
     }
 }
 
+impl NutsNamedArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                384 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                257 => if r.first(&mut seen[1])? { f1 = r.multilingual()?; },
+                1349 => if r.first(&mut seen[2])? { f2 = r.enumeration::<NamedAreaTypeEnum>()?; },
+                468 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1144 => if r.first(&mut seen[4])? { f4 = NamedAreaExtensionType::read_json(r)?.map(Box::new); },
+                1421 => if r.first(&mut seen[5])? { f5 = r.enumeration::<NutsCodeTypeEnum>()?; },
+                1420 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1147 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 257);
+        r.required(&f5, 1421);
+        r.required(&f6, 1420);
+        Ok(Self {
+            named_area_extension: f0,
+            area_name: f1,
+            named_area_type: f2,
+            country: f3,
+            loc_named_area_extension: f4,
+            nuts_code_type: f5,
+            nuts_code: f6,
+            nuts_named_area_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(548)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.named_area_extension {
+            w.key(384)?;
+            w.extension(v)?;
+        }
+        match &self.area_name {
+            Some(v) => {
+                w.key(257)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(257, w.missing("areaName"))?,
+        }
+        if let Some(v) = &self.named_area_type {
+            w.key(1349)?;
+            w.enumeration(545, v.literal())?;
+        }
+        if let Some(v) = &self.country {
+            w.key(468)?;
+            w.max_len("country", v, 2)?; w.string(v)?;
+        }
+        if let Some(v) = &self.loc_named_area_extension {
+            w.key(1144)?;
+            v.write_json(w, None)?;
+        }
+        match &self.nuts_code_type {
+            Some(v) => {
+                w.key(1421)?;
+                w.enumeration(547, v.literal())?;
+            }
+            None => w.absent(1421, w.missing("nutsCodeType"))?,
+        }
+        match &self.nuts_code {
+            Some(v) => {
+                w.key(1420)?;
+                w.max_len("nutsCode", v, 5)?; w.string(v)?;
+            }
+            None => w.absent(1420, w.missing("nutsCode"))?,
+        }
+        if let Some(v) = &self.nuts_named_area_extension {
+            w.key(1147)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OffsetDistance`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OffsetDistance {
@@ -5562,18 +8813,18 @@ pub struct OffsetDistance {
 }
 
 impl OffsetDistance {
-    const FIELDS: &'static [u32] = &[0xb09a5, 0xb0512];
+    const FIELDS: &'static [u32] = &[0xe09e9, 0xe0535];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb012d);
+        r.expect_type(0xe0136);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb09a5 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2469); }
-                    0xb0512 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1298); }
+                    0xe09e9 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2537); }
+                    0xe0535 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1333); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5582,7 +8833,7 @@ impl OffsetDistance {
                 break;
             }
         }
-        r.required(&e0, 2469);
+        r.required(&e0, 2537);
         let v = Self {
             offset_distance: e0,
             offset_distance_extension: e1,
@@ -5606,6 +8857,61 @@ impl OffsetDistance {
     }
 }
 
+impl OffsetDistance {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1437 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                1148 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1437);
+        Ok(Self {
+            offset_distance: f0,
+            offset_distance_extension: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(549)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.offset_distance {
+            Some(v) => {
+                w.key(1437)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1437, w.missing("offsetDistance"))?,
+        }
+        if let Some(v) = &self.offset_distance_extension {
+            w.key(1148)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrCircleLocationReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrCircleLocationReference {
@@ -5620,10 +8926,10 @@ pub struct OpenlrCircleLocationReference {
 }
 
 impl OpenlrCircleLocationReference {
-    const FIELDS: &'static [u32] = &[0xb0514, 0xb09c0, 0xb09af, 0xb0517];
+    const FIELDS: &'static [u32] = &[0xe0537, 0xe0a04, 0xe09f3, 0xe053a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0132);
+        r.expect_type(0xe013b);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5632,10 +8938,10 @@ impl OpenlrCircleLocationReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0514 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1300); }
-                    0xb09c0 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2496); }
-                    0xb09af => { let v = Some(OpenlrGeoCoordinate::read(r)?); r.set(&mut e2, v.map(Box::new), 2479); }
-                    0xb0517 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1303); }
+                    0xe0537 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1335); }
+                    0xe0a04 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2564); }
+                    0xe09f3 => { let v = Some(OpenlrGeoCoordinate::read(r)?); r.set(&mut e2, v.map(Box::new), 2547); }
+                    0xe053a => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1338); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5644,8 +8950,8 @@ impl OpenlrCircleLocationReference {
                 break;
             }
         }
-        r.required(&e1, 2496);
-        r.required(&e2, 2479);
+        r.required(&e1, 2564);
+        r.required(&e2, 2547);
         let v = Self {
             openlr_area_location_reference_extension: e0,
             openlr_radius: e1,
@@ -5676,6 +8982,79 @@ impl OpenlrCircleLocationReference {
     }
 }
 
+impl OpenlrCircleLocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1149 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1464 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1447 => if r.first(&mut seen[2])? { f2 = OpenlrGeoCoordinate::read_json(r)?.map(Box::new); },
+                1153 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1464);
+        r.required(&f2, 1447);
+        Ok(Self {
+            openlr_area_location_reference_extension: f0,
+            openlr_radius: f1,
+            openlr_geo_coordinate: f2,
+            openlr_circle_location_reference_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(551)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.openlr_area_location_reference_extension {
+            w.key(1149)?;
+            w.extension(v)?;
+        }
+        match &self.openlr_radius {
+            Some(v) => {
+                w.key(1464)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1464, w.missing("openlrRadius"))?,
+        }
+        match &self.openlr_geo_coordinate {
+            Some(v) => {
+                w.key(1447)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1447, w.missing("openlrGeoCoordinate"))?,
+        }
+        if let Some(v) = &self.openlr_circle_location_reference_extension {
+            w.key(1153)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrClosedLineLocationReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrClosedLineLocationReference {
@@ -5690,10 +9069,10 @@ pub struct OpenlrClosedLineLocationReference {
 }
 
 impl OpenlrClosedLineLocationReference {
-    const FIELDS: &'static [u32] = &[0xb0514, 0xb09b4, 0xb09b0, 0xb0518];
+    const FIELDS: &'static [u32] = &[0xe0537, 0xe09f8, 0xe09f4, 0xe053b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0133);
+        r.expect_type(0xe013c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -5702,10 +9081,10 @@ impl OpenlrClosedLineLocationReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0514 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1300); }
-                    0xb09b4 => { let v = Some(OpenlrLocationReferencePoint::read(r)?); e1.extend(v); }
-                    0xb09b0 => { let v = Some(OpenlrLastLocationReferencePoint::read(r)?); r.set(&mut e2, v.map(Box::new), 2480); }
-                    0xb0518 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1304); }
+                    0xe0537 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1335); }
+                    0xe09f8 => { let v = Some(OpenlrLocationReferencePoint::read(r)?); e1.extend(v); }
+                    0xe09f4 => { let v = Some(OpenlrLastLocationReferencePoint::read(r)?); r.set(&mut e2, v.map(Box::new), 2548); }
+                    0xe053b => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1339); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5714,7 +9093,7 @@ impl OpenlrClosedLineLocationReference {
                 break;
             }
         }
-        r.required(&e2, 2480);
+        r.required(&e2, 2548);
         let v = Self {
             openlr_area_location_reference_extension: e0,
             openlr_location_reference_point: e1,
@@ -5743,6 +9122,81 @@ impl OpenlrClosedLineLocationReference {
     }
 }
 
+impl OpenlrClosedLineLocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1149 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1452 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = OpenlrLocationReferencePoint::read_json(r)? { f1.push(v); } } },
+                1448 => if r.first(&mut seen[2])? { f2 = OpenlrLastLocationReferencePoint::read_json(r)?.map(Box::new); },
+                1155 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 1448);
+        Ok(Self {
+            openlr_area_location_reference_extension: f0,
+            openlr_location_reference_point: f1,
+            openlr_last_line: f2,
+            openlr_closed_line_location_reference_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(552)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.openlr_area_location_reference_extension {
+            w.key(1149)?;
+            w.extension(v)?;
+        }
+        w.count("openlrLocationReferencePoint", self.openlr_location_reference_point.len(), 1, usize::MAX)?;
+        if !self.openlr_location_reference_point.is_empty() {
+            w.key(1452)?;
+            w.begin_array()?;
+            for v in &self.openlr_location_reference_point {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        match &self.openlr_last_line {
+            Some(v) => {
+                w.key(1448)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1448, w.missing("openlrLastLine"))?,
+        }
+        if let Some(v) = &self.openlr_closed_line_location_reference_extension {
+            w.key(1155)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrGeoCoordinate`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrGeoCoordinate {
@@ -5755,10 +9209,10 @@ pub struct OpenlrGeoCoordinate {
 }
 
 impl OpenlrGeoCoordinate {
-    const FIELDS: &'static [u32] = &[0xb0524, 0xb09ab, 0xb0519];
+    const FIELDS: &'static [u32] = &[0xe0547, 0xe09ef, 0xe053c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0134);
+        r.expect_type(0xe013d);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5766,9 +9220,9 @@ impl OpenlrGeoCoordinate {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0524 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1316); }
-                    0xb09ab => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2475); }
-                    0xb0519 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1305); }
+                    0xe0547 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1351); }
+                    0xe09ef => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2543); }
+                    0xe053c => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1340); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5777,7 +9231,7 @@ impl OpenlrGeoCoordinate {
                 break;
             }
         }
-        r.required(&e1, 2475);
+        r.required(&e1, 2543);
         let v = Self {
             openlr_point_location_reference_extension: e0,
             openlr_coordinates: e1,
@@ -5803,6 +9257,68 @@ impl OpenlrGeoCoordinate {
     }
 }
 
+impl OpenlrGeoCoordinate {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1171 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1443 => if r.first(&mut seen[1])? { f1 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1157 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1443);
+        Ok(Self {
+            openlr_point_location_reference_extension: f0,
+            openlr_coordinates: f1,
+            openlr_geo_coordinate_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(555)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.openlr_point_location_reference_extension {
+            w.key(1171)?;
+            w.extension(v)?;
+        }
+        match &self.openlr_coordinates {
+            Some(v) => {
+                w.key(1443)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1443, w.missing("openlrCoordinates"))?,
+        }
+        if let Some(v) = &self.openlr_geo_coordinate_extension {
+            w.key(1157)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrGridLocationReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrGridLocationReference {
@@ -5819,10 +9335,10 @@ pub struct OpenlrGridLocationReference {
 }
 
 impl OpenlrGridLocationReference {
-    const FIELDS: &'static [u32] = &[0xb0514, 0xb09b8, 0xb09b9, 0xb09c1, 0xb051a];
+    const FIELDS: &'static [u32] = &[0xe0537, 0xe09fc, 0xe09fd, 0xe0a05, 0xe053d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0135);
+        r.expect_type(0xe013e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5832,11 +9348,11 @@ impl OpenlrGridLocationReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0514 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1300); }
-                    0xb09b8 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2488); }
-                    0xb09b9 => { let v = r.value::<u64>()?; r.set(&mut e2, v, 2489); }
-                    0xb09c1 => { let v = Some(OpenlrRectangle::read(r)?); r.set(&mut e3, v.map(Box::new), 2497); }
-                    0xb051a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1306); }
+                    0xe0537 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1335); }
+                    0xe09fc => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2556); }
+                    0xe09fd => { let v = r.value::<u64>()?; r.set(&mut e2, v, 2557); }
+                    0xe0a05 => { let v = Some(OpenlrRectangle::read(r)?); r.set(&mut e3, v.map(Box::new), 2565); }
+                    0xe053d => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1341); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5845,9 +9361,9 @@ impl OpenlrGridLocationReference {
                 break;
             }
         }
-        r.required(&e1, 2488);
-        r.required(&e2, 2489);
-        r.required(&e3, 2497);
+        r.required(&e1, 2556);
+        r.required(&e2, 2557);
+        r.required(&e3, 2565);
         let v = Self {
             openlr_area_location_reference_extension: e0,
             openlr_num_columns: e1,
@@ -5883,6 +9399,90 @@ impl OpenlrGridLocationReference {
     }
 }
 
+impl OpenlrGridLocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1149 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1456 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1457 => if r.first(&mut seen[2])? { f2 = r.number::<u64>()?; },
+                1465 => if r.first(&mut seen[3])? { f3 = OpenlrRectangle::read_json(r)?.map(Box::new); },
+                1159 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1456);
+        r.required(&f2, 1457);
+        r.required(&f3, 1465);
+        Ok(Self {
+            openlr_area_location_reference_extension: f0,
+            openlr_num_columns: f1,
+            openlr_num_rows: f2,
+            openlr_rectangle: f3,
+            openlr_grid_location_reference_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(556)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.openlr_area_location_reference_extension {
+            w.key(1149)?;
+            w.extension(v)?;
+        }
+        match &self.openlr_num_columns {
+            Some(v) => {
+                w.key(1456)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1456, w.missing("openlrNumColumns"))?,
+        }
+        match &self.openlr_num_rows {
+            Some(v) => {
+                w.key(1457)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1457, w.missing("openlrNumRows"))?,
+        }
+        match &self.openlr_rectangle {
+            Some(v) => {
+                w.key(1465)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1465, w.missing("openlrRectangle"))?,
+        }
+        if let Some(v) = &self.openlr_grid_location_reference_extension {
+            w.key(1159)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrLastLocationReferencePoint`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrLastLocationReferencePoint {
@@ -5897,10 +9497,10 @@ pub struct OpenlrLastLocationReferencePoint {
 }
 
 impl OpenlrLastLocationReferencePoint {
-    const FIELDS: &'static [u32] = &[0xb09ab, 0xb09b2, 0xb0516, 0xb051b];
+    const FIELDS: &'static [u32] = &[0xe09ef, 0xe09f6, 0xe0539, 0xe053e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0136);
+        r.expect_type(0xe013f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5909,10 +9509,10 @@ impl OpenlrLastLocationReferencePoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb09ab => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e0, v.map(Box::new), 2475); }
-                    0xb09b2 => { let v = Some(OpenlrLineAttributes::read(r)?); r.set(&mut e1, v.map(Box::new), 2482); }
-                    0xb0516 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1302); }
-                    0xb051b => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1307); }
+                    0xe09ef => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e0, v.map(Box::new), 2543); }
+                    0xe09f6 => { let v = Some(OpenlrLineAttributes::read(r)?); r.set(&mut e1, v.map(Box::new), 2550); }
+                    0xe0539 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1337); }
+                    0xe053e => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1342); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5921,8 +9521,8 @@ impl OpenlrLastLocationReferencePoint {
                 break;
             }
         }
-        r.required(&e0, 2475);
-        r.required(&e1, 2482);
+        r.required(&e0, 2543);
+        r.required(&e1, 2550);
         let v = Self {
             openlr_coordinates: e0,
             openlr_line_attributes: e1,
@@ -5953,6 +9553,79 @@ impl OpenlrLastLocationReferencePoint {
     }
 }
 
+impl OpenlrLastLocationReferencePoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1443 => if r.first(&mut seen[0])? { f0 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1450 => if r.first(&mut seen[1])? { f1 = OpenlrLineAttributes::read_json(r)?.map(Box::new); },
+                1151 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1160 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1443);
+        r.required(&f1, 1450);
+        Ok(Self {
+            openlr_coordinates: f0,
+            openlr_line_attributes: f1,
+            openlr_base_reference_point_extension: f2,
+            openlr_last_location_reference_point_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(557)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.openlr_coordinates {
+            Some(v) => {
+                w.key(1443)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1443, w.missing("openlrCoordinates"))?,
+        }
+        match &self.openlr_line_attributes {
+            Some(v) => {
+                w.key(1450)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1450, w.missing("openlrLineAttributes"))?,
+        }
+        if let Some(v) = &self.openlr_base_reference_point_extension {
+            w.key(1151)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.openlr_last_location_reference_point_extension {
+            w.key(1160)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrLineAttributes`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrLineAttributes {
@@ -5967,10 +9640,10 @@ pub struct OpenlrLineAttributes {
 }
 
 impl OpenlrLineAttributes {
-    const FIELDS: &'static [u32] = &[0xb09ae, 0xb09ad, 0xb09aa, 0xb051c];
+    const FIELDS: &'static [u32] = &[0xe09f2, 0xe09f1, 0xe09ee, 0xe053f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0137);
+        r.expect_type(0xe0140);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5979,10 +9652,10 @@ impl OpenlrLineAttributes {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb09ae => { let v = r.enumeration::<OpenlrFunctionalRoadClassEnum>()?; r.set(&mut e0, v, 2478); }
-                    0xb09ad => { let v = r.enumeration::<OpenlrFormOfWayEnum>()?; r.set(&mut e1, v, 2477); }
-                    0xb09aa => { let v = r.value::<u64>()?; r.set(&mut e2, v, 2474); }
-                    0xb051c => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1308); }
+                    0xe09f2 => { let v = r.enumeration::<OpenlrFunctionalRoadClassEnum>()?; r.set(&mut e0, v, 2546); }
+                    0xe09f1 => { let v = r.enumeration::<OpenlrFormOfWayEnum>()?; r.set(&mut e1, v, 2545); }
+                    0xe09ee => { let v = r.value::<u64>()?; r.set(&mut e2, v, 2542); }
+                    0xe053f => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1343); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5991,9 +9664,9 @@ impl OpenlrLineAttributes {
                 break;
             }
         }
-        r.required(&e0, 2478);
-        r.required(&e1, 2477);
-        r.required(&e2, 2474);
+        r.required(&e0, 2546);
+        r.required(&e1, 2545);
+        r.required(&e2, 2542);
         let v = Self {
             openlr_functional_road_class: e0,
             openlr_form_of_way: e1,
@@ -6027,6 +9700,83 @@ impl OpenlrLineAttributes {
     }
 }
 
+impl OpenlrLineAttributes {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1446 => if r.first(&mut seen[0])? { f0 = r.enumeration::<OpenlrFunctionalRoadClassEnum>()?; },
+                1445 => if r.first(&mut seen[1])? { f1 = r.enumeration::<OpenlrFormOfWayEnum>()?; },
+                1442 => if r.first(&mut seen[2])? { f2 = r.number::<u64>()?; },
+                1161 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1446);
+        r.required(&f1, 1445);
+        r.required(&f2, 1442);
+        Ok(Self {
+            openlr_functional_road_class: f0,
+            openlr_form_of_way: f1,
+            openlr_bearing: f2,
+            openlr_line_attributes_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(558)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.openlr_functional_road_class {
+            Some(v) => {
+                w.key(1446)?;
+                w.enumeration(554, v.literal())?;
+            }
+            None => w.absent(1446, w.missing("openlrFunctionalRoadClass"))?,
+        }
+        match &self.openlr_form_of_way {
+            Some(v) => {
+                w.key(1445)?;
+                w.enumeration(553, v.literal())?;
+            }
+            None => w.absent(1445, w.missing("openlrFormOfWay"))?,
+        }
+        match &self.openlr_bearing {
+            Some(v) => {
+                w.key(1442)?;
+                w.range("openlrBearing", *v, 0, 359)?; w.integer(*v)?;
+            }
+            None => w.absent(1442, w.missing("openlrBearing"))?,
+        }
+        if let Some(v) = &self.openlr_line_attributes_extension {
+            w.key(1161)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrLineLocationReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrLineLocationReference {
@@ -6041,10 +9791,10 @@ pub struct OpenlrLineLocationReference {
 }
 
 impl OpenlrLineLocationReference {
-    const FIELDS: &'static [u32] = &[0xb09b4, 0xb09b1, 0xb09ba, 0xb051d];
+    const FIELDS: &'static [u32] = &[0xe09f8, 0xe09f5, 0xe09fe, 0xe0540];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0138);
+        r.expect_type(0xe0141);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -6053,10 +9803,10 @@ impl OpenlrLineLocationReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb09b4 => { let v = Some(OpenlrLocationReferencePoint::read(r)?); e0.extend(v); }
-                    0xb09b1 => { let v = Some(OpenlrLastLocationReferencePoint::read(r)?); r.set(&mut e1, v.map(Box::new), 2481); }
-                    0xb09ba => { let v = Some(OpenlrOffsets::read(r)?); r.set(&mut e2, v.map(Box::new), 2490); }
-                    0xb051d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1309); }
+                    0xe09f8 => { let v = Some(OpenlrLocationReferencePoint::read(r)?); e0.extend(v); }
+                    0xe09f5 => { let v = Some(OpenlrLastLocationReferencePoint::read(r)?); r.set(&mut e1, v.map(Box::new), 2549); }
+                    0xe09fe => { let v = Some(OpenlrOffsets::read(r)?); r.set(&mut e2, v.map(Box::new), 2558); }
+                    0xe0540 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1344); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6065,7 +9815,7 @@ impl OpenlrLineLocationReference {
                 break;
             }
         }
-        r.required(&e1, 2481);
+        r.required(&e1, 2549);
         let v = Self {
             openlr_location_reference_point: e0,
             openlr_last_location_reference_point: e1,
@@ -6094,6 +9844,81 @@ impl OpenlrLineLocationReference {
     }
 }
 
+impl OpenlrLineLocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1452 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = OpenlrLocationReferencePoint::read_json(r)? { f0.push(v); } } },
+                1449 => if r.first(&mut seen[1])? { f1 = OpenlrLastLocationReferencePoint::read_json(r)?.map(Box::new); },
+                1458 => if r.first(&mut seen[2])? { f2 = OpenlrOffsets::read_json(r)?.map(Box::new); },
+                1162 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1449);
+        Ok(Self {
+            openlr_location_reference_point: f0,
+            openlr_last_location_reference_point: f1,
+            openlr_offsets: f2,
+            openlr_line_location_reference_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(559)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        w.count("openlrLocationReferencePoint", self.openlr_location_reference_point.len(), 1, usize::MAX)?;
+        if !self.openlr_location_reference_point.is_empty() {
+            w.key(1452)?;
+            w.begin_array()?;
+            for v in &self.openlr_location_reference_point {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        match &self.openlr_last_location_reference_point {
+            Some(v) => {
+                w.key(1449)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1449, w.missing("openlrLastLocationReferencePoint"))?,
+        }
+        if let Some(v) = &self.openlr_offsets {
+            w.key(1458)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.openlr_line_location_reference_extension {
+            w.key(1162)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrLinear`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrLinear {
@@ -6106,10 +9931,10 @@ pub struct OpenlrLinear {
 }
 
 impl OpenlrLinear {
-    const FIELDS: &'static [u32] = &[0xb0821, 0xb09d8, 0xb051e];
+    const FIELDS: &'static [u32] = &[0xe085d, 0xe0a1d, 0xe0541];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0139);
+        r.expect_type(0xe0142);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6117,9 +9942,9 @@ impl OpenlrLinear {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0821 => { let v = Some(OpenlrLineLocationReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2081); }
-                    0xb09d8 => { let v = Some(OpenlrLineLocationReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2520); }
-                    0xb051e => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1310); }
+                    0xe085d => { let v = Some(OpenlrLineLocationReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2141); }
+                    0xe0a1d => { let v = Some(OpenlrLineLocationReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2589); }
+                    0xe0541 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1345); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6128,7 +9953,7 @@ impl OpenlrLinear {
                 break;
             }
         }
-        r.required(&e0, 2081);
+        r.required(&e0, 2141);
         let v = Self {
             first_direction: e0,
             opposite_direction: e1,
@@ -6154,6 +9979,68 @@ impl OpenlrLinear {
     }
 }
 
+impl OpenlrLinear {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                851 => if r.first(&mut seen[0])? { f0 = OpenlrLineLocationReference::read_json(r)?.map(Box::new); },
+                1488 => if r.first(&mut seen[1])? { f1 = OpenlrLineLocationReference::read_json(r)?.map(Box::new); },
+                1163 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 851);
+        Ok(Self {
+            first_direction: f0,
+            opposite_direction: f1,
+            openlr_linear_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(560)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.first_direction {
+            Some(v) => {
+                w.key(851)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(851, w.missing("firstDirection"))?,
+        }
+        if let Some(v) = &self.opposite_direction {
+            w.key(1488)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.openlr_linear_extension {
+            w.key(1163)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrLocationReferencePoint`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrLocationReferencePoint {
@@ -6170,10 +10057,10 @@ pub struct OpenlrLocationReferencePoint {
 }
 
 impl OpenlrLocationReferencePoint {
-    const FIELDS: &'static [u32] = &[0xb09ab, 0xb09b2, 0xb0516, 0xb09bc, 0xb051f];
+    const FIELDS: &'static [u32] = &[0xe09ef, 0xe09f6, 0xe0539, 0xe0a00, 0xe0542];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb013a);
+        r.expect_type(0xe0143);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6183,11 +10070,11 @@ impl OpenlrLocationReferencePoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb09ab => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e0, v.map(Box::new), 2475); }
-                    0xb09b2 => { let v = Some(OpenlrLineAttributes::read(r)?); r.set(&mut e1, v.map(Box::new), 2482); }
-                    0xb0516 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1302); }
-                    0xb09bc => { let v = Some(OpenlrPathAttributes::read(r)?); r.set(&mut e3, v.map(Box::new), 2492); }
-                    0xb051f => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1311); }
+                    0xe09ef => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e0, v.map(Box::new), 2543); }
+                    0xe09f6 => { let v = Some(OpenlrLineAttributes::read(r)?); r.set(&mut e1, v.map(Box::new), 2550); }
+                    0xe0539 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1337); }
+                    0xe0a00 => { let v = Some(OpenlrPathAttributes::read(r)?); r.set(&mut e3, v.map(Box::new), 2560); }
+                    0xe0542 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1346); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6196,9 +10083,9 @@ impl OpenlrLocationReferencePoint {
                 break;
             }
         }
-        r.required(&e0, 2475);
-        r.required(&e1, 2482);
-        r.required(&e3, 2492);
+        r.required(&e0, 2543);
+        r.required(&e1, 2550);
+        r.required(&e3, 2560);
         let v = Self {
             openlr_coordinates: e0,
             openlr_line_attributes: e1,
@@ -6234,6 +10121,90 @@ impl OpenlrLocationReferencePoint {
     }
 }
 
+impl OpenlrLocationReferencePoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1443 => if r.first(&mut seen[0])? { f0 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1450 => if r.first(&mut seen[1])? { f1 = OpenlrLineAttributes::read_json(r)?.map(Box::new); },
+                1151 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1460 => if r.first(&mut seen[3])? { f3 = OpenlrPathAttributes::read_json(r)?.map(Box::new); },
+                1164 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1443);
+        r.required(&f1, 1450);
+        r.required(&f3, 1460);
+        Ok(Self {
+            openlr_coordinates: f0,
+            openlr_line_attributes: f1,
+            openlr_base_reference_point_extension: f2,
+            openlr_path_attributes: f3,
+            openlr_location_reference_point_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(561)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.openlr_coordinates {
+            Some(v) => {
+                w.key(1443)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1443, w.missing("openlrCoordinates"))?,
+        }
+        match &self.openlr_line_attributes {
+            Some(v) => {
+                w.key(1450)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1450, w.missing("openlrLineAttributes"))?,
+        }
+        if let Some(v) = &self.openlr_base_reference_point_extension {
+            w.key(1151)?;
+            w.extension(v)?;
+        }
+        match &self.openlr_path_attributes {
+            Some(v) => {
+                w.key(1460)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1460, w.missing("openlrPathAttributes"))?,
+        }
+        if let Some(v) = &self.openlr_location_reference_point_extension {
+            w.key(1164)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrOffsets`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrOffsets {
@@ -6246,10 +10217,10 @@ pub struct OpenlrOffsets {
 }
 
 impl OpenlrOffsets {
-    const FIELDS: &'static [u32] = &[0xb09bf, 0xb09b7, 0xb0520];
+    const FIELDS: &'static [u32] = &[0xe0a03, 0xe09fb, 0xe0543];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb013b);
+        r.expect_type(0xe0144);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6257,9 +10228,9 @@ impl OpenlrOffsets {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb09bf => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2495); }
-                    0xb09b7 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2487); }
-                    0xb0520 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1312); }
+                    0xe0a03 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 2563); }
+                    0xe09fb => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2555); }
+                    0xe0543 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1347); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6290,6 +10261,64 @@ impl OpenlrOffsets {
     }
 }
 
+impl OpenlrOffsets {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1463 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                1455 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1165 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            openlr_positive_offset: f0,
+            openlr_negative_offset: f1,
+            openlr_offsets_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(562)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.openlr_positive_offset {
+            w.key(1463)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.openlr_negative_offset {
+            w.key(1455)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.openlr_offsets_extension {
+            w.key(1165)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrPathAttributes`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrPathAttributes {
@@ -6302,10 +10331,10 @@ pub struct OpenlrPathAttributes {
 }
 
 impl OpenlrPathAttributes {
-    const FIELDS: &'static [u32] = &[0xb09b6, 0xb09ac, 0xb0521];
+    const FIELDS: &'static [u32] = &[0xe09fa, 0xe09f0, 0xe0544];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb013c);
+        r.expect_type(0xe0145);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6313,9 +10342,9 @@ impl OpenlrPathAttributes {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb09b6 => { let v = r.enumeration::<OpenlrFunctionalRoadClassEnum>()?; r.set(&mut e0, v, 2486); }
-                    0xb09ac => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2476); }
-                    0xb0521 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1313); }
+                    0xe09fa => { let v = r.enumeration::<OpenlrFunctionalRoadClassEnum>()?; r.set(&mut e0, v, 2554); }
+                    0xe09f0 => { let v = r.value::<u64>()?; r.set(&mut e1, v, 2544); }
+                    0xe0544 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1348); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6324,8 +10353,8 @@ impl OpenlrPathAttributes {
                 break;
             }
         }
-        r.required(&e0, 2486);
-        r.required(&e1, 2476);
+        r.required(&e0, 2554);
+        r.required(&e1, 2544);
         let v = Self {
             openlr_lowest_frc_to_next_lr_point: e0,
             openlr_distance_to_next_lr_point: e1,
@@ -6354,6 +10383,72 @@ impl OpenlrPathAttributes {
     }
 }
 
+impl OpenlrPathAttributes {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1454 => if r.first(&mut seen[0])? { f0 = r.enumeration::<OpenlrFunctionalRoadClassEnum>()?; },
+                1444 => if r.first(&mut seen[1])? { f1 = r.number::<u64>()?; },
+                1166 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1454);
+        r.required(&f1, 1444);
+        Ok(Self {
+            openlr_lowest_frc_to_next_lr_point: f0,
+            openlr_distance_to_next_lr_point: f1,
+            openlr_path_attributes_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(564)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.openlr_lowest_frc_to_next_lr_point {
+            Some(v) => {
+                w.key(1454)?;
+                w.enumeration(554, v.literal())?;
+            }
+            None => w.absent(1454, w.missing("openlrLowestFrcToNextLRPoint"))?,
+        }
+        match &self.openlr_distance_to_next_lr_point {
+            Some(v) => {
+                w.key(1444)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1444, w.missing("openlrDistanceToNextLRPoint"))?,
+        }
+        if let Some(v) = &self.openlr_path_attributes_extension {
+            w.key(1166)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrPoiWithAccessPoint`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrPoiWithAccessPoint {
@@ -6378,10 +10473,10 @@ pub struct OpenlrPoiWithAccessPoint {
 }
 
 impl OpenlrPoiWithAccessPoint {
-    const FIELDS: &'static [u32] = &[0xb0524, 0xb09c2, 0xb09bb, 0xb09b4, 0xb09b1, 0xb09ba, 0xb0515, 0xb09ab, 0xb0522];
+    const FIELDS: &'static [u32] = &[0xe0547, 0xe0a06, 0xe09ff, 0xe09f8, 0xe09f5, 0xe09fe, 0xe0538, 0xe09ef, 0xe0545];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb013d);
+        r.expect_type(0xe0146);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6395,15 +10490,15 @@ impl OpenlrPoiWithAccessPoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0524 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1316); }
-                    0xb09c2 => { let v = r.enumeration::<OpenlrSideOfRoadEnum>()?; r.set(&mut e1, v, 2498); }
-                    0xb09bb => { let v = r.enumeration::<OpenlrOrientationEnum>()?; r.set(&mut e2, v, 2491); }
-                    0xb09b4 => { let v = Some(OpenlrLocationReferencePoint::read(r)?); r.set(&mut e3, v.map(Box::new), 2484); }
-                    0xb09b1 => { let v = Some(OpenlrLastLocationReferencePoint::read(r)?); r.set(&mut e4, v.map(Box::new), 2481); }
-                    0xb09ba => { let v = Some(OpenlrOffsets::read(r)?); r.set(&mut e5, v.map(Box::new), 2490); }
-                    0xb0515 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1301); }
-                    0xb09ab => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e7, v.map(Box::new), 2475); }
-                    0xb0522 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1314); }
+                    0xe0547 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1351); }
+                    0xe0a06 => { let v = r.enumeration::<OpenlrSideOfRoadEnum>()?; r.set(&mut e1, v, 2566); }
+                    0xe09ff => { let v = r.enumeration::<OpenlrOrientationEnum>()?; r.set(&mut e2, v, 2559); }
+                    0xe09f8 => { let v = Some(OpenlrLocationReferencePoint::read(r)?); r.set(&mut e3, v.map(Box::new), 2552); }
+                    0xe09f5 => { let v = Some(OpenlrLastLocationReferencePoint::read(r)?); r.set(&mut e4, v.map(Box::new), 2549); }
+                    0xe09fe => { let v = Some(OpenlrOffsets::read(r)?); r.set(&mut e5, v.map(Box::new), 2558); }
+                    0xe0538 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1336); }
+                    0xe09ef => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e7, v.map(Box::new), 2543); }
+                    0xe0545 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1349); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6412,11 +10507,11 @@ impl OpenlrPoiWithAccessPoint {
                 break;
             }
         }
-        r.required(&e1, 2498);
-        r.required(&e2, 2491);
-        r.required(&e3, 2484);
-        r.required(&e4, 2481);
-        r.required(&e7, 2475);
+        r.required(&e1, 2566);
+        r.required(&e2, 2559);
+        r.required(&e3, 2552);
+        r.required(&e4, 2549);
+        r.required(&e7, 2543);
         let v = Self {
             openlr_point_location_reference_extension: e0,
             openlr_side_of_road: e1,
@@ -6466,6 +10561,126 @@ impl OpenlrPoiWithAccessPoint {
     }
 }
 
+impl OpenlrPoiWithAccessPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 9];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1171 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1466 => if r.first(&mut seen[1])? { f1 = r.enumeration::<OpenlrSideOfRoadEnum>()?; },
+                1459 => if r.first(&mut seen[2])? { f2 = r.enumeration::<OpenlrOrientationEnum>()?; },
+                1452 => if r.first(&mut seen[3])? { f3 = OpenlrLocationReferencePoint::read_json(r)?.map(Box::new); },
+                1449 => if r.first(&mut seen[4])? { f4 = OpenlrLastLocationReferencePoint::read_json(r)?.map(Box::new); },
+                1458 => if r.first(&mut seen[5])? { f5 = OpenlrOffsets::read_json(r)?.map(Box::new); },
+                1150 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                1443 => if r.first(&mut seen[7])? { f7 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1168 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1466);
+        r.required(&f2, 1459);
+        r.required(&f3, 1452);
+        r.required(&f4, 1449);
+        r.required(&f7, 1443);
+        Ok(Self {
+            openlr_point_location_reference_extension: f0,
+            openlr_side_of_road: f1,
+            openlr_orientation: f2,
+            openlr_location_reference_point: f3,
+            openlr_last_location_reference_point: f4,
+            openlr_offsets: f5,
+            openlr_base_point_location_extension: f6,
+            openlr_coordinates: f7,
+            openlr_poi_with_access_point_extension: f8,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(565)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.openlr_point_location_reference_extension {
+            w.key(1171)?;
+            w.extension(v)?;
+        }
+        match &self.openlr_side_of_road {
+            Some(v) => {
+                w.key(1466)?;
+                w.enumeration(572, v.literal())?;
+            }
+            None => w.absent(1466, w.missing("openlrSideOfRoad"))?,
+        }
+        match &self.openlr_orientation {
+            Some(v) => {
+                w.key(1459)?;
+                w.enumeration(563, v.literal())?;
+            }
+            None => w.absent(1459, w.missing("openlrOrientation"))?,
+        }
+        match &self.openlr_location_reference_point {
+            Some(v) => {
+                w.key(1452)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1452, w.missing("openlrLocationReferencePoint"))?,
+        }
+        match &self.openlr_last_location_reference_point {
+            Some(v) => {
+                w.key(1449)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1449, w.missing("openlrLastLocationReferencePoint"))?,
+        }
+        if let Some(v) = &self.openlr_offsets {
+            w.key(1458)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.openlr_base_point_location_extension {
+            w.key(1150)?;
+            w.extension(v)?;
+        }
+        match &self.openlr_coordinates {
+            Some(v) => {
+                w.key(1443)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1443, w.missing("openlrCoordinates"))?,
+        }
+        if let Some(v) = &self.openlr_poi_with_access_point_extension {
+            w.key(1168)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrPointAlongLine`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrPointAlongLine {
@@ -6488,10 +10703,10 @@ pub struct OpenlrPointAlongLine {
 }
 
 impl OpenlrPointAlongLine {
-    const FIELDS: &'static [u32] = &[0xb0524, 0xb09c2, 0xb09bb, 0xb09b4, 0xb09b1, 0xb09ba, 0xb0515, 0xb0523];
+    const FIELDS: &'static [u32] = &[0xe0547, 0xe0a06, 0xe09ff, 0xe09f8, 0xe09f5, 0xe09fe, 0xe0538, 0xe0546];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb013e);
+        r.expect_type(0xe0147);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6504,14 +10719,14 @@ impl OpenlrPointAlongLine {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0524 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1316); }
-                    0xb09c2 => { let v = r.enumeration::<OpenlrSideOfRoadEnum>()?; r.set(&mut e1, v, 2498); }
-                    0xb09bb => { let v = r.enumeration::<OpenlrOrientationEnum>()?; r.set(&mut e2, v, 2491); }
-                    0xb09b4 => { let v = Some(OpenlrLocationReferencePoint::read(r)?); r.set(&mut e3, v.map(Box::new), 2484); }
-                    0xb09b1 => { let v = Some(OpenlrLastLocationReferencePoint::read(r)?); r.set(&mut e4, v.map(Box::new), 2481); }
-                    0xb09ba => { let v = Some(OpenlrOffsets::read(r)?); r.set(&mut e5, v.map(Box::new), 2490); }
-                    0xb0515 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1301); }
-                    0xb0523 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1315); }
+                    0xe0547 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1351); }
+                    0xe0a06 => { let v = r.enumeration::<OpenlrSideOfRoadEnum>()?; r.set(&mut e1, v, 2566); }
+                    0xe09ff => { let v = r.enumeration::<OpenlrOrientationEnum>()?; r.set(&mut e2, v, 2559); }
+                    0xe09f8 => { let v = Some(OpenlrLocationReferencePoint::read(r)?); r.set(&mut e3, v.map(Box::new), 2552); }
+                    0xe09f5 => { let v = Some(OpenlrLastLocationReferencePoint::read(r)?); r.set(&mut e4, v.map(Box::new), 2549); }
+                    0xe09fe => { let v = Some(OpenlrOffsets::read(r)?); r.set(&mut e5, v.map(Box::new), 2558); }
+                    0xe0538 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1336); }
+                    0xe0546 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1350); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6520,10 +10735,10 @@ impl OpenlrPointAlongLine {
                 break;
             }
         }
-        r.required(&e1, 2498);
-        r.required(&e2, 2491);
-        r.required(&e3, 2484);
-        r.required(&e4, 2481);
+        r.required(&e1, 2566);
+        r.required(&e2, 2559);
+        r.required(&e3, 2552);
+        r.required(&e4, 2549);
         let v = Self {
             openlr_point_location_reference_extension: e0,
             openlr_side_of_road: e1,
@@ -6568,6 +10783,115 @@ impl OpenlrPointAlongLine {
     }
 }
 
+impl OpenlrPointAlongLine {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 8];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1171 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1466 => if r.first(&mut seen[1])? { f1 = r.enumeration::<OpenlrSideOfRoadEnum>()?; },
+                1459 => if r.first(&mut seen[2])? { f2 = r.enumeration::<OpenlrOrientationEnum>()?; },
+                1452 => if r.first(&mut seen[3])? { f3 = OpenlrLocationReferencePoint::read_json(r)?.map(Box::new); },
+                1449 => if r.first(&mut seen[4])? { f4 = OpenlrLastLocationReferencePoint::read_json(r)?.map(Box::new); },
+                1458 => if r.first(&mut seen[5])? { f5 = OpenlrOffsets::read_json(r)?.map(Box::new); },
+                1150 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                1170 => if r.first(&mut seen[7])? { f7 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1466);
+        r.required(&f2, 1459);
+        r.required(&f3, 1452);
+        r.required(&f4, 1449);
+        Ok(Self {
+            openlr_point_location_reference_extension: f0,
+            openlr_side_of_road: f1,
+            openlr_orientation: f2,
+            openlr_location_reference_point: f3,
+            openlr_last_location_reference_point: f4,
+            openlr_offsets: f5,
+            openlr_base_point_location_extension: f6,
+            openlr_point_along_line_extension: f7,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(566)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.openlr_point_location_reference_extension {
+            w.key(1171)?;
+            w.extension(v)?;
+        }
+        match &self.openlr_side_of_road {
+            Some(v) => {
+                w.key(1466)?;
+                w.enumeration(572, v.literal())?;
+            }
+            None => w.absent(1466, w.missing("openlrSideOfRoad"))?,
+        }
+        match &self.openlr_orientation {
+            Some(v) => {
+                w.key(1459)?;
+                w.enumeration(563, v.literal())?;
+            }
+            None => w.absent(1459, w.missing("openlrOrientation"))?,
+        }
+        match &self.openlr_location_reference_point {
+            Some(v) => {
+                w.key(1452)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1452, w.missing("openlrLocationReferencePoint"))?,
+        }
+        match &self.openlr_last_location_reference_point {
+            Some(v) => {
+                w.key(1449)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1449, w.missing("openlrLastLocationReferencePoint"))?,
+        }
+        if let Some(v) = &self.openlr_offsets {
+            w.key(1458)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.openlr_base_point_location_extension {
+            w.key(1150)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.openlr_point_along_line_extension {
+            w.key(1170)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrPolygonCorners`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrPolygonCorners {
@@ -6578,18 +10902,18 @@ pub struct OpenlrPolygonCorners {
 }
 
 impl OpenlrPolygonCorners {
-    const FIELDS: &'static [u32] = &[0xb09ab, 0xb0525];
+    const FIELDS: &'static [u32] = &[0xe09ef, 0xe0548];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0140);
+        r.expect_type(0xe0149);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb09ab => { let v = Some(PointCoordinates::read(r)?); e0.extend(v); }
-                    0xb0525 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1317); }
+                    0xe09ef => { let v = Some(PointCoordinates::read(r)?); e0.extend(v); }
+                    0xe0548 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1352); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6619,6 +10943,63 @@ impl OpenlrPolygonCorners {
     }
 }
 
+impl OpenlrPolygonCorners {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1443 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = PointCoordinates::read_json(r)? { f0.push(v); } } },
+                1172 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            openlr_coordinates: f0,
+            openlr_polygon_corners_extension: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(568)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        w.count("openlrCoordinates", self.openlr_coordinates.len(), 3, usize::MAX)?;
+        if !self.openlr_coordinates.is_empty() {
+            w.key(1443)?;
+            w.begin_array()?;
+            for v in &self.openlr_coordinates {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.openlr_polygon_corners_extension {
+            w.key(1172)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrPolygonLocationReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrPolygonLocationReference {
@@ -6631,10 +11012,10 @@ pub struct OpenlrPolygonLocationReference {
 }
 
 impl OpenlrPolygonLocationReference {
-    const FIELDS: &'static [u32] = &[0xb0514, 0xb09be, 0xb0526];
+    const FIELDS: &'static [u32] = &[0xe0537, 0xe0a02, 0xe0549];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0141);
+        r.expect_type(0xe014a);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6642,9 +11023,9 @@ impl OpenlrPolygonLocationReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0514 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1300); }
-                    0xb09be => { let v = Some(OpenlrPolygonCorners::read(r)?); r.set(&mut e1, v.map(Box::new), 2494); }
-                    0xb0526 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1318); }
+                    0xe0537 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1335); }
+                    0xe0a02 => { let v = Some(OpenlrPolygonCorners::read(r)?); r.set(&mut e1, v.map(Box::new), 2562); }
+                    0xe0549 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1353); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6653,7 +11034,7 @@ impl OpenlrPolygonLocationReference {
                 break;
             }
         }
-        r.required(&e1, 2494);
+        r.required(&e1, 2562);
         let v = Self {
             openlr_area_location_reference_extension: e0,
             openlr_polygon_corners: e1,
@@ -6679,6 +11060,68 @@ impl OpenlrPolygonLocationReference {
     }
 }
 
+impl OpenlrPolygonLocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1149 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1462 => if r.first(&mut seen[1])? { f1 = OpenlrPolygonCorners::read_json(r)?.map(Box::new); },
+                1174 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1462);
+        Ok(Self {
+            openlr_area_location_reference_extension: f0,
+            openlr_polygon_corners: f1,
+            openlr_polygon_location_reference_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(569)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.openlr_area_location_reference_extension {
+            w.key(1149)?;
+            w.extension(v)?;
+        }
+        match &self.openlr_polygon_corners {
+            Some(v) => {
+                w.key(1462)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1462, w.missing("openlrPolygonCorners"))?,
+        }
+        if let Some(v) = &self.openlr_polygon_location_reference_extension {
+            w.key(1174)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrRectangle`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrRectangle {
@@ -6691,10 +11134,10 @@ pub struct OpenlrRectangle {
 }
 
 impl OpenlrRectangle {
-    const FIELDS: &'static [u32] = &[0xb09b5, 0xb09c3, 0xb0527];
+    const FIELDS: &'static [u32] = &[0xe09f9, 0xe0a07, 0xe054a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0142);
+        r.expect_type(0xe014b);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6702,9 +11145,9 @@ impl OpenlrRectangle {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb09b5 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e0, v.map(Box::new), 2485); }
-                    0xb09c3 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2499); }
-                    0xb0527 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1319); }
+                    0xe09f9 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e0, v.map(Box::new), 2553); }
+                    0xe0a07 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2567); }
+                    0xe054a => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1354); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6713,8 +11156,8 @@ impl OpenlrRectangle {
                 break;
             }
         }
-        r.required(&e0, 2485);
-        r.required(&e1, 2499);
+        r.required(&e0, 2553);
+        r.required(&e1, 2567);
         let v = Self {
             openlr_lower_left: e0,
             openlr_upper_right: e1,
@@ -6743,6 +11186,72 @@ impl OpenlrRectangle {
     }
 }
 
+impl OpenlrRectangle {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1453 => if r.first(&mut seen[0])? { f0 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1467 => if r.first(&mut seen[1])? { f1 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1175 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1453);
+        r.required(&f1, 1467);
+        Ok(Self {
+            openlr_lower_left: f0,
+            openlr_upper_right: f1,
+            openlr_rectangle_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(570)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.openlr_lower_left {
+            Some(v) => {
+                w.key(1453)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1453, w.missing("openlrLowerLeft"))?,
+        }
+        match &self.openlr_upper_right {
+            Some(v) => {
+                w.key(1467)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1467, w.missing("openlrUpperRight"))?,
+        }
+        if let Some(v) = &self.openlr_rectangle_extension {
+            w.key(1175)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:OpenlrRectangleLocationReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenlrRectangleLocationReference {
@@ -6755,10 +11264,10 @@ pub struct OpenlrRectangleLocationReference {
 }
 
 impl OpenlrRectangleLocationReference {
-    const FIELDS: &'static [u32] = &[0xb0514, 0xb09c1, 0xb0528];
+    const FIELDS: &'static [u32] = &[0xe0537, 0xe0a05, 0xe054b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0143);
+        r.expect_type(0xe014c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6766,9 +11275,9 @@ impl OpenlrRectangleLocationReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0514 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1300); }
-                    0xb09c1 => { let v = Some(OpenlrRectangle::read(r)?); r.set(&mut e1, v.map(Box::new), 2497); }
-                    0xb0528 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1320); }
+                    0xe0537 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1335); }
+                    0xe0a05 => { let v = Some(OpenlrRectangle::read(r)?); r.set(&mut e1, v.map(Box::new), 2565); }
+                    0xe054b => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1355); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6777,7 +11286,7 @@ impl OpenlrRectangleLocationReference {
                 break;
             }
         }
-        r.required(&e1, 2497);
+        r.required(&e1, 2565);
         let v = Self {
             openlr_area_location_reference_extension: e0,
             openlr_rectangle: e1,
@@ -6803,6 +11312,68 @@ impl OpenlrRectangleLocationReference {
     }
 }
 
+impl OpenlrRectangleLocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1149 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1465 => if r.first(&mut seen[1])? { f1 = OpenlrRectangle::read_json(r)?.map(Box::new); },
+                1177 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1465);
+        Ok(Self {
+            openlr_area_location_reference_extension: f0,
+            openlr_rectangle: f1,
+            openlr_rectangle_location_reference_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(571)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.openlr_area_location_reference_extension {
+            w.key(1149)?;
+            w.extension(v)?;
+        }
+        match &self.openlr_rectangle {
+            Some(v) => {
+                w.key(1465)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1465, w.missing("openlrRectangle"))?,
+        }
+        if let Some(v) = &self.openlr_rectangle_location_reference_extension {
+            w.key(1177)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PercentageDistanceAlongLinearElement`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PercentageDistanceAlongLinearElement {
@@ -6815,10 +11386,10 @@ pub struct PercentageDistanceAlongLinearElement {
 }
 
 impl PercentageDistanceAlongLinearElement {
-    const FIELDS: &'static [u32] = &[0xb0470, 0xb0a1a, 0xb054d];
+    const FIELDS: &'static [u32] = &[0xe048c, 0xe0a60, 0xe0570];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0169);
+        r.expect_type(0xe0172);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6826,9 +11397,9 @@ impl PercentageDistanceAlongLinearElement {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0470 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1136); }
-                    0xb0a1a => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2586); }
-                    0xb054d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1357); }
+                    0xe048c => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1164); }
+                    0xe0a60 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2656); }
+                    0xe0570 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1392); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6837,7 +11408,7 @@ impl PercentageDistanceAlongLinearElement {
                 break;
             }
         }
-        r.required(&e1, 2586);
+        r.required(&e1, 2656);
         let v = Self {
             distance_along_linear_element_extension: e0,
             percentage_distance_along: e1,
@@ -6863,6 +11434,68 @@ impl PercentageDistanceAlongLinearElement {
     }
 }
 
+impl PercentageDistanceAlongLinearElement {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1102 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1555 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                1179 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1555);
+        Ok(Self {
+            distance_along_linear_element_extension: f0,
+            percentage_distance_along: f1,
+            percentage_distance_along_linear_element_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(573)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.distance_along_linear_element_extension {
+            w.key(1102)?;
+            w.extension(v)?;
+        }
+        match &self.percentage_distance_along {
+            Some(v) => {
+                w.key(1555)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(1555, w.missing("percentageDistanceAlong"))?,
+        }
+        if let Some(v) = &self.percentage_distance_along_linear_element_extension {
+            w.key(1179)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PointAlongLinearElement`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PointAlongLinearElement {
@@ -6883,10 +11516,10 @@ pub struct PointAlongLinearElement {
 }
 
 impl PointAlongLinearElement {
-    const FIELDS: &'static [u32] = &[0xb0696, 0xb0788, 0xb078d, 0xb0861, 0xb08d0, 0xb079d, 0xb055e];
+    const FIELDS: &'static [u32] = &[0xe06bf, 0xe07b9, 0xe07be, 0xe089d, 0xe090e, 0xe07ce, 0xe0581];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb017b);
+        r.expect_type(0xe0184);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6898,13 +11531,13 @@ impl PointAlongLinearElement {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0696 => { let v = r.multilingual()?; r.set(&mut e0, v, 1686); }
-                    0xb0788 => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e1, v, 1928); }
-                    0xb078d => { let v = r.enumeration::<LinearDirectionEnum>()?; r.set(&mut e2, v, 1933); }
-                    0xb0861 => { let v = r.enumeration::<HeightGradeEnum>()?; r.set(&mut e3, v, 2145); }
-                    0xb08d0 => { let v = AnyLinearElement::read(r)?; r.set(&mut e4, v, 2256); }
-                    0xb079d => { let v = DistanceAlongLinearElement::read(r)?; r.set(&mut e5, v, 1949); }
-                    0xb055e => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1374); }
+                    0xe06bf => { let v = r.multilingual()?; r.set(&mut e0, v, 1727); }
+                    0xe07b9 => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e1, v, 1977); }
+                    0xe07be => { let v = r.enumeration::<LinearDirectionEnum>()?; r.set(&mut e2, v, 1982); }
+                    0xe089d => { let v = r.enumeration::<HeightGradeEnum>()?; r.set(&mut e3, v, 2205); }
+                    0xe090e => { let v = AnyLinearElement::read(r)?; r.set(&mut e4, v, 2318); }
+                    0xe07ce => { let v = DistanceAlongLinearElement::read(r)?; r.set(&mut e5, v, 1998); }
+                    0xe0581 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1409); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6913,8 +11546,8 @@ impl PointAlongLinearElement {
                 break;
             }
         }
-        r.required(&e4, 2256);
-        r.required(&e5, 1949);
+        r.required(&e4, 2318);
+        r.required(&e5, 1998);
         let v = Self {
             administrative_area_of_point: e0,
             direction_at_point: e1,
@@ -6951,6 +11584,100 @@ impl PointAlongLinearElement {
     }
 }
 
+impl PointAlongLinearElement {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                67 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                562 => if r.first(&mut seen[1])? { f1 = r.enumeration::<DirectionEnum>()?; },
+                567 => if r.first(&mut seen[2])? { f2 = r.enumeration::<LinearDirectionEnum>()?; },
+                950 => if r.first(&mut seen[3])? { f3 = r.enumeration::<HeightGradeEnum>()?; },
+                1065 => if r.first(&mut seen[4])? { f4 = AnyLinearElement::read_json(r)?; },
+                583 => if r.first(&mut seen[5])? { f5 = DistanceAlongLinearElement::read_json(r)?; },
+                1180 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f4, 1065);
+        r.required(&f5, 583);
+        Ok(Self {
+            administrative_area_of_point: f0,
+            direction_at_point: f1,
+            direction_relative_at_point: f2,
+            height_grade_of_point: f3,
+            linear_element: f4,
+            distance_along_linear_element: f5,
+            point_along_linear_element_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(574)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.administrative_area_of_point {
+            w.key(67)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.direction_at_point {
+            w.key(562)?;
+            w.enumeration(503, v.literal())?;
+        }
+        if let Some(v) = &self.direction_relative_at_point {
+            w.key(567)?;
+            w.enumeration(525, v.literal())?;
+        }
+        if let Some(v) = &self.height_grade_of_point {
+            w.key(950)?;
+            w.enumeration(516, v.literal())?;
+        }
+        match &self.linear_element {
+            Some(v) => {
+                w.key(1065)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(1065, w.missing("linearElement"))?,
+        }
+        match &self.distance_along_linear_element {
+            Some(v) => {
+                w.key(583)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(583, w.missing("distanceAlongLinearElement"))?,
+        }
+        if let Some(v) = &self.point_along_linear_element_extension {
+            w.key(1180)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PointByCoordinates`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PointByCoordinates {
@@ -6963,10 +11690,10 @@ pub struct PointByCoordinates {
 }
 
 impl PointByCoordinates {
-    const FIELDS: &'static [u32] = &[0xb06f2, 0xb0a46, 0xb055f];
+    const FIELDS: &'static [u32] = &[0xe071b, 0xe0a8c, 0xe0582];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb017c);
+        r.expect_type(0xe0185);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6974,9 +11701,9 @@ impl PointByCoordinates {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb06f2 => { let v = r.value::<u64>()?; r.set(&mut e0, v, 1778); }
-                    0xb0a46 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2630); }
-                    0xb055f => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1375); }
+                    0xe071b => { let v = r.value::<u64>()?; r.set(&mut e0, v, 1819); }
+                    0xe0a8c => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2700); }
+                    0xe0582 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1410); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6985,7 +11712,7 @@ impl PointByCoordinates {
                 break;
             }
         }
-        r.required(&e1, 2630);
+        r.required(&e1, 2700);
         let v = Self {
             bearing: e0,
             point_coordinates: e1,
@@ -7011,6 +11738,68 @@ impl PointByCoordinates {
     }
 }
 
+impl PointByCoordinates {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                294 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                1598 => if r.first(&mut seen[1])? { f1 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1181 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1598);
+        Ok(Self {
+            bearing: f0,
+            point_coordinates: f1,
+            point_by_coordinates_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(575)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.bearing {
+            w.key(294)?;
+            w.range("bearing", *v, 0, 359)?; w.integer(*v)?;
+        }
+        match &self.point_coordinates {
+            Some(v) => {
+                w.key(1598)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1598, w.missing("pointCoordinates"))?,
+        }
+        if let Some(v) = &self.point_by_coordinates_extension {
+            w.key(1181)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PointCoordinates`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PointCoordinates {
@@ -7029,10 +11818,10 @@ pub struct PointCoordinates {
 }
 
 impl PointCoordinates {
-    const FIELDS: &'static [u32] = &[0xb08bf, 0xb08eb, 0xb085f, 0xb0a4f, 0xb0866, 0xb0560];
+    const FIELDS: &'static [u32] = &[0xe08fd, 0xe0929, 0xe089b, 0xe0a95, 0xe08a2, 0xe0583];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb017d);
+        r.expect_type(0xe0186);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7043,12 +11832,12 @@ impl PointCoordinates {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb08bf => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2239); }
-                    0xb08eb => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2283); }
-                    0xb085f => { let v = Some(HeightCoordinate::read(r)?); e2.extend(v); }
-                    0xb0a4f => { let v = Some(PositionConfidenceEllipse::read(r)?); r.set(&mut e3, v.map(Box::new), 2639); }
-                    0xb0866 => { let v = Some(PositionAccuracy::read(r)?); r.set(&mut e4, v.map(Box::new), 2150); }
-                    0xb0560 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1376); }
+                    0xe08fd => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2301); }
+                    0xe0929 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2345); }
+                    0xe089b => { let v = Some(HeightCoordinate::read(r)?); e2.extend(v); }
+                    0xe0a95 => { let v = Some(PositionConfidenceEllipse::read(r)?); r.set(&mut e3, v.map(Box::new), 2709); }
+                    0xe08a2 => { let v = Some(PositionAccuracy::read(r)?); r.set(&mut e4, v.map(Box::new), 2210); }
+                    0xe0583 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1411); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7057,8 +11846,8 @@ impl PointCoordinates {
                 break;
             }
         }
-        r.required(&e0, 2239);
-        r.required(&e1, 2283);
+        r.required(&e0, 2301);
+        r.required(&e1, 2345);
         let v = Self {
             latitude: e0,
             longitude: e1,
@@ -7094,6 +11883,99 @@ impl PointCoordinates {
     }
 }
 
+impl PointCoordinates {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1048 => if r.first(&mut seen[0])? { f0 = r.number::<f32>()?; },
+                1246 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                948 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = HeightCoordinate::read_json(r)? { f2.push(v); } } },
+                1607 => if r.first(&mut seen[3])? { f3 = PositionConfidenceEllipse::read_json(r)?.map(Box::new); },
+                955 => if r.first(&mut seen[4])? { f4 = PositionAccuracy::read_json(r)?.map(Box::new); },
+                1182 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1048);
+        r.required(&f1, 1246);
+        Ok(Self {
+            latitude: f0,
+            longitude: f1,
+            height_coordinate: f2,
+            position_confidence_ellipse: f3,
+            horizontal_position_accuracy: f4,
+            point_coordinates_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(576)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.latitude {
+            Some(v) => {
+                w.key(1048)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(1048, w.missing("latitude"))?,
+        }
+        match &self.longitude {
+            Some(v) => {
+                w.key(1246)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(1246, w.missing("longitude"))?,
+        }
+        w.count("heightCoordinate", self.height_coordinate.len(), 0, 3)?;
+        if !self.height_coordinate.is_empty() {
+            w.key(948)?;
+            w.begin_array()?;
+            for v in &self.height_coordinate {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.position_confidence_ellipse {
+            w.key(1607)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.horizontal_position_accuracy {
+            w.key(955)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.point_coordinates_extension {
+            w.key(1182)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PointDestination`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PointDestination {
@@ -7106,10 +11988,10 @@ pub struct PointDestination {
 }
 
 impl PointDestination {
-    const FIELDS: &'static [u32] = &[0xb045d, 0xb0a47, 0xb0561];
+    const FIELDS: &'static [u32] = &[0xe0479, 0xe0a8d, 0xe0584];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb017e);
+        r.expect_type(0xe0187);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7117,9 +11999,9 @@ impl PointDestination {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb045d => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1117); }
-                    0xb0a47 => { let v = AnyPointLocation::read(r)?; r.set(&mut e1, v, 2631); }
-                    0xb0561 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1377); }
+                    0xe0479 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1145); }
+                    0xe0a8d => { let v = AnyPointLocation::read(r)?; r.set(&mut e1, v, 2701); }
+                    0xe0584 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1412); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7128,7 +12010,7 @@ impl PointDestination {
                 break;
             }
         }
-        r.required(&e1, 2631);
+        r.required(&e1, 2701);
         let v = Self {
             destination_extension: e0,
             point_location: e1,
@@ -7151,6 +12033,68 @@ impl PointDestination {
         }
         if let Some(v) = &self.point_destination_extension { w.extension("loc:_pointDestinationExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl PointDestination {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1101 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1599 => if r.first(&mut seen[1])? { f1 = AnyPointLocation::read_json(r)?; },
+                1184 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1599);
+        Ok(Self {
+            destination_extension: f0,
+            point_location: f1,
+            point_destination_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(577)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.destination_extension {
+            w.key(1101)?;
+            w.extension(v)?;
+        }
+        match &self.point_location {
+            Some(v) => {
+                w.key(1599)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(1599, w.missing("pointLocation"))?,
+        }
+        if let Some(v) = &self.point_destination_extension {
+            w.key(1184)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -7186,10 +12130,10 @@ pub struct PointLocation {
 }
 
 impl PointLocation {
-    const FIELDS: &'static [u32] = &[0xb04e3, 0xb0809, 0xb0743, 0xb04df, 0xb0b94, 0xb0779, 0xb04fb, 0xb0a45, 0xb0a44, 0xb06ac, 0xb0bd8, 0xb09bd, 0xb0562];
+    const FIELDS: &'static [u32] = &[0xe0505, 0xe0845, 0xe0772, 0xe0501, 0xe0bf2, 0xe07aa, 0xe051e, 0xe0a8b, 0xe0a8a, 0xe06d5, 0xe0c37, 0xe0a01, 0xe0585];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb017f);
+        r.expect_type(0xe0188);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -7207,19 +12151,19 @@ impl PointLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb04e3 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1251); }
-                    0xb0809 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
-                    0xb0743 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1859); }
-                    0xb04df => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1247); }
-                    0xb0b94 => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e4, v.map(Box::new), 2964); }
-                    0xb0779 => { let v = Destination::read(r)?; r.set(&mut e5, v, 1913); }
-                    0xb04fb => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1275); }
-                    0xb0a45 => { let v = Some(PointByCoordinates::read(r)?); r.set(&mut e7, v.map(Box::new), 2629); }
-                    0xb0a44 => { let v = Some(PointAlongLinearElement::read(r)?); e8.extend(v); }
-                    0xb06ac => { let v = AlertCPoint::read(r)?; e9.extend(v); }
-                    0xb0bd8 => { let v = TpegPointLocation::read(r)?; r.set(&mut e10, v, 3032); }
-                    0xb09bd => { let v = OpenlrPointLocationReference::read(r)?; r.set(&mut e11, v, 2493); }
-                    0xb0562 => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1378); }
+                    0xe0505 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1285); }
+                    0xe0845 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
+                    0xe0772 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1906); }
+                    0xe0501 => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1281); }
+                    0xe0bf2 => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e4, v.map(Box::new), 3058); }
+                    0xe07aa => { let v = Destination::read(r)?; r.set(&mut e5, v, 1962); }
+                    0xe051e => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1310); }
+                    0xe0a8b => { let v = Some(PointByCoordinates::read(r)?); r.set(&mut e7, v.map(Box::new), 2699); }
+                    0xe0a8a => { let v = Some(PointAlongLinearElement::read(r)?); e8.extend(v); }
+                    0xe06d5 => { let v = AlertCPoint::read(r)?; e9.extend(v); }
+                    0xe0c37 => { let v = TpegPointLocation::read(r)?; r.set(&mut e10, v, 3127); }
+                    0xe0a01 => { let v = OpenlrPointLocationReference::read(r)?; r.set(&mut e11, v, 2561); }
+                    0xe0585 => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1413); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7270,6 +12214,149 @@ impl PointLocation {
     }
 }
 
+impl PointLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1142 => if r.first(&mut seen[0])? { f0 = LocationReferenceExtensionType::read_json(r)?.map(Box::new); },
+                744 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ExternalReferencing::read_json(r)? { f1.push(v); } } },
+                464 => if r.first(&mut seen[2])? { f2 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1136 => if r.first(&mut seen[3])? { f3 = LocationExtensionType::read_json(r)?.map(Box::new); },
+                2222 => if r.first(&mut seen[4])? { f4 = SupplementaryPositionalDescription::read_json(r)?.map(Box::new); },
+                547 => if r.first(&mut seen[5])? { f5 = Destination::read_json(r)?; },
+                1145 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                1597 => if r.first(&mut seen[7])? { f7 = PointByCoordinates::read_json(r)?.map(Box::new); },
+                1596 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = PointAlongLinearElement::read_json(r)? { f8.push(v); } } },
+                224 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AlertCPoint::read_json(r)? { f9.push(v); } } },
+                2352 => if r.first(&mut seen[10])? { f10 = TpegPointLocation::read_json(r)?; },
+                1461 => if r.first(&mut seen[11])? { f11 = OpenlrPointLocationReference::read_json(r)?; },
+                1186 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            location_reference_extension: f0,
+            external_referencing: f1,
+            coordinates_for_display: f2,
+            location_extension: f3,
+            supplementary_positional_description: f4,
+            destination: f5,
+            network_location_extension: f6,
+            point_by_coordinates: f7,
+            point_along_linear_element: f8,
+            alert_c_point: f9,
+            tpeg_point_location: f10,
+            openlr_point_location_reference: f11,
+            point_location_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(578)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_reference_extension {
+            w.key(1142)?;
+            v.write_json(w, None)?;
+        }
+        if !self.external_referencing.is_empty() {
+            w.key(744)?;
+            w.begin_array()?;
+            for v in &self.external_referencing {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.coordinates_for_display {
+            w.key(464)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.location_extension {
+            w.key(1136)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.supplementary_positional_description {
+            w.key(2222)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.destination {
+            w.key(547)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.network_location_extension {
+            w.key(1145)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.point_by_coordinates {
+            w.key(1597)?;
+            v.write_json(w, None)?;
+        }
+        if !self.point_along_linear_element.is_empty() {
+            w.key(1596)?;
+            w.begin_array()?;
+            for v in &self.point_along_linear_element {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.alert_c_point.is_empty() {
+            w.key(224)?;
+            w.begin_array()?;
+            for v in &self.alert_c_point {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.tpeg_point_location {
+            w.key(2352)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.openlr_point_location_reference {
+            w.key(1461)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.point_location_extension {
+            w.key(1186)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PositionAccuracy`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PositionAccuracy {
@@ -7284,10 +12371,10 @@ pub struct PositionAccuracy {
 }
 
 impl PositionAccuracy {
-    const FIELDS: &'static [u32] = &[0xb0671, 0xb0672, 0xb0673, 0xb0568];
+    const FIELDS: &'static [u32] = &[0xe069a, 0xe069b, 0xe069c, 0xe058b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0185);
+        r.expect_type(0xe018e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7296,10 +12383,10 @@ impl PositionAccuracy {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0671 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 1649); }
-                    0xb0672 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1650); }
-                    0xb0673 => { let v = r.value::<f32>()?; r.set(&mut e2, v, 1651); }
-                    0xb0568 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1384); }
+                    0xe069a => { let v = r.value::<f32>()?; r.set(&mut e0, v, 1690); }
+                    0xe069b => { let v = r.value::<f32>()?; r.set(&mut e1, v, 1691); }
+                    0xe069c => { let v = r.value::<f32>()?; r.set(&mut e2, v, 1692); }
+                    0xe058b => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1419); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7332,6 +12419,71 @@ impl PositionAccuracy {
     }
 }
 
+impl PositionAccuracy {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                30 => if r.first(&mut seen[0])? { f0 = r.number::<f32>()?; },
+                31 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                32 => if r.first(&mut seen[2])? { f2 = r.number::<f32>()?; },
+                1187 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            accuracy_percentile50: f0,
+            accuracy_percentile75: f1,
+            accuracy_percentile95: f2,
+            position_accuracy_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(580)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.accuracy_percentile50 {
+            w.key(30)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.accuracy_percentile75 {
+            w.key(31)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.accuracy_percentile95 {
+            w.key(32)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.position_accuracy_extension {
+            w.key(1187)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PositionConfidenceEllipse`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PositionConfidenceEllipse {
@@ -7352,10 +12504,10 @@ pub struct PositionConfidenceEllipse {
 }
 
 impl PositionConfidenceEllipse {
-    const FIELDS: &'static [u32] = &[0xb0b24, 0xb0b25, 0xb0b28, 0xb0b29, 0xb0b26, 0xb0b27, 0xb0569];
+    const FIELDS: &'static [u32] = &[0xe0b71, 0xe0b72, 0xe0b75, 0xe0b76, 0xe0b73, 0xe0b74, 0xe058c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0186);
+        r.expect_type(0xe018f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7367,13 +12519,13 @@ impl PositionConfidenceEllipse {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0b24 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2852); }
-                    0xb0b25 => { let v = r.enumeration::<PositionConfidenceCodedErrorEnum>()?; r.set(&mut e1, v, 2853); }
-                    0xb0b28 => { let v = r.value::<f32>()?; r.set(&mut e2, v, 2856); }
-                    0xb0b29 => { let v = r.enumeration::<PositionConfidenceCodedErrorEnum>()?; r.set(&mut e3, v, 2857); }
-                    0xb0b26 => { let v = r.value::<u64>()?; r.set(&mut e4, v, 2854); }
-                    0xb0b27 => { let v = r.value::<bool>()?; r.set(&mut e5, v, 2855); }
-                    0xb0569 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1385); }
+                    0xe0b71 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2929); }
+                    0xe0b72 => { let v = r.enumeration::<PositionConfidenceCodedErrorEnum>()?; r.set(&mut e1, v, 2930); }
+                    0xe0b75 => { let v = r.value::<f32>()?; r.set(&mut e2, v, 2933); }
+                    0xe0b76 => { let v = r.enumeration::<PositionConfidenceCodedErrorEnum>()?; r.set(&mut e3, v, 2934); }
+                    0xe0b73 => { let v = r.value::<u64>()?; r.set(&mut e4, v, 2931); }
+                    0xe0b74 => { let v = r.value::<bool>()?; r.set(&mut e5, v, 2932); }
+                    0xe058c => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1420); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7412,6 +12564,92 @@ impl PositionConfidenceEllipse {
     }
 }
 
+impl PositionConfidenceEllipse {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2016 => if r.first(&mut seen[0])? { f0 = r.number::<f32>()?; },
+                2017 => if r.first(&mut seen[1])? { f1 = r.enumeration::<PositionConfidenceCodedErrorEnum>()?; },
+                2020 => if r.first(&mut seen[2])? { f2 = r.number::<f32>()?; },
+                2021 => if r.first(&mut seen[3])? { f3 = r.enumeration::<PositionConfidenceCodedErrorEnum>()?; },
+                2018 => if r.first(&mut seen[4])? { f4 = r.number::<u64>()?; },
+                2019 => if r.first(&mut seen[5])? { f5 = r.boolean()?; },
+                1188 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            semi_major_axis_length: f0,
+            semi_major_axis_length_coded_error: f1,
+            semi_minor_axis_length: f2,
+            semi_minor_axis_length_coded_error: f3,
+            semi_major_axis_orientation: f4,
+            semi_major_axis_orientation_error: f5,
+            position_confidence_ellipse_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(582)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.semi_major_axis_length {
+            w.key(2016)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.semi_major_axis_length_coded_error {
+            w.key(2017)?;
+            w.enumeration(581, v.literal())?;
+        }
+        if let Some(v) = &self.semi_minor_axis_length {
+            w.key(2020)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.semi_minor_axis_length_coded_error {
+            w.key(2021)?;
+            w.enumeration(581, v.literal())?;
+        }
+        if let Some(v) = &self.semi_major_axis_orientation {
+            w.key(2018)?;
+            w.range("semiMajorAxisOrientation", *v, 0, 359)?; w.integer(*v)?;
+        }
+        if let Some(v) = &self.semi_major_axis_orientation_error {
+            w.key(2019)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.position_confidence_ellipse_extension {
+            w.key(1188)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PredefinedItinerary`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PredefinedItinerary {
@@ -7432,12 +12670,12 @@ pub struct PredefinedItinerary {
 }
 
 impl PredefinedItinerary {
-    const FIELDS: &'static [u32] = &[0xb0574, 0xb0a61, 0xb08a0, 0xb0a63, 0xb0571];
+    const FIELDS: &'static [u32] = &[0xe0597, 0xe0aa7, 0xe08de, 0xe0aa9, 0xe0594];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb018e);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0xe0197);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7447,11 +12685,11 @@ impl PredefinedItinerary {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0574 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1396); }
-                    0xb0a61 => { let v = r.multilingual()?; r.set(&mut e1, v, 2657); }
-                    0xb08a0 => { let v = Itinerary::read(r)?; r.set(&mut e2, v, 2208); }
-                    0xb0a63 => { let v = Some(PredefinedLocation::read(r)?); e3.extend(v); }
-                    0xb0571 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1393); }
+                    0xe0597 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1431); }
+                    0xe0aa7 => { let v = r.multilingual()?; r.set(&mut e1, v, 2727); }
+                    0xe08de => { let v = Itinerary::read(r)?; r.set(&mut e2, v, 2270); }
+                    0xe0aa9 => { let v = Some(PredefinedLocation::read(r)?); e3.extend(v); }
+                    0xe0594 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1428); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7496,6 +12734,105 @@ impl PredefinedItinerary {
     }
 }
 
+impl PredefinedItinerary {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1195 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1625 => if r.first(&mut seen[3])? { f3 = r.multilingual()?; },
+                1017 => if r.first(&mut seen[4])? { f4 = Itinerary::read_json(r)?; },
+                1627 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = PredefinedLocation::read_json(r)? { f5.push(v); } } },
+                1190 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            predefined_location_reference_extension: f2,
+            predefined_itinerary_name: f3,
+            itinerary: f4,
+            predefined_location: f5,
+            predefined_itinerary_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(583)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.predefined_location_reference_extension {
+            w.key(1195)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.predefined_itinerary_name {
+            w.key(1625)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.itinerary {
+            w.key(1017)?;
+            v.write_json(w)?;
+        }
+        if !self.predefined_location.is_empty() {
+            w.key(1627)?;
+            w.begin_array()?;
+            for v in &self.predefined_location {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.predefined_itinerary_extension {
+            w.key(1190)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PredefinedLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PredefinedLocation {
@@ -7514,12 +12851,12 @@ pub struct PredefinedLocation {
 }
 
 impl PredefinedLocation {
-    const FIELDS: &'static [u32] = &[0xb0574, 0xb0a66, 0xb08dc, 0xb0572];
+    const FIELDS: &'static [u32] = &[0xe0597, 0xe0aac, 0xe091a, 0xe0595];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb018f);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0xe0198);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7528,10 +12865,10 @@ impl PredefinedLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0574 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1396); }
-                    0xb0a66 => { let v = r.multilingual()?; r.set(&mut e1, v, 2662); }
-                    0xb08dc => { let v = Location::read(r)?; r.set(&mut e2, v, 2268); }
-                    0xb0572 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1394); }
+                    0xe0597 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1431); }
+                    0xe0aac => { let v = r.multilingual()?; r.set(&mut e1, v, 2732); }
+                    0xe091a => { let v = Location::read(r)?; r.set(&mut e2, v, 2330); }
+                    0xe0595 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1429); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7540,7 +12877,7 @@ impl PredefinedLocation {
                 break;
             }
         }
-        r.required(&e2, 2268);
+        r.required(&e2, 2330);
         let v = Self {
             id: a0,
             version: a1,
@@ -7578,6 +12915,97 @@ impl PredefinedLocation {
     }
 }
 
+impl PredefinedLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1195 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1630 => if r.first(&mut seen[3])? { f3 = r.multilingual()?; },
+                1228 => if r.first(&mut seen[4])? { f4 = Location::read_json(r)?; },
+                1192 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f4, 1228);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            predefined_location_reference_extension: f2,
+            predefined_location_name: f3,
+            location: f4,
+            predefined_location_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(584)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.predefined_location_reference_extension {
+            w.key(1195)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.predefined_location_name {
+            w.key(1630)?;
+            w.multilingual(v)?;
+        }
+        match &self.location {
+            Some(v) => {
+                w.key(1228)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(1228, w.missing("location"))?,
+        }
+        if let Some(v) = &self.predefined_location_extension {
+            w.key(1192)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PredefinedLocationGroup`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PredefinedLocationGroup {
@@ -7598,12 +13026,12 @@ pub struct PredefinedLocationGroup {
 }
 
 impl PredefinedLocationGroup {
-    const FIELDS: &'static [u32] = &[0xb0574, 0xb0a64, 0xb08e3, 0xb0a63, 0xb0573];
+    const FIELDS: &'static [u32] = &[0xe0597, 0xe0aaa, 0xe0921, 0xe0aa9, 0xe0596];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0190);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0xe0199);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7613,11 +13041,11 @@ impl PredefinedLocationGroup {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0574 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1396); }
-                    0xb0a64 => { let v = r.multilingual()?; r.set(&mut e1, v, 2660); }
-                    0xb08e3 => { let v = LocationGroup::read(r)?; r.set(&mut e2, v, 2275); }
-                    0xb0a63 => { let v = Some(PredefinedLocation::read(r)?); e3.extend(v); }
-                    0xb0573 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1395); }
+                    0xe0597 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1431); }
+                    0xe0aaa => { let v = r.multilingual()?; r.set(&mut e1, v, 2730); }
+                    0xe0921 => { let v = LocationGroup::read(r)?; r.set(&mut e2, v, 2337); }
+                    0xe0aa9 => { let v = Some(PredefinedLocation::read(r)?); e3.extend(v); }
+                    0xe0596 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1430); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7662,6 +13090,105 @@ impl PredefinedLocationGroup {
     }
 }
 
+impl PredefinedLocationGroup {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1195 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1628 => if r.first(&mut seen[3])? { f3 = r.multilingual()?; },
+                1235 => if r.first(&mut seen[4])? { f4 = LocationGroup::read_json(r)?; },
+                1627 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = PredefinedLocation::read_json(r)? { f5.push(v); } } },
+                1194 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            predefined_location_reference_extension: f2,
+            predefined_location_group_name: f3,
+            location_group: f4,
+            predefined_location: f5,
+            predefined_location_group_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(585)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.predefined_location_reference_extension {
+            w.key(1195)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.predefined_location_group_name {
+            w.key(1628)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.location_group {
+            w.key(1235)?;
+            v.write_json(w)?;
+        }
+        if !self.predefined_location.is_empty() {
+            w.key(1627)?;
+            w.begin_array()?;
+            for v in &self.predefined_location {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.predefined_location_group_extension {
+            w.key(1194)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:PredefinedLocationsPublication`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PredefinedLocationsPublication {
@@ -7694,16 +13221,16 @@ pub struct PredefinedLocationsPublication {
 }
 
 impl PredefinedLocationsPublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0xb0857, 0xb0a67, 0xb0575];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0xe0893, 0xe0aad, 0xe0598];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0192);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0xe019b);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7716,14 +13243,14 @@ impl PredefinedLocationsPublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0xb0857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2135); }
-                    0xb0a67 => { let v = PredefinedLocationReference::read(r)?; e6.extend(v); }
-                    0xb0575 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1397); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0xe0893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2195); }
+                    0xe0aad => { let v = PredefinedLocationReference::read(r)?; e6.extend(v); }
+                    0xe0598 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1432); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7732,9 +13259,9 @@ impl PredefinedLocationsPublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
-        r.required(&e5, 2135);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
+        r.required(&e5, 2195);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -7791,6 +13318,136 @@ impl PredefinedLocationsPublication {
     }
 }
 
+impl PredefinedLocationsPublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                940 => if r.first(&mut seen[10])? { f10 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                1631 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = PredefinedLocationReference::read_json(r)? { f11.push(v); } } },
+                1197 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        r.required(&f10, 940);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            header_information: f10,
+            predefined_location_reference: f11,
+            predefined_locations_publication_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(587)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        match &self.header_information {
+            Some(v) => {
+                w.key(940)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(940, w.missing("headerInformation"))?,
+        }
+        w.count("predefinedLocationReference", self.predefined_location_reference.len(), 1, usize::MAX)?;
+        if !self.predefined_location_reference.is_empty() {
+            w.key(1631)?;
+            w.begin_array()?;
+            for v in &self.predefined_location_reference {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.predefined_locations_publication_extension {
+            w.key(1197)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:Referent`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Referent {
@@ -7809,10 +13466,10 @@ pub struct Referent {
 }
 
 impl Referent {
-    const FIELDS: &'static [u32] = &[0xb0ac0, 0xb0ac1, 0xb0ac2, 0xb0abf, 0xb0a46, 0xb0591];
+    const FIELDS: &'static [u32] = &[0xe0b09, 0xe0b0a, 0xe0b0b, 0xe0b08, 0xe0a8c, 0xe05b4];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb01af);
+        r.expect_type(0xe01b8);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7823,12 +13480,12 @@ impl Referent {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0ac0 => { let v = r.string()?; r.set(&mut e0, v, 2752); }
-                    0xb0ac1 => { let v = r.string()?; r.set(&mut e1, v, 2753); }
-                    0xb0ac2 => { let v = r.enumeration::<ReferentTypeEnum>()?; r.set(&mut e2, v, 2754); }
-                    0xb0abf => { let v = r.multilingual()?; r.set(&mut e3, v, 2751); }
-                    0xb0a46 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e4, v.map(Box::new), 2630); }
-                    0xb0591 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1425); }
+                    0xe0b09 => { let v = r.string()?; r.set(&mut e0, v, 2825); }
+                    0xe0b0a => { let v = r.string()?; r.set(&mut e1, v, 2826); }
+                    0xe0b0b => { let v = r.enumeration::<ReferentTypeEnum>()?; r.set(&mut e2, v, 2827); }
+                    0xe0b08 => { let v = r.multilingual()?; r.set(&mut e3, v, 2824); }
+                    0xe0a8c => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e4, v.map(Box::new), 2700); }
+                    0xe05b4 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1460); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7837,8 +13494,8 @@ impl Referent {
                 break;
             }
         }
-        r.required(&e0, 2752);
-        r.required(&e2, 2754);
+        r.required(&e0, 2825);
+        r.required(&e2, 2827);
         let v = Self {
             referent_identifier: e0,
             referent_name: e1,
@@ -7873,6 +13530,93 @@ impl Referent {
     }
 }
 
+impl Referent {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1825 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                1826 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1827 => if r.first(&mut seen[2])? { f2 = r.enumeration::<ReferentTypeEnum>()?; },
+                1824 => if r.first(&mut seen[3])? { f3 = r.multilingual()?; },
+                1598 => if r.first(&mut seen[4])? { f4 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1198 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1825);
+        r.required(&f2, 1827);
+        Ok(Self {
+            referent_identifier: f0,
+            referent_name: f1,
+            referent_type: f2,
+            referent_description: f3,
+            point_coordinates: f4,
+            referent_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(588)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.referent_identifier {
+            Some(v) => {
+                w.key(1825)?;
+                w.max_len("referentIdentifier", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(1825, w.missing("referentIdentifier"))?,
+        }
+        if let Some(v) = &self.referent_name {
+            w.key(1826)?;
+            w.max_len("referentName", v, 1024)?; w.string(v)?;
+        }
+        match &self.referent_type {
+            Some(v) => {
+                w.key(1827)?;
+                w.enumeration(589, v.literal())?;
+            }
+            None => w.absent(1827, w.missing("referentType"))?,
+        }
+        if let Some(v) = &self.referent_description {
+            w.key(1824)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.point_coordinates {
+            w.key(1598)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.referent_extension {
+            w.key(1198)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:RoadInformation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RoadInformation {
@@ -7887,10 +13631,10 @@ pub struct RoadInformation {
 }
 
 impl RoadInformation {
-    const FIELDS: &'static [u32] = &[0xb0af3, 0xb0af7, 0xb0af8, 0xb05a4];
+    const FIELDS: &'static [u32] = &[0xe0b40, 0xe0b44, 0xe0b45, 0xe05c8];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb01c2);
+        r.expect_type(0xe01cc);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7899,10 +13643,10 @@ impl RoadInformation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0af3 => { let v = r.string()?; r.set(&mut e0, v, 2803); }
-                    0xb0af7 => { let v = r.string()?; r.set(&mut e1, v, 2807); }
-                    0xb0af8 => { let v = r.string()?; r.set(&mut e2, v, 2808); }
-                    0xb05a4 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1444); }
+                    0xe0b40 => { let v = r.string()?; r.set(&mut e0, v, 2880); }
+                    0xe0b44 => { let v = r.string()?; r.set(&mut e1, v, 2884); }
+                    0xe0b45 => { let v = r.string()?; r.set(&mut e2, v, 2885); }
+                    0xe05c8 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1480); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7932,6 +13676,71 @@ impl RoadInformation {
         if let Some(v) = &self.road_number { w.max_len("roadNumber", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
         if let Some(v) = &self.road_information_extension { w.extension("loc:_roadInformationExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl RoadInformation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1966 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                1970 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1971 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                1200 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            road_destination: f0,
+            road_name: f1,
+            road_number: f2,
+            road_information_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(591)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.road_destination {
+            w.key(1966)?;
+            w.max_len("roadDestination", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.road_name {
+            w.key(1970)?;
+            w.max_len("roadName", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.road_number {
+            w.key(1971)?;
+            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.road_information_extension {
+            w.key(1200)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -7971,10 +13780,10 @@ pub struct SingleRoadLinearLocation {
 }
 
 impl SingleRoadLinearLocation {
-    const FIELDS: &'static [u32] = &[0xb04e3, 0xb0809, 0xb0743, 0xb04df, 0xb0b94, 0xb0779, 0xb04fb, 0xb09b3, 0xb0845, 0xb0b1f, 0xb04da, 0xb0bd5, 0xb06a2, 0xb08d5, 0xb05ba];
+    const FIELDS: &'static [u32] = &[0xe0505, 0xe0845, 0xe0772, 0xe0501, 0xe0bf2, 0xe07aa, 0xe051e, 0xe09f7, 0xe0881, 0xe0b6c, 0xe04fc, 0xe0c34, 0xe06cb, 0xe0913, 0xe05e2];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb01da);
+        r.expect_type(0xe01e8);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -7994,21 +13803,21 @@ impl SingleRoadLinearLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb04e3 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1251); }
-                    0xb0809 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
-                    0xb0743 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1859); }
-                    0xb04df => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1247); }
-                    0xb0b94 => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e4, v.map(Box::new), 2964); }
-                    0xb0779 => { let v = Destination::read(r)?; r.set(&mut e5, v, 1913); }
-                    0xb04fb => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1275); }
-                    0xb09b3 => { let v = Some(OpenlrLinear::read(r)?); r.set(&mut e7, v.map(Box::new), 2483); }
-                    0xb0845 => { let v = AnyGmlLineString::read(r)?; r.set(&mut e8, v, 2117); }
-                    0xb0b1f => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e9, v.map(Box::new), 2847); }
-                    0xb04da => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1242); }
-                    0xb0bd5 => { let v = Some(TpegLinearLocation::read(r)?); r.set(&mut e11, v.map(Box::new), 3029); }
-                    0xb06a2 => { let v = AlertCLinear::read(r)?; e12.extend(v); }
-                    0xb08d5 => { let v = Some(LinearWithinLinearElement::read(r)?); e13.extend(v); }
-                    0xb05ba => { let v = r.raw()?; r.set(&mut e14, v.map(Box::new), 1466); }
+                    0xe0505 => { let v = Some(LocationReferenceExtensionType::read(r)?); r.set(&mut e0, v.map(Box::new), 1285); }
+                    0xe0845 => { let v = Some(ExternalReferencing::read(r)?); e1.extend(v); }
+                    0xe0772 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e2, v.map(Box::new), 1906); }
+                    0xe0501 => { let v = Some(LocationExtensionType::read(r)?); r.set(&mut e3, v.map(Box::new), 1281); }
+                    0xe0bf2 => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e4, v.map(Box::new), 3058); }
+                    0xe07aa => { let v = Destination::read(r)?; r.set(&mut e5, v, 1962); }
+                    0xe051e => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1310); }
+                    0xe09f7 => { let v = Some(OpenlrLinear::read(r)?); r.set(&mut e7, v.map(Box::new), 2551); }
+                    0xe0881 => { let v = AnyGmlLineString::read(r)?; r.set(&mut e8, v, 2177); }
+                    0xe0b6c => { let v = Some(SupplementaryPositionalDescription::read(r)?); r.set(&mut e9, v.map(Box::new), 2924); }
+                    0xe04fc => { let v = r.raw()?; r.set(&mut e10, v.map(Box::new), 1276); }
+                    0xe0c34 => { let v = Some(TpegLinearLocation::read(r)?); r.set(&mut e11, v.map(Box::new), 3124); }
+                    0xe06cb => { let v = AlertCLinear::read(r)?; e12.extend(v); }
+                    0xe0913 => { let v = Some(LinearWithinLinearElement::read(r)?); e13.extend(v); }
+                    0xe05e2 => { let v = r.raw()?; r.set(&mut e14, v.map(Box::new), 1506); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8063,6 +13872,163 @@ impl SingleRoadLinearLocation {
     }
 }
 
+impl SingleRoadLinearLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 15];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = Vec::new();
+        let mut f13 = Vec::new();
+        let mut f14 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1142 => if r.first(&mut seen[0])? { f0 = LocationReferenceExtensionType::read_json(r)?.map(Box::new); },
+                744 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ExternalReferencing::read_json(r)? { f1.push(v); } } },
+                464 => if r.first(&mut seen[2])? { f2 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1136 => if r.first(&mut seen[3])? { f3 = LocationExtensionType::read_json(r)?.map(Box::new); },
+                2222 => if r.first(&mut seen[4])? { f4 = SupplementaryPositionalDescription::read_json(r)?.map(Box::new); },
+                547 => if r.first(&mut seen[5])? { f5 = Destination::read_json(r)?; },
+                1145 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                1451 => if r.first(&mut seen[7])? { f7 = OpenlrLinear::read_json(r)?.map(Box::new); },
+                922 => if r.first(&mut seen[8])? { f8 = AnyGmlLineString::read_json(r)?; },
+                2011 => if r.first(&mut seen[9])? { f9 = SupplementaryPositionalDescription::read_json(r)?.map(Box::new); },
+                1132 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                2349 => if r.first(&mut seen[11])? { f11 = TpegLinearLocation::read_json(r)?.map(Box::new); },
+                214 => if r.first(&mut seen[12])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AlertCLinear::read_json(r)? { f12.push(v); } } },
+                1070 => if r.first(&mut seen[13])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = LinearWithinLinearElement::read_json(r)? { f13.push(v); } } },
+                1202 => if r.first(&mut seen[14])? { f14 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            location_reference_extension: f0,
+            external_referencing: f1,
+            coordinates_for_display: f2,
+            location_extension: f3,
+            supplementary_positional_description: f4,
+            destination: f5,
+            network_location_extension: f6,
+            openlr_linear: f7,
+            gml_line_string: f8,
+            secondary_supplementary_description: f9,
+            linear_location_extension: f10,
+            tpeg_linear_location: f11,
+            alert_c_linear: f12,
+            linear_within_linear_element: f13,
+            single_road_linear_location_extension: f14,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(593)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_reference_extension {
+            w.key(1142)?;
+            v.write_json(w, None)?;
+        }
+        if !self.external_referencing.is_empty() {
+            w.key(744)?;
+            w.begin_array()?;
+            for v in &self.external_referencing {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.coordinates_for_display {
+            w.key(464)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.location_extension {
+            w.key(1136)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.supplementary_positional_description {
+            w.key(2222)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.destination {
+            w.key(547)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.network_location_extension {
+            w.key(1145)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.openlr_linear {
+            w.key(1451)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.gml_line_string {
+            w.key(922)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.secondary_supplementary_description {
+            w.key(2011)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.linear_location_extension {
+            w.key(1132)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.tpeg_linear_location {
+            w.key(2349)?;
+            v.write_json(w, None)?;
+        }
+        if !self.alert_c_linear.is_empty() {
+            w.key(214)?;
+            w.begin_array()?;
+            for v in &self.alert_c_linear {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if !self.linear_within_linear_element.is_empty() {
+            w.key(1070)?;
+            w.begin_array()?;
+            for v in &self.linear_within_linear_element {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.single_road_linear_location_extension {
+            w.key(1202)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:SupplementaryPositionalDescription`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SupplementaryPositionalDescription {
@@ -8093,11 +14059,11 @@ pub struct SupplementaryPositionalDescription {
 }
 
 impl SupplementaryPositionalDescription {
-    const FIELDS: &'static [u32] = &[0xb078c, 0xb0842, 0xb0889, 0xb08c6, 0xb08e1, 0xb0a50, 0xb0b2f, 0xb070a, 0xb094b, 0xb0af5, 0xb05e3];
+    const FIELDS: &'static [u32] = &[0xe07bd, 0xe087e, 0xe08c7, 0xe0904, 0xe091f, 0xe0a96, 0xe0b7c, 0xe0733, 0xe098d, 0xe0b42, 0xe060c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0204);
-        let a0 = r.attr_value::<u64>(2279)?;
+        r.expect_type(0xe0213);
+        let a0 = r.attr_value::<u64>(2341)?;
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8113,17 +14079,17 @@ impl SupplementaryPositionalDescription {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb078c => { let v = r.enumeration::<DirectionPurposeEnum>()?; r.set(&mut e0, v, 1932); }
-                    0xb0842 => { let v = r.enumeration::<GeographicCharacteristicEnum>()?; r.set(&mut e1, v, 2114); }
-                    0xb0889 => { let v = r.enumeration::<InfrastructureDescriptorEnum>()?; r.set(&mut e2, v, 2185); }
-                    0xb08c6 => { let v = r.value::<f32>()?; r.set(&mut e3, v, 2246); }
-                    0xb08e1 => { let v = r.multilingual()?; r.set(&mut e4, v, 2273); }
-                    0xb0a50 => { let v = r.enumeration::<RelativePositionOnCarriagewayEnum>()?; r.set(&mut e5, v, 2640); }
-                    0xb0b2f => { let v = r.value::<u64>()?; r.set(&mut e6, v, 2863); }
-                    0xb070a => { let v = Some(Carriageway::read(r)?); e7.extend(v); }
-                    0xb094b => { let v = AnyNamedArea::read(r)?; r.set(&mut e8, v, 2379); }
-                    0xb0af5 => { let v = AnyRoadInformation::read(r)?; e9.extend(v); }
-                    0xb05e3 => { let v = Some(SupplementaryPositionalDescriptionExtensionType::read(r)?); r.set(&mut e10, v.map(Box::new), 1507); }
+                    0xe07bd => { let v = r.enumeration::<DirectionPurposeEnum>()?; r.set(&mut e0, v, 1981); }
+                    0xe087e => { let v = r.enumeration::<GeographicCharacteristicEnum>()?; r.set(&mut e1, v, 2174); }
+                    0xe08c7 => { let v = r.enumeration::<InfrastructureDescriptorEnum>()?; r.set(&mut e2, v, 2247); }
+                    0xe0904 => { let v = r.value::<f32>()?; r.set(&mut e3, v, 2308); }
+                    0xe091f => { let v = r.multilingual()?; r.set(&mut e4, v, 2335); }
+                    0xe0a96 => { let v = r.enumeration::<RelativePositionOnCarriagewayEnum>()?; r.set(&mut e5, v, 2710); }
+                    0xe0b7c => { let v = r.value::<u64>()?; r.set(&mut e6, v, 2940); }
+                    0xe0733 => { let v = Some(Carriageway::read(r)?); e7.extend(v); }
+                    0xe098d => { let v = AnyNamedArea::read(r)?; r.set(&mut e8, v, 2445); }
+                    0xe0b42 => { let v = AnyRoadInformation::read(r)?; e9.extend(v); }
+                    0xe060c => { let v = Some(SupplementaryPositionalDescriptionExtensionType::read(r)?); r.set(&mut e10, v.map(Box::new), 1548); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8172,6 +14138,137 @@ impl SupplementaryPositionalDescription {
     }
 }
 
+impl SupplementaryPositionalDescription {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = Vec::new();
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1239 => if r.first(&mut seen[0])? { f0 = r.number::<u64>()?; },
+                566 => if r.first(&mut seen[1])? { f1 = r.enumeration::<DirectionPurposeEnum>()?; },
+                919 => if r.first(&mut seen[2])? { f2 = r.enumeration::<GeographicCharacteristicEnum>()?; },
+                994 => if r.first(&mut seen[3])? { f3 = r.enumeration::<InfrastructureDescriptorEnum>()?; },
+                1055 => if r.first(&mut seen[4])? { f4 = r.number::<f32>()?; },
+                1233 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1608 => if r.first(&mut seen[6])? { f6 = r.enumeration::<RelativePositionOnCarriagewayEnum>()?; },
+                2027 => if r.first(&mut seen[7])? { f7 = r.number::<u64>()?; },
+                317 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Carriageway::read_json(r)? { f8.push(v); } } },
+                1347 => if r.first(&mut seen[9])? { f9 = AnyNamedArea::read_json(r)?; },
+                1968 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyRoadInformation::read_json(r)? { f10.push(v); } } },
+                1203 => if r.first(&mut seen[11])? { f11 = SupplementaryPositionalDescriptionExtensionType::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            location_precision: f0,
+            direction_purpose: f1,
+            geographic_descriptor: f2,
+            infrastructure_descriptor: f3,
+            length_affected: f4,
+            location_description: f5,
+            position_on_carriageway: f6,
+            sequential_ramp_number: f7,
+            carriageway: f8,
+            named_area: f9,
+            road_information: f10,
+            supplementary_positional_description_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(595)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.location_precision {
+            w.key(1239)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.direction_purpose {
+            w.key(566)?;
+            w.enumeration(504, v.literal())?;
+        }
+        if let Some(v) = &self.geographic_descriptor {
+            w.key(919)?;
+            w.enumeration(509, v.literal())?;
+        }
+        if let Some(v) = &self.infrastructure_descriptor {
+            w.key(994)?;
+            w.enumeration(518, v.literal())?;
+        }
+        if let Some(v) = &self.length_affected {
+            w.key(1055)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.location_description {
+            w.key(1233)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.position_on_carriageway {
+            w.key(1608)?;
+            w.enumeration(590, v.literal())?;
+        }
+        if let Some(v) = &self.sequential_ramp_number {
+            w.key(2027)?;
+            w.integer(*v)?;
+        }
+        if !self.carriageway.is_empty() {
+            w.key(317)?;
+            w.begin_array()?;
+            for v in &self.carriageway {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.named_area {
+            w.key(1347)?;
+            v.write_json(w)?;
+        }
+        if !self.road_information.is_empty() {
+            w.key(1968)?;
+            w.begin_array()?;
+            for v in &self.road_information {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.supplementary_positional_description_extension {
+            w.key(1203)?;
+            v.write_json(w, None)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegAreaDescriptor`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegAreaDescriptor {
@@ -8186,10 +14283,10 @@ pub struct TpegAreaDescriptor {
 }
 
 impl TpegAreaDescriptor {
-    const FIELDS: &'static [u32] = &[0xb0778, 0xb05ff, 0xb0bcd, 0xb05fd];
+    const FIELDS: &'static [u32] = &[0xe07a9, 0xe0628, 0xe0c2c, 0xe0626];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb021f);
+        r.expect_type(0xe022e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8198,10 +14295,10 @@ impl TpegAreaDescriptor {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0778 => { let v = r.multilingual()?; r.set(&mut e0, v, 1912); }
-                    0xb05ff => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1535); }
-                    0xb0bcd => { let v = r.enumeration::<TpegLoc03AreaDescriptorSubtypeEnum>()?; r.set(&mut e2, v, 3021); }
-                    0xb05fd => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1533); }
+                    0xe07a9 => { let v = r.multilingual()?; r.set(&mut e0, v, 1961); }
+                    0xe0628 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1576); }
+                    0xe0c2c => { let v = r.enumeration::<TpegLoc03AreaDescriptorSubtypeEnum>()?; r.set(&mut e2, v, 3116); }
+                    0xe0626 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1574); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8210,8 +14307,8 @@ impl TpegAreaDescriptor {
                 break;
             }
         }
-        r.required(&e0, 1912);
-        r.required(&e2, 3021);
+        r.required(&e0, 1961);
+        r.required(&e2, 3116);
         let v = Self {
             descriptor: e0,
             tpeg_descriptor_extension: e1,
@@ -8242,6 +14339,79 @@ impl TpegAreaDescriptor {
     }
 }
 
+impl TpegAreaDescriptor {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                546 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1206 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                2341 => if r.first(&mut seen[2])? { f2 = r.enumeration::<TpegLoc03AreaDescriptorSubtypeEnum>()?; },
+                1204 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 546);
+        r.required(&f2, 2341);
+        Ok(Self {
+            descriptor: f0,
+            tpeg_descriptor_extension: f1,
+            tpeg_area_descriptor_type: f2,
+            tpeg_area_descriptor_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(597)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.descriptor {
+            Some(v) => {
+                w.key(546)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(546, w.missing("descriptor"))?,
+        }
+        if let Some(v) = &self.tpeg_descriptor_extension {
+            w.key(1206)?;
+            w.extension(v)?;
+        }
+        match &self.tpeg_area_descriptor_type {
+            Some(v) => {
+                w.key(2341)?;
+                w.enumeration(610, v.literal())?;
+            }
+            None => w.absent(2341, w.missing("tpegAreaDescriptorType"))?,
+        }
+        if let Some(v) = &self.tpeg_area_descriptor_extension {
+            w.key(1204)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegFramedPoint`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegFramedPoint {
@@ -8262,10 +14432,10 @@ pub struct TpegFramedPoint {
 }
 
 impl TpegFramedPoint {
-    const FIELDS: &'static [u32] = &[0xb0bd0, 0xb060c, 0xb0bd1, 0xb082a, 0xb0bc4, 0xb0830, 0xb0600];
+    const FIELDS: &'static [u32] = &[0xe0c2f, 0xe0635, 0xe0c30, 0xe0866, 0xe0c23, 0xe086c, 0xe0629];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0222);
+        r.expect_type(0xe0231);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8277,13 +14447,13 @@ impl TpegFramedPoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0bd0 => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e0, v, 3024); }
-                    0xb060c => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1548); }
-                    0xb0bd1 => { let v = r.enumeration::<TpegLoc01FramedPointLocationSubtypeEnum>()?; r.set(&mut e2, v, 3025); }
-                    0xb082a => { let v = Some(TpegNonJunctionPoint::read(r)?); r.set(&mut e3, v.map(Box::new), 2090); }
-                    0xb0bc4 => { let v = TpegPoint::read(r)?; r.set(&mut e4, v, 3012); }
-                    0xb0830 => { let v = TpegPoint::read(r)?; r.set(&mut e5, v, 2096); }
-                    0xb0600 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1536); }
+                    0xe0c2f => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e0, v, 3119); }
+                    0xe0635 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1589); }
+                    0xe0c30 => { let v = r.enumeration::<TpegLoc01FramedPointLocationSubtypeEnum>()?; r.set(&mut e2, v, 3120); }
+                    0xe0866 => { let v = Some(TpegNonJunctionPoint::read(r)?); r.set(&mut e3, v.map(Box::new), 2150); }
+                    0xe0c23 => { let v = TpegPoint::read(r)?; r.set(&mut e4, v, 3107); }
+                    0xe086c => { let v = TpegPoint::read(r)?; r.set(&mut e5, v, 2156); }
+                    0xe0629 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1577); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8292,11 +14462,11 @@ impl TpegFramedPoint {
                 break;
             }
         }
-        r.required(&e0, 3024);
-        r.required(&e2, 3025);
-        r.required(&e3, 2090);
-        r.required(&e4, 3012);
-        r.required(&e5, 2096);
+        r.required(&e0, 3119);
+        r.required(&e2, 3120);
+        r.required(&e3, 2150);
+        r.required(&e4, 3107);
+        r.required(&e5, 2156);
         let v = Self {
             tpeg_direction: e0,
             tpeg_point_location_extension: e1,
@@ -8342,6 +14512,112 @@ impl TpegFramedPoint {
     }
 }
 
+impl TpegFramedPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2344 => if r.first(&mut seen[0])? { f0 = r.enumeration::<DirectionEnum>()?; },
+                1224 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                2345 => if r.first(&mut seen[2])? { f2 = r.enumeration::<TpegLoc01FramedPointLocationSubtypeEnum>()?; },
+                860 => if r.first(&mut seen[3])? { f3 = TpegNonJunctionPoint::read_json(r)?.map(Box::new); },
+                2332 => if r.first(&mut seen[4])? { f4 = TpegPoint::read_json(r)?; },
+                866 => if r.first(&mut seen[5])? { f5 = TpegPoint::read_json(r)?; },
+                1208 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2344);
+        r.required(&f2, 2345);
+        r.required(&f3, 860);
+        r.required(&f4, 2332);
+        r.required(&f5, 866);
+        Ok(Self {
+            tpeg_direction: f0,
+            tpeg_point_location_extension: f1,
+            tpeg_framed_point_location_type: f2,
+            framed_point: f3,
+            to: f4,
+            from: f5,
+            tpeg_framed_point_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(599)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.tpeg_direction {
+            Some(v) => {
+                w.key(2344)?;
+                w.enumeration(503, v.literal())?;
+            }
+            None => w.absent(2344, w.missing("tpegDirection"))?,
+        }
+        if let Some(v) = &self.tpeg_point_location_extension {
+            w.key(1224)?;
+            w.extension(v)?;
+        }
+        match &self.tpeg_framed_point_location_type {
+            Some(v) => {
+                w.key(2345)?;
+                w.enumeration(607, v.literal())?;
+            }
+            None => w.absent(2345, w.missing("tpegFramedPointLocationType"))?,
+        }
+        match &self.framed_point {
+            Some(v) => {
+                w.key(860)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(860, w.missing("framedPoint"))?,
+        }
+        match &self.to {
+            Some(v) => {
+                w.key(2332)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(2332, w.missing("to"))?,
+        }
+        match &self.from {
+            Some(v) => {
+                w.key(866)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(866, w.missing("from"))?,
+        }
+        if let Some(v) = &self.tpeg_framed_point_extension {
+            w.key(1208)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegGeometricArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegGeometricArea {
@@ -8362,10 +14638,10 @@ pub struct TpegGeometricArea {
 }
 
 impl TpegGeometricArea {
-    const FIELDS: &'static [u32] = &[0xb0bcf, 0xb0bd2, 0xb05fe, 0xb0a9c, 0xb0711, 0xb0949, 0xb0601];
+    const FIELDS: &'static [u32] = &[0xe0c2e, 0xe0c31, 0xe0627, 0xe0ae3, 0xe073a, 0xe098b, 0xe062a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0223);
+        r.expect_type(0xe0232);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8377,13 +14653,13 @@ impl TpegGeometricArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0bcf => { let v = r.enumeration::<TpegLoc01AreaLocationSubtypeEnum>()?; r.set(&mut e0, v, 3023); }
-                    0xb0bd2 => { let v = Some(TpegHeight::read(r)?); r.set(&mut e1, v.map(Box::new), 3026); }
-                    0xb05fe => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1534); }
-                    0xb0a9c => { let v = r.value::<u64>()?; r.set(&mut e3, v, 2716); }
-                    0xb0711 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e4, v.map(Box::new), 1809); }
-                    0xb0949 => { let v = Some(TpegAreaDescriptor::read(r)?); r.set(&mut e5, v.map(Box::new), 2377); }
-                    0xb0601 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1537); }
+                    0xe0c2e => { let v = r.enumeration::<TpegLoc01AreaLocationSubtypeEnum>()?; r.set(&mut e0, v, 3118); }
+                    0xe0c31 => { let v = Some(TpegHeight::read(r)?); r.set(&mut e1, v.map(Box::new), 3121); }
+                    0xe0627 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1575); }
+                    0xe0ae3 => { let v = r.value::<u64>()?; r.set(&mut e3, v, 2787); }
+                    0xe073a => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e4, v.map(Box::new), 1850); }
+                    0xe098b => { let v = Some(TpegAreaDescriptor::read(r)?); r.set(&mut e5, v.map(Box::new), 2443); }
+                    0xe062a => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1578); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8392,9 +14668,9 @@ impl TpegGeometricArea {
                 break;
             }
         }
-        r.required(&e0, 3023);
-        r.required(&e3, 2716);
-        r.required(&e4, 1809);
+        r.required(&e0, 3118);
+        r.required(&e3, 2787);
+        r.required(&e4, 1850);
         let v = Self {
             tpeg_area_location_type: e0,
             tpeg_height: e1,
@@ -8434,6 +14710,104 @@ impl TpegGeometricArea {
     }
 }
 
+impl TpegGeometricArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2343 => if r.first(&mut seen[0])? { f0 = r.enumeration::<TpegLoc01AreaLocationSubtypeEnum>()?; },
+                2346 => if r.first(&mut seen[1])? { f1 = TpegHeight::read_json(r)?.map(Box::new); },
+                1205 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1787 => if r.first(&mut seen[3])? { f3 = r.number::<u64>()?; },
+                324 => if r.first(&mut seen[4])? { f4 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1345 => if r.first(&mut seen[5])? { f5 = TpegAreaDescriptor::read_json(r)?.map(Box::new); },
+                1210 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2343);
+        r.required(&f3, 1787);
+        r.required(&f4, 324);
+        Ok(Self {
+            tpeg_area_location_type: f0,
+            tpeg_height: f1,
+            tpeg_area_location_extension: f2,
+            radius: f3,
+            centre_point: f4,
+            name: f5,
+            tpeg_geometric_area_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(600)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.tpeg_area_location_type {
+            Some(v) => {
+                w.key(2343)?;
+                w.enumeration(606, v.literal())?;
+            }
+            None => w.absent(2343, w.missing("tpegAreaLocationType"))?,
+        }
+        if let Some(v) = &self.tpeg_height {
+            w.key(2346)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.tpeg_area_location_extension {
+            w.key(1205)?;
+            w.extension(v)?;
+        }
+        match &self.radius {
+            Some(v) => {
+                w.key(1787)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(1787, w.missing("radius"))?,
+        }
+        match &self.centre_point {
+            Some(v) => {
+                w.key(324)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(324, w.missing("centrePoint"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.tpeg_geometric_area_extension {
+            w.key(1210)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegHeight`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegHeight {
@@ -8446,10 +14820,10 @@ pub struct TpegHeight {
 }
 
 impl TpegHeight {
-    const FIELDS: &'static [u32] = &[0xb085b, 0xb0862, 0xb0602];
+    const FIELDS: &'static [u32] = &[0xe0897, 0xe089e, 0xe062b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0224);
+        r.expect_type(0xe0233);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8457,9 +14831,9 @@ impl TpegHeight {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb085b => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2139); }
-                    0xb0862 => { let v = r.enumeration::<TpegLoc04HeightTypeEnum>()?; r.set(&mut e1, v, 2146); }
-                    0xb0602 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1538); }
+                    0xe0897 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2199); }
+                    0xe089e => { let v = r.enumeration::<TpegLoc04HeightTypeEnum>()?; r.set(&mut e1, v, 2206); }
+                    0xe062b => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1579); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8468,7 +14842,7 @@ impl TpegHeight {
                 break;
             }
         }
-        r.required(&e1, 2146);
+        r.required(&e1, 2206);
         let v = Self {
             height: e0,
             height_type: e1,
@@ -8494,6 +14868,68 @@ impl TpegHeight {
     }
 }
 
+impl TpegHeight {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                944 => if r.first(&mut seen[0])? { f0 = r.number::<f32>()?; },
+                951 => if r.first(&mut seen[1])? { f1 = r.enumeration::<TpegLoc04HeightTypeEnum>()?; },
+                1211 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 951);
+        Ok(Self {
+            height: f0,
+            height_type: f1,
+            tpeg_height_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(601)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.height {
+            w.key(944)?;
+            w.float32(*v)?;
+        }
+        match &self.height_type {
+            Some(v) => {
+                w.key(951)?;
+                w.enumeration(614, v.literal())?;
+            }
+            None => w.absent(951, w.missing("heightType"))?,
+        }
+        if let Some(v) = &self.tpeg_height_extension {
+            w.key(1211)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegIlcPointDescriptor`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegIlcPointDescriptor {
@@ -8510,10 +14946,10 @@ pub struct TpegIlcPointDescriptor {
 }
 
 impl TpegIlcPointDescriptor {
-    const FIELDS: &'static [u32] = &[0xb0778, 0xb05ff, 0xb060a, 0xb0bd3, 0xb0603];
+    const FIELDS: &'static [u32] = &[0xe07a9, 0xe0628, 0xe0633, 0xe0c32, 0xe062c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0225);
+        r.expect_type(0xe0234);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8523,11 +14959,11 @@ impl TpegIlcPointDescriptor {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0778 => { let v = r.multilingual()?; r.set(&mut e0, v, 1912); }
-                    0xb05ff => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1535); }
-                    0xb060a => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1546); }
-                    0xb0bd3 => { let v = r.enumeration::<TpegLoc03IlcPointDescriptorSubtypeEnum>()?; r.set(&mut e3, v, 3027); }
-                    0xb0603 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1539); }
+                    0xe07a9 => { let v = r.multilingual()?; r.set(&mut e0, v, 1961); }
+                    0xe0628 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1576); }
+                    0xe0633 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1587); }
+                    0xe0c32 => { let v = r.enumeration::<TpegLoc03IlcPointDescriptorSubtypeEnum>()?; r.set(&mut e3, v, 3122); }
+                    0xe062c => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1580); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8536,8 +14972,8 @@ impl TpegIlcPointDescriptor {
                 break;
             }
         }
-        r.required(&e0, 1912);
-        r.required(&e3, 3027);
+        r.required(&e0, 1961);
+        r.required(&e3, 3122);
         let v = Self {
             descriptor: e0,
             tpeg_descriptor_extension: e1,
@@ -8570,6 +15006,86 @@ impl TpegIlcPointDescriptor {
     }
 }
 
+impl TpegIlcPointDescriptor {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                546 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1206 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1222 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                2347 => if r.first(&mut seen[3])? { f3 = r.enumeration::<TpegLoc03IlcPointDescriptorSubtypeEnum>()?; },
+                1212 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 546);
+        r.required(&f3, 2347);
+        Ok(Self {
+            descriptor: f0,
+            tpeg_descriptor_extension: f1,
+            tpeg_point_descriptor_extension: f2,
+            tpeg_ilc_point_descriptor_type: f3,
+            tpeg_ilc_point_descriptor_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(602)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.descriptor {
+            Some(v) => {
+                w.key(546)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(546, w.missing("descriptor"))?,
+        }
+        if let Some(v) = &self.tpeg_descriptor_extension {
+            w.key(1206)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.tpeg_point_descriptor_extension {
+            w.key(1222)?;
+            w.extension(v)?;
+        }
+        match &self.tpeg_ilc_point_descriptor_type {
+            Some(v) => {
+                w.key(2347)?;
+                w.enumeration(611, v.literal())?;
+            }
+            None => w.absent(2347, w.missing("tpegIlcPointDescriptorType"))?,
+        }
+        if let Some(v) = &self.tpeg_ilc_point_descriptor_extension {
+            w.key(1212)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegJunction`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegJunction {
@@ -8588,10 +15104,10 @@ pub struct TpegJunction {
 }
 
 impl TpegJunction {
-    const FIELDS: &'static [u32] = &[0xb060b, 0xb0a46, 0xb0949, 0xb0871, 0xb09e8, 0xb0604];
+    const FIELDS: &'static [u32] = &[0xe0634, 0xe0a8c, 0xe098b, 0xe08ad, 0xe0a2d, 0xe062d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0226);
+        r.expect_type(0xe0235);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8602,12 +15118,12 @@ impl TpegJunction {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb060b => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1547); }
-                    0xb0a46 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2630); }
-                    0xb0949 => { let v = Some(TpegJunctionPointDescriptor::read(r)?); r.set(&mut e2, v.map(Box::new), 2377); }
-                    0xb0871 => { let v = Some(TpegIlcPointDescriptor::read(r)?); e3.extend(v); }
-                    0xb09e8 => { let v = Some(TpegOtherPointDescriptor::read(r)?); e4.extend(v); }
-                    0xb0604 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1540); }
+                    0xe0634 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1588); }
+                    0xe0a8c => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2700); }
+                    0xe098b => { let v = Some(TpegJunctionPointDescriptor::read(r)?); r.set(&mut e2, v.map(Box::new), 2443); }
+                    0xe08ad => { let v = Some(TpegIlcPointDescriptor::read(r)?); e3.extend(v); }
+                    0xe0a2d => { let v = Some(TpegOtherPointDescriptor::read(r)?); e4.extend(v); }
+                    0xe062d => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1581); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8616,7 +15132,7 @@ impl TpegJunction {
                 break;
             }
         }
-        r.required(&e1, 2630);
+        r.required(&e1, 2700);
         let v = Self {
             tpeg_point_extension: e0,
             point_coordinates: e1,
@@ -8649,6 +15165,100 @@ impl TpegJunction {
     }
 }
 
+impl TpegJunction {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1223 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1598 => if r.first(&mut seen[1])? { f1 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1345 => if r.first(&mut seen[2])? { f2 = TpegJunctionPointDescriptor::read_json(r)?.map(Box::new); },
+                966 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = TpegIlcPointDescriptor::read_json(r)? { f3.push(v); } } },
+                1504 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = TpegOtherPointDescriptor::read_json(r)? { f4.push(v); } } },
+                1214 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1598);
+        Ok(Self {
+            tpeg_point_extension: f0,
+            point_coordinates: f1,
+            name: f2,
+            ilc: f3,
+            other_name: f4,
+            tpeg_junction_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(603)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.tpeg_point_extension {
+            w.key(1223)?;
+            w.extension(v)?;
+        }
+        match &self.point_coordinates {
+            Some(v) => {
+                w.key(1598)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1598, w.missing("pointCoordinates"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            v.write_json(w, None)?;
+        }
+        w.count("ilc", self.ilc.len(), 1, 3)?;
+        if !self.ilc.is_empty() {
+            w.key(966)?;
+            w.begin_array()?;
+            for v in &self.ilc {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.other_name.is_empty() {
+            w.key(1504)?;
+            w.begin_array()?;
+            for v in &self.other_name {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.tpeg_junction_extension {
+            w.key(1214)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegJunctionPointDescriptor`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegJunctionPointDescriptor {
@@ -8665,10 +15275,10 @@ pub struct TpegJunctionPointDescriptor {
 }
 
 impl TpegJunctionPointDescriptor {
-    const FIELDS: &'static [u32] = &[0xb0778, 0xb05ff, 0xb060a, 0xb0bd4, 0xb0605];
+    const FIELDS: &'static [u32] = &[0xe07a9, 0xe0628, 0xe0633, 0xe0c33, 0xe062e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0227);
+        r.expect_type(0xe0236);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8678,11 +15288,11 @@ impl TpegJunctionPointDescriptor {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0778 => { let v = r.multilingual()?; r.set(&mut e0, v, 1912); }
-                    0xb05ff => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1535); }
-                    0xb060a => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1546); }
-                    0xb0bd4 => { let v = r.enumeration::<TpegLoc03JunctionPointDescriptorSubtypeEnum>()?; r.set(&mut e3, v, 3028); }
-                    0xb0605 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1541); }
+                    0xe07a9 => { let v = r.multilingual()?; r.set(&mut e0, v, 1961); }
+                    0xe0628 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1576); }
+                    0xe0633 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1587); }
+                    0xe0c33 => { let v = r.enumeration::<TpegLoc03JunctionPointDescriptorSubtypeEnum>()?; r.set(&mut e3, v, 3123); }
+                    0xe062e => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1582); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8691,8 +15301,8 @@ impl TpegJunctionPointDescriptor {
                 break;
             }
         }
-        r.required(&e0, 1912);
-        r.required(&e3, 3028);
+        r.required(&e0, 1961);
+        r.required(&e3, 3123);
         let v = Self {
             descriptor: e0,
             tpeg_descriptor_extension: e1,
@@ -8725,6 +15335,86 @@ impl TpegJunctionPointDescriptor {
     }
 }
 
+impl TpegJunctionPointDescriptor {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                546 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1206 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1222 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                2348 => if r.first(&mut seen[3])? { f3 = r.enumeration::<TpegLoc03JunctionPointDescriptorSubtypeEnum>()?; },
+                1215 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 546);
+        r.required(&f3, 2348);
+        Ok(Self {
+            descriptor: f0,
+            tpeg_descriptor_extension: f1,
+            tpeg_point_descriptor_extension: f2,
+            tpeg_junction_point_descriptor_type: f3,
+            tpeg_junction_point_descriptor_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(604)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.descriptor {
+            Some(v) => {
+                w.key(546)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(546, w.missing("descriptor"))?,
+        }
+        if let Some(v) = &self.tpeg_descriptor_extension {
+            w.key(1206)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.tpeg_point_descriptor_extension {
+            w.key(1222)?;
+            w.extension(v)?;
+        }
+        match &self.tpeg_junction_point_descriptor_type {
+            Some(v) => {
+                w.key(2348)?;
+                w.enumeration(612, v.literal())?;
+            }
+            None => w.absent(2348, w.missing("tpegJunctionPointDescriptorType"))?,
+        }
+        if let Some(v) = &self.tpeg_junction_point_descriptor_extension {
+            w.key(1215)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegLinearLocation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegLinearLocation {
@@ -8741,10 +15431,10 @@ pub struct TpegLinearLocation {
 }
 
 impl TpegLinearLocation {
-    const FIELDS: &'static [u32] = &[0xb0bd0, 0xb0bd6, 0xb0bc4, 0xb0830, 0xb0606];
+    const FIELDS: &'static [u32] = &[0xe0c2f, 0xe0c35, 0xe0c23, 0xe086c, 0xe062f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0228);
+        r.expect_type(0xe0237);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8754,11 +15444,11 @@ impl TpegLinearLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0bd0 => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e0, v, 3024); }
-                    0xb0bd6 => { let v = r.enumeration::<TpegLoc01LinearLocationSubtypeEnum>()?; r.set(&mut e1, v, 3030); }
-                    0xb0bc4 => { let v = TpegPoint::read(r)?; r.set(&mut e2, v, 3012); }
-                    0xb0830 => { let v = TpegPoint::read(r)?; r.set(&mut e3, v, 2096); }
-                    0xb0606 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1542); }
+                    0xe0c2f => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e0, v, 3119); }
+                    0xe0c35 => { let v = r.enumeration::<TpegLoc01LinearLocationSubtypeEnum>()?; r.set(&mut e1, v, 3125); }
+                    0xe0c23 => { let v = TpegPoint::read(r)?; r.set(&mut e2, v, 3107); }
+                    0xe086c => { let v = TpegPoint::read(r)?; r.set(&mut e3, v, 2156); }
+                    0xe062f => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1583); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8767,10 +15457,10 @@ impl TpegLinearLocation {
                 break;
             }
         }
-        r.required(&e0, 3024);
-        r.required(&e1, 3030);
-        r.required(&e2, 3012);
-        r.required(&e3, 2096);
+        r.required(&e0, 3119);
+        r.required(&e1, 3125);
+        r.required(&e2, 3107);
+        r.required(&e3, 2156);
         let v = Self {
             tpeg_direction: e0,
             tpeg_linear_location_type: e1,
@@ -8809,6 +15499,94 @@ impl TpegLinearLocation {
     }
 }
 
+impl TpegLinearLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2344 => if r.first(&mut seen[0])? { f0 = r.enumeration::<DirectionEnum>()?; },
+                2350 => if r.first(&mut seen[1])? { f1 = r.enumeration::<TpegLoc01LinearLocationSubtypeEnum>()?; },
+                2332 => if r.first(&mut seen[2])? { f2 = TpegPoint::read_json(r)?; },
+                866 => if r.first(&mut seen[3])? { f3 = TpegPoint::read_json(r)?; },
+                1216 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2344);
+        r.required(&f1, 2350);
+        r.required(&f2, 2332);
+        r.required(&f3, 866);
+        Ok(Self {
+            tpeg_direction: f0,
+            tpeg_linear_location_type: f1,
+            to: f2,
+            from: f3,
+            tpeg_linear_location_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(605)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.tpeg_direction {
+            Some(v) => {
+                w.key(2344)?;
+                w.enumeration(503, v.literal())?;
+            }
+            None => w.absent(2344, w.missing("tpegDirection"))?,
+        }
+        match &self.tpeg_linear_location_type {
+            Some(v) => {
+                w.key(2350)?;
+                w.enumeration(608, v.literal())?;
+            }
+            None => w.absent(2350, w.missing("tpegLinearLocationType"))?,
+        }
+        match &self.to {
+            Some(v) => {
+                w.key(2332)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(2332, w.missing("to"))?,
+        }
+        match &self.from {
+            Some(v) => {
+                w.key(866)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(866, w.missing("from"))?,
+        }
+        if let Some(v) = &self.tpeg_linear_location_extension {
+            w.key(1216)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegNamedOnlyArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegNamedOnlyArea {
@@ -8825,10 +15603,10 @@ pub struct TpegNamedOnlyArea {
 }
 
 impl TpegNamedOnlyArea {
-    const FIELDS: &'static [u32] = &[0xb0bcf, 0xb0bd2, 0xb05fe, 0xb0949, 0xb0607];
+    const FIELDS: &'static [u32] = &[0xe0c2e, 0xe0c31, 0xe0627, 0xe098b, 0xe0630];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0229);
+        r.expect_type(0xe0238);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8838,11 +15616,11 @@ impl TpegNamedOnlyArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0bcf => { let v = r.enumeration::<TpegLoc01AreaLocationSubtypeEnum>()?; r.set(&mut e0, v, 3023); }
-                    0xb0bd2 => { let v = Some(TpegHeight::read(r)?); r.set(&mut e1, v.map(Box::new), 3026); }
-                    0xb05fe => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1534); }
-                    0xb0949 => { let v = Some(TpegAreaDescriptor::read(r)?); e3.extend(v); }
-                    0xb0607 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1543); }
+                    0xe0c2e => { let v = r.enumeration::<TpegLoc01AreaLocationSubtypeEnum>()?; r.set(&mut e0, v, 3118); }
+                    0xe0c31 => { let v = Some(TpegHeight::read(r)?); r.set(&mut e1, v.map(Box::new), 3121); }
+                    0xe0627 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1575); }
+                    0xe098b => { let v = Some(TpegAreaDescriptor::read(r)?); e3.extend(v); }
+                    0xe0630 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1584); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8851,7 +15629,7 @@ impl TpegNamedOnlyArea {
                 break;
             }
         }
-        r.required(&e0, 3023);
+        r.required(&e0, 3118);
         let v = Self {
             tpeg_area_location_type: e0,
             tpeg_height: e1,
@@ -8882,6 +15660,88 @@ impl TpegNamedOnlyArea {
     }
 }
 
+impl TpegNamedOnlyArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2343 => if r.first(&mut seen[0])? { f0 = r.enumeration::<TpegLoc01AreaLocationSubtypeEnum>()?; },
+                2346 => if r.first(&mut seen[1])? { f1 = TpegHeight::read_json(r)?.map(Box::new); },
+                1205 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1345 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = TpegAreaDescriptor::read_json(r)? { f3.push(v); } } },
+                1218 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2343);
+        Ok(Self {
+            tpeg_area_location_type: f0,
+            tpeg_height: f1,
+            tpeg_area_location_extension: f2,
+            name: f3,
+            tpeg_named_only_area_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(615)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.tpeg_area_location_type {
+            Some(v) => {
+                w.key(2343)?;
+                w.enumeration(606, v.literal())?;
+            }
+            None => w.absent(2343, w.missing("tpegAreaLocationType"))?,
+        }
+        if let Some(v) = &self.tpeg_height {
+            w.key(2346)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.tpeg_area_location_extension {
+            w.key(1205)?;
+            w.extension(v)?;
+        }
+        w.count("name", self.name.len(), 1, usize::MAX)?;
+        if !self.name.is_empty() {
+            w.key(1345)?;
+            w.begin_array()?;
+            for v in &self.name {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.tpeg_named_only_area_extension {
+            w.key(1218)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegNonJunctionPoint`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegNonJunctionPoint {
@@ -8896,10 +15756,10 @@ pub struct TpegNonJunctionPoint {
 }
 
 impl TpegNonJunctionPoint {
-    const FIELDS: &'static [u32] = &[0xb060b, 0xb0a46, 0xb0949, 0xb0608];
+    const FIELDS: &'static [u32] = &[0xe0634, 0xe0a8c, 0xe098b, 0xe0631];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb022a);
+        r.expect_type(0xe0239);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8908,10 +15768,10 @@ impl TpegNonJunctionPoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb060b => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1547); }
-                    0xb0a46 => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2630); }
-                    0xb0949 => { let v = Some(TpegOtherPointDescriptor::read(r)?); e2.extend(v); }
-                    0xb0608 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1544); }
+                    0xe0634 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1588); }
+                    0xe0a8c => { let v = Some(PointCoordinates::read(r)?); r.set(&mut e1, v.map(Box::new), 2700); }
+                    0xe098b => { let v = Some(TpegOtherPointDescriptor::read(r)?); e2.extend(v); }
+                    0xe0631 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1585); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8920,7 +15780,7 @@ impl TpegNonJunctionPoint {
                 break;
             }
         }
-        r.required(&e1, 2630);
+        r.required(&e1, 2700);
         let v = Self {
             tpeg_point_extension: e0,
             point_coordinates: e1,
@@ -8949,6 +15809,81 @@ impl TpegNonJunctionPoint {
     }
 }
 
+impl TpegNonJunctionPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1223 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                1598 => if r.first(&mut seen[1])? { f1 = PointCoordinates::read_json(r)?.map(Box::new); },
+                1345 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = TpegOtherPointDescriptor::read_json(r)? { f2.push(v); } } },
+                1220 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f1, 1598);
+        Ok(Self {
+            tpeg_point_extension: f0,
+            point_coordinates: f1,
+            name: f2,
+            tpeg_non_junction_point_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(616)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.tpeg_point_extension {
+            w.key(1223)?;
+            w.extension(v)?;
+        }
+        match &self.point_coordinates {
+            Some(v) => {
+                w.key(1598)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1598, w.missing("pointCoordinates"))?,
+        }
+        w.count("name", self.name.len(), 1, usize::MAX)?;
+        if !self.name.is_empty() {
+            w.key(1345)?;
+            w.begin_array()?;
+            for v in &self.name {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.tpeg_non_junction_point_extension {
+            w.key(1220)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegOtherPointDescriptor`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegOtherPointDescriptor {
@@ -8965,10 +15900,10 @@ pub struct TpegOtherPointDescriptor {
 }
 
 impl TpegOtherPointDescriptor {
-    const FIELDS: &'static [u32] = &[0xb0778, 0xb05ff, 0xb060a, 0xb0bd7, 0xb0609];
+    const FIELDS: &'static [u32] = &[0xe07a9, 0xe0628, 0xe0633, 0xe0c36, 0xe0632];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb022b);
+        r.expect_type(0xe023a);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -8978,11 +15913,11 @@ impl TpegOtherPointDescriptor {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0778 => { let v = r.multilingual()?; r.set(&mut e0, v, 1912); }
-                    0xb05ff => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1535); }
-                    0xb060a => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1546); }
-                    0xb0bd7 => { let v = r.enumeration::<TpegLoc03OtherPointDescriptorSubtypeEnum>()?; r.set(&mut e3, v, 3031); }
-                    0xb0609 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1545); }
+                    0xe07a9 => { let v = r.multilingual()?; r.set(&mut e0, v, 1961); }
+                    0xe0628 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1576); }
+                    0xe0633 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1587); }
+                    0xe0c36 => { let v = r.enumeration::<TpegLoc03OtherPointDescriptorSubtypeEnum>()?; r.set(&mut e3, v, 3126); }
+                    0xe0632 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1586); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -8991,8 +15926,8 @@ impl TpegOtherPointDescriptor {
                 break;
             }
         }
-        r.required(&e0, 1912);
-        r.required(&e3, 3031);
+        r.required(&e0, 1961);
+        r.required(&e3, 3126);
         let v = Self {
             descriptor: e0,
             tpeg_descriptor_extension: e1,
@@ -9025,6 +15960,86 @@ impl TpegOtherPointDescriptor {
     }
 }
 
+impl TpegOtherPointDescriptor {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                546 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1206 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1222 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                2351 => if r.first(&mut seen[3])? { f3 = r.enumeration::<TpegLoc03OtherPointDescriptorSubtypeEnum>()?; },
+                1221 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 546);
+        r.required(&f3, 2351);
+        Ok(Self {
+            descriptor: f0,
+            tpeg_descriptor_extension: f1,
+            tpeg_point_descriptor_extension: f2,
+            tpeg_other_point_descriptor_type: f3,
+            tpeg_other_point_descriptor_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(617)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.descriptor {
+            Some(v) => {
+                w.key(546)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(546, w.missing("descriptor"))?,
+        }
+        if let Some(v) = &self.tpeg_descriptor_extension {
+            w.key(1206)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.tpeg_point_descriptor_extension {
+            w.key(1222)?;
+            w.extension(v)?;
+        }
+        match &self.tpeg_other_point_descriptor_type {
+            Some(v) => {
+                w.key(2351)?;
+                w.enumeration(613, v.literal())?;
+            }
+            None => w.absent(2351, w.missing("tpegOtherPointDescriptorType"))?,
+        }
+        if let Some(v) = &self.tpeg_other_point_descriptor_extension {
+            w.key(1221)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:TpegSimplePoint`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TpegSimplePoint {
@@ -9041,10 +16056,10 @@ pub struct TpegSimplePoint {
 }
 
 impl TpegSimplePoint {
-    const FIELDS: &'static [u32] = &[0xb0bd0, 0xb060c, 0xb0bd9, 0xb0a43, 0xb060d];
+    const FIELDS: &'static [u32] = &[0xe0c2f, 0xe0635, 0xe0c38, 0xe0a89, 0xe0636];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb022f);
+        r.expect_type(0xe023e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -9054,11 +16069,11 @@ impl TpegSimplePoint {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0bd0 => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e0, v, 3024); }
-                    0xb060c => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1548); }
-                    0xb0bd9 => { let v = r.enumeration::<TpegLoc01SimplePointLocationSubtypeEnum>()?; r.set(&mut e2, v, 3033); }
-                    0xb0a43 => { let v = TpegPoint::read(r)?; r.set(&mut e3, v, 2627); }
-                    0xb060d => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1549); }
+                    0xe0c2f => { let v = r.enumeration::<DirectionEnum>()?; r.set(&mut e0, v, 3119); }
+                    0xe0635 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1589); }
+                    0xe0c38 => { let v = r.enumeration::<TpegLoc01SimplePointLocationSubtypeEnum>()?; r.set(&mut e2, v, 3128); }
+                    0xe0a89 => { let v = TpegPoint::read(r)?; r.set(&mut e3, v, 2697); }
+                    0xe0636 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1590); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -9067,9 +16082,9 @@ impl TpegSimplePoint {
                 break;
             }
         }
-        r.required(&e0, 3024);
-        r.required(&e2, 3033);
-        r.required(&e3, 2627);
+        r.required(&e0, 3119);
+        r.required(&e2, 3128);
+        r.required(&e3, 2697);
         let v = Self {
             tpeg_direction: e0,
             tpeg_point_location_extension: e1,
@@ -9105,6 +16120,90 @@ impl TpegSimplePoint {
     }
 }
 
+impl TpegSimplePoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2344 => if r.first(&mut seen[0])? { f0 = r.enumeration::<DirectionEnum>()?; },
+                1224 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                2353 => if r.first(&mut seen[2])? { f2 = r.enumeration::<TpegLoc01SimplePointLocationSubtypeEnum>()?; },
+                1595 => if r.first(&mut seen[3])? { f3 = TpegPoint::read_json(r)?; },
+                1226 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2344);
+        r.required(&f2, 2353);
+        r.required(&f3, 1595);
+        Ok(Self {
+            tpeg_direction: f0,
+            tpeg_point_location_extension: f1,
+            tpeg_simple_point_location_type: f2,
+            point: f3,
+            tpeg_simple_point_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(620)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.tpeg_direction {
+            Some(v) => {
+                w.key(2344)?;
+                w.enumeration(503, v.literal())?;
+            }
+            None => w.absent(2344, w.missing("tpegDirection"))?,
+        }
+        if let Some(v) = &self.tpeg_point_location_extension {
+            w.key(1224)?;
+            w.extension(v)?;
+        }
+        match &self.tpeg_simple_point_location_type {
+            Some(v) => {
+                w.key(2353)?;
+                w.enumeration(609, v.literal())?;
+            }
+            None => w.absent(2353, w.missing("tpegSimplePointLocationType"))?,
+        }
+        match &self.point {
+            Some(v) => {
+                w.key(1595)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(1595, w.missing("point"))?,
+        }
+        if let Some(v) = &self.tpeg_simple_point_extension {
+            w.key(1226)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:_IntermediatePointOnLinearElement`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct IntermediatePointOnLinearElement {
@@ -9115,17 +16214,17 @@ pub struct IntermediatePointOnLinearElement {
 }
 
 impl IntermediatePointOnLinearElement {
-    const FIELDS: &'static [u32] = &[0xb0abe];
+    const FIELDS: &'static [u32] = &[0xe0b07];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0306);
-        let a0 = r.req_attr_value::<i32>(2177)?;
+        r.expect_type(0xe0317);
+        let a0 = r.req_attr_value::<i32>(2237)?;
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0abe => { let v = Some(Referent::read(r)?); r.set(&mut e0, v.map(Box::new), 2750); }
+                    0xe0b07 => { let v = Some(Referent::read(r)?); r.set(&mut e0, v.map(Box::new), 2823); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -9134,7 +16233,7 @@ impl IntermediatePointOnLinearElement {
                 break;
             }
         }
-        r.required(&e0, 2750);
+        r.required(&e0, 2823);
         let v = Self {
             index: a0,
             referent: e0,
@@ -9161,6 +16260,65 @@ impl IntermediatePointOnLinearElement {
     }
 }
 
+impl IntermediatePointOnLinearElement {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                981 => if r.first(&mut seen[0])? { f0 = r.number::<i32>()?; },
+                1823 => if r.first(&mut seen[1])? { f1 = Referent::read_json(r)?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 981);
+        r.required(&f1, 1823);
+        Ok(Self {
+            index: f0,
+            referent: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(621)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.index {
+            Some(v) => {
+                w.key(981)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(981, w.missing_attr("index"))?,
+        }
+        match &self.referent {
+            Some(v) => {
+                w.key(1823)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1823, w.missing("referent"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:_LocationContainedInItinerary`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LocationContainedInItinerary {
@@ -9171,17 +16329,17 @@ pub struct LocationContainedInItinerary {
 }
 
 impl LocationContainedInItinerary {
-    const FIELDS: &'static [u32] = &[0xb08dc];
+    const FIELDS: &'static [u32] = &[0xe091a];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb030f);
-        let a0 = r.req_attr_value::<i32>(2177)?;
+        r.expect_type(0xe0321);
+        let a0 = r.req_attr_value::<i32>(2237)?;
         r.attrs_done();
         let mut e0 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb08dc => { let v = Location::read(r)?; r.set(&mut e0, v, 2268); }
+                    0xe091a => { let v = Location::read(r)?; r.set(&mut e0, v, 2330); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -9190,7 +16348,7 @@ impl LocationContainedInItinerary {
                 break;
             }
         }
-        r.required(&e0, 2268);
+        r.required(&e0, 2330);
         let v = Self {
             index: a0,
             location: e0,
@@ -9217,6 +16375,65 @@ impl LocationContainedInItinerary {
     }
 }
 
+impl LocationContainedInItinerary {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                981 => if r.first(&mut seen[0])? { f0 = r.number::<i32>()?; },
+                1228 => if r.first(&mut seen[1])? { f1 = Location::read_json(r)?; },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 981);
+        r.required(&f1, 1228);
+        Ok(Self {
+            index: f0,
+            location: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(622)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.index {
+            Some(v) => {
+                w.key(981)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(981, w.missing_attr("index"))?,
+        }
+        match &self.location {
+            Some(v) => {
+                w.key(1228)?;
+                v.write_json(w)?;
+            }
+            None => w.absent(1228, w.missing("location"))?,
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `loc:_LocationExtensionType`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LocationExtensionType {
@@ -9227,17 +16444,17 @@ pub struct LocationExtensionType {
 }
 
 impl LocationExtensionType {
-    const FIELDS: &'static [u32] = &[0xb0699];
+    const FIELDS: &'static [u32] = &[0xe06c2];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0310);
+        r.expect_type(0xe0322);
         r.attrs_done();
         let mut e0 = None;
         let mut other = Vec::new();
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0699 => { let v = Some(afac::AfirFacilityLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1689); }
+                    0xe06c2 => { let v = Some(afac::AfirFacilityLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 1730); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => other.push(r.raw_element()?),
@@ -9266,6 +16483,54 @@ impl LocationExtensionType {
     }
 }
 
+impl LocationExtensionType {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1 => if r.first(&mut seen[0])? { f0 = afac::AfirFacilityLocation::read_json(r)?.map(Box::new); },
+                5 => if r.first(&mut seen[0])? { f0 = afac::AfirFacilityLocation::read_json(r)?.map(Box::new); },
+                _ => f1.push(r.raw_member()?),
+            }
+        }
+        Ok(Self {
+            afir_facility_location: f0,
+            other: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(535)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.afir_facility_location {
+            w.key(1)?;
+            v.write_json(w, None)?;
+        }
+        w.foreign_members(&self.other)?;
+        w.end_object()
+    }
+}
+
 /// XML type `loc:_LocationReferenceExtensionType`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LocationReferenceExtensionType {
@@ -9276,17 +16541,17 @@ pub struct LocationReferenceExtensionType {
 }
 
 impl LocationReferenceExtensionType {
-    const FIELDS: &'static [u32] = &[0xb080b];
+    const FIELDS: &'static [u32] = &[0xe0847];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb0311);
+        r.expect_type(0xe0323);
         r.attrs_done();
         let mut e0 = None;
         let mut other = Vec::new();
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb080b => { let v = Some(locx::FacilityLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 2059); }
+                    0xe0847 => { let v = Some(locx::FacilityLocation::read(r)?); r.set(&mut e0, v.map(Box::new), 2119); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => other.push(r.raw_element()?),
@@ -9315,6 +16580,53 @@ impl LocationReferenceExtensionType {
     }
 }
 
+impl LocationReferenceExtensionType {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                5 => if r.first(&mut seen[0])? { f0 = locx::FacilityLocation::read_json(r)?.map(Box::new); },
+                _ => f1.push(r.raw_member()?),
+            }
+        }
+        Ok(Self {
+            facility_location: f0,
+            other: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(540)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.facility_location {
+            w.key(5)?;
+            v.write_json(w, None)?;
+        }
+        w.foreign_members(&self.other)?;
+        w.end_object()
+    }
+}
+
 /// XML type `loc:_NamedAreaExtensionType`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NamedAreaExtensionType {
@@ -9325,17 +16637,17 @@ pub struct NamedAreaExtensionType {
 }
 
 impl NamedAreaExtensionType {
-    const FIELDS: &'static [u32] = &[0xb094d];
+    const FIELDS: &'static [u32] = &[0xe098f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb031e);
+        r.expect_type(0xe0332);
         r.attrs_done();
         let mut e0 = None;
         let mut other = Vec::new();
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb094d => { let v = Some(locx::NamedAreaExtended::read(r)?); r.set(&mut e0, v.map(Box::new), 2381); }
+                    0xe098f => { let v = Some(locx::NamedAreaExtended::read(r)?); r.set(&mut e0, v.map(Box::new), 2447); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => other.push(r.raw_element()?),
@@ -9364,6 +16676,53 @@ impl NamedAreaExtensionType {
     }
 }
 
+impl NamedAreaExtensionType {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                7 => if r.first(&mut seen[0])? { f0 = locx::NamedAreaExtended::read_json(r)?.map(Box::new); },
+                _ => f1.push(r.raw_member()?),
+            }
+        }
+        Ok(Self {
+            named_area_extended: f0,
+            other: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(543)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.named_area_extended {
+            w.key(7)?;
+            v.write_json(w, None)?;
+        }
+        w.foreign_members(&self.other)?;
+        w.end_object()
+    }
+}
+
 /// XML type `loc:_SupplementaryPositionalDescriptionExtensionType`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SupplementaryPositionalDescriptionExtensionType {
@@ -9374,17 +16733,17 @@ pub struct SupplementaryPositionalDescriptionExtensionType {
 }
 
 impl SupplementaryPositionalDescriptionExtensionType {
-    const FIELDS: &'static [u32] = &[0xb0b95];
+    const FIELDS: &'static [u32] = &[0xe0bf3];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0xb03b2);
+        r.expect_type(0xe03cb);
         r.attrs_done();
         let mut e0 = None;
         let mut other = Vec::new();
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0xb0b95 => { let v = Some(locx::SupplementaryPositionalDescriptionExtended::read(r)?); r.set(&mut e0, v.map(Box::new), 2965); }
+                    0xe0bf3 => { let v = Some(locx::SupplementaryPositionalDescriptionExtended::read(r)?); r.set(&mut e0, v.map(Box::new), 3059); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => other.push(r.raw_element()?),
@@ -9413,6 +16772,53 @@ impl SupplementaryPositionalDescriptionExtensionType {
     }
 }
 
+impl SupplementaryPositionalDescriptionExtensionType {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                14 => if r.first(&mut seen[0])? { f0 = locx::SupplementaryPositionalDescriptionExtended::read_json(r)?.map(Box::new); },
+                _ => f1.push(r.raw_member()?),
+            }
+        }
+        Ok(Self {
+            supplementary_positional_description_extended: f0,
+            other: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(596)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.supplementary_positional_description_extended {
+            w.key(14)?;
+            v.write_json(w, None)?;
+        }
+        w.foreign_members(&self.other)?;
+        w.end_object()
+    }
+}
+
 /// Any concrete kind of XML type `loc:AlertCLinear`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AlertCLinear {
@@ -9431,9 +16837,9 @@ impl AlertCLinear {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb001e) => Self::AlertCLinearByCode(Box::new(AlertCLinearByCode::read(r)?)),
-            Some(0xb0020) => Self::AlertCMethod2Linear(Box::new(AlertCMethod2Linear::read(r)?)),
-            Some(0xb0024) => Self::AlertCMethod4Linear(Box::new(AlertCMethod4Linear::read(r)?)),
+            Some(0xe001f) => Self::AlertCLinearByCode(Box::new(AlertCLinearByCode::read(r)?)),
+            Some(0xe0021) => Self::AlertCMethod2Linear(Box::new(AlertCMethod2Linear::read(r)?)),
+            Some(0xe0025) => Self::AlertCMethod4Linear(Box::new(AlertCMethod4Linear::read(r)?)),
             _ => {
                 r.unknown_type("AlertCLinear")?;
                 return Ok(None);
@@ -9488,6 +16894,71 @@ impl AlertCLinear {
     }
 }
 
+impl AlertCLinear {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1078 => if r.first(&mut seen)? { value = AlertCLinearByCode::read_json(r)?.map(|v| Self::AlertCLinearByCode(Box::new(v))); },
+                1082 => if r.first(&mut seen)? { value = AlertCMethod2Linear::read_json(r)?.map(|v| Self::AlertCMethod2Linear(Box::new(v))); },
+                1088 => if r.first(&mut seen)? { value = AlertCMethod4Linear::read_json(r)?.map(|v| Self::AlertCMethod4Linear(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of AlertCLinear in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::AlertCLinearByCode(v) => {
+                if w.wrapper(1078)? {
+                    w.begin_object(484)?;
+                    w.key(1078)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::AlertCMethod2Linear(v) => {
+                if w.wrapper(1082)? {
+                    w.begin_object(484)?;
+                    w.key(1082)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::AlertCMethod4Linear(v) => {
+                if w.wrapper(1088)? {
+                    w.begin_object(484)?;
+                    w.key(1088)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:AlertCPoint`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AlertCPoint {
@@ -9504,8 +16975,8 @@ impl AlertCPoint {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb0021) => Self::AlertCMethod2Point(Box::new(AlertCMethod2Point::read(r)?)),
-            Some(0xb0025) => Self::AlertCMethod4Point(Box::new(AlertCMethod4Point::read(r)?)),
+            Some(0xe0022) => Self::AlertCMethod2Point(Box::new(AlertCMethod2Point::read(r)?)),
+            Some(0xe0026) => Self::AlertCMethod4Point(Box::new(AlertCMethod4Point::read(r)?)),
             _ => {
                 r.unknown_type("AlertCPoint")?;
                 return Ok(None);
@@ -9555,6 +17026,60 @@ impl AlertCPoint {
     }
 }
 
+impl AlertCPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1084 => if r.first(&mut seen)? { value = AlertCMethod2Point::read_json(r)?.map(|v| Self::AlertCMethod2Point(Box::new(v))); },
+                1090 => if r.first(&mut seen)? { value = AlertCMethod4Point::read_json(r)?.map(|v| Self::AlertCMethod4Point(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of AlertCPoint in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::AlertCMethod2Point(v) => {
+                if w.wrapper(1084)? {
+                    w.begin_object(494)?;
+                    w.key(1084)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::AlertCMethod4Point(v) => {
+                if w.wrapper(1090)? {
+                    w.begin_object(494)?;
+                    w.key(1090)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:Destination`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Destination {
@@ -9571,8 +17096,8 @@ impl Destination {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb0034) => Self::AreaDestination(Box::new(AreaDestination::read(r)?)),
-            Some(0xb017e) => Self::PointDestination(Box::new(PointDestination::read(r)?)),
+            Some(0xe0035) => Self::AreaDestination(Box::new(AreaDestination::read(r)?)),
+            Some(0xe0187) => Self::PointDestination(Box::new(PointDestination::read(r)?)),
             _ => {
                 r.unknown_type("Destination")?;
                 return Ok(None);
@@ -9598,6 +17123,60 @@ impl Destination {
     }
 }
 
+impl Destination {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1096 => if r.first(&mut seen)? { value = AreaDestination::read_json(r)?.map(|v| Self::AreaDestination(Box::new(v))); },
+                1183 => if r.first(&mut seen)? { value = PointDestination::read_json(r)?.map(|v| Self::PointDestination(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Destination in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::AreaDestination(v) => {
+                if w.wrapper(1096)? {
+                    w.begin_object(502)?;
+                    w.key(1096)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PointDestination(v) => {
+                if w.wrapper(1183)? {
+                    w.begin_object(502)?;
+                    w.key(1183)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:DistanceAlongLinearElement`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum DistanceAlongLinearElement {
@@ -9616,9 +17195,9 @@ impl DistanceAlongLinearElement {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb0086) => Self::DistanceFromLinearElementReferent(Box::new(DistanceFromLinearElementReferent::read(r)?)),
-            Some(0xb0087) => Self::DistanceFromLinearElementStart(Box::new(DistanceFromLinearElementStart::read(r)?)),
-            Some(0xb0169) => Self::PercentageDistanceAlongLinearElement(Box::new(PercentageDistanceAlongLinearElement::read(r)?)),
+            Some(0xe0088) => Self::DistanceFromLinearElementReferent(Box::new(DistanceFromLinearElementReferent::read(r)?)),
+            Some(0xe0089) => Self::DistanceFromLinearElementStart(Box::new(DistanceFromLinearElementStart::read(r)?)),
+            Some(0xe0172) => Self::PercentageDistanceAlongLinearElement(Box::new(PercentageDistanceAlongLinearElement::read(r)?)),
             _ => {
                 r.unknown_type("DistanceAlongLinearElement")?;
                 return Ok(None);
@@ -9646,6 +17225,71 @@ impl DistanceAlongLinearElement {
     }
 }
 
+impl DistanceAlongLinearElement {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1103 => if r.first(&mut seen)? { value = DistanceFromLinearElementReferent::read_json(r)?.map(|v| Self::DistanceFromLinearElementReferent(Box::new(v))); },
+                1105 => if r.first(&mut seen)? { value = DistanceFromLinearElementStart::read_json(r)?.map(|v| Self::DistanceFromLinearElementStart(Box::new(v))); },
+                1178 => if r.first(&mut seen)? { value = PercentageDistanceAlongLinearElement::read_json(r)?.map(|v| Self::PercentageDistanceAlongLinearElement(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of DistanceAlongLinearElement in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::DistanceFromLinearElementReferent(v) => {
+                if w.wrapper(1103)? {
+                    w.begin_object(505)?;
+                    w.key(1103)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::DistanceFromLinearElementStart(v) => {
+                if w.wrapper(1105)? {
+                    w.begin_object(505)?;
+                    w.key(1105)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PercentageDistanceAlongLinearElement(v) => {
+                if w.wrapper(1178)? {
+                    w.begin_object(505)?;
+                    w.key(1178)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:GmlLineString`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyGmlLineString {
@@ -9662,8 +17306,8 @@ impl AnyGmlLineString {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb00c5) => Self::GmlLineString(Box::new(GmlLineString::read(r)?)),
-            Some(0xb00c6) => Self::GmlLinearRing(Box::new(GmlLinearRing::read(r)?)),
+            Some(0xe00cb) => Self::GmlLineString(Box::new(GmlLineString::read(r)?)),
+            Some(0xe00cc) => Self::GmlLinearRing(Box::new(GmlLinearRing::read(r)?)),
             None => Self::GmlLineString(Box::new(GmlLineString::read(r)?)),
             _ => {
                 r.unknown_type_as("GmlLineString");
@@ -9714,6 +17358,66 @@ impl AnyGmlLineString {
     }
 }
 
+impl AnyGmlLineString {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 1108 | 1110) {
+                return GmlLineString::read_json_members(r, Some(key)).map(|v| Some(Self::GmlLineString(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1108 => if r.first(&mut seen)? { value = GmlLineString::read_json(r)?.map(|v| Self::GmlLineString(Box::new(v))); },
+                1110 => if r.first(&mut seen)? { value = GmlLinearRing::read_json(r)?.map(|v| Self::GmlLinearRing(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of GmlLineString in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::GmlLineString(v) => {
+                if w.wrapper(1108)? {
+                    w.begin_object(511)?;
+                    w.key(1108)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::GmlLinearRing(v) => {
+                if w.wrapper(1110)? {
+                    w.begin_object(511)?;
+                    w.key(1110)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:Itinerary`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Itinerary {
@@ -9730,8 +17434,8 @@ impl Itinerary {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb00e6) => Self::ItineraryByIndexedLocations(Box::new(ItineraryByIndexedLocations::read(r)?)),
-            Some(0xb00e7) => Self::ItineraryByReference(Box::new(ItineraryByReference::read(r)?)),
+            Some(0xe00ee) => Self::ItineraryByIndexedLocations(Box::new(ItineraryByIndexedLocations::read(r)?)),
+            Some(0xe00ef) => Self::ItineraryByReference(Box::new(ItineraryByReference::read(r)?)),
             _ => {
                 r.unknown_type("Itinerary")?;
                 return Ok(None);
@@ -9773,6 +17477,60 @@ impl Itinerary {
     }
 }
 
+impl Itinerary {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1117 => if r.first(&mut seen)? { value = ItineraryByIndexedLocations::read_json(r)?.map(|v| Self::ItineraryByIndexedLocations(Box::new(v))); },
+                1119 => if r.first(&mut seen)? { value = ItineraryByReference::read_json(r)?.map(|v| Self::ItineraryByReference(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Itinerary in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::ItineraryByIndexedLocations(v) => {
+                if w.wrapper(1117)? {
+                    w.begin_object(522)?;
+                    w.key(1117)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ItineraryByReference(v) => {
+                if w.wrapper(1119)? {
+                    w.begin_object(522)?;
+                    w.key(1119)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:LinearElement`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyLinearElement {
@@ -9793,10 +17551,10 @@ impl AnyLinearElement {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb00ed) => Self::LinearElement(Box::new(LinearElement::read(r)?)),
-            Some(0xb00ee) => Self::LinearElementByCode(Box::new(LinearElementByCode::read(r)?)),
-            Some(0xb00ef) => Self::LinearElementByLineString(Box::new(LinearElementByLineString::read(r)?)),
-            Some(0xb00f0) => Self::LinearElementByPoints(Box::new(LinearElementByPoints::read(r)?)),
+            Some(0xe00f5) => Self::LinearElement(Box::new(LinearElement::read(r)?)),
+            Some(0xe00f6) => Self::LinearElementByCode(Box::new(LinearElementByCode::read(r)?)),
+            Some(0xe00f7) => Self::LinearElementByLineString(Box::new(LinearElementByLineString::read(r)?)),
+            Some(0xe00f8) => Self::LinearElementByPoints(Box::new(LinearElementByPoints::read(r)?)),
             None => Self::LinearElement(Box::new(LinearElement::read(r)?)),
             _ => {
                 r.unknown_type_as("LinearElement");
@@ -9877,6 +17635,88 @@ impl AnyLinearElement {
     }
 }
 
+impl AnyLinearElement {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 1123 | 1124 | 1126 | 1128) {
+                return LinearElement::read_json_members(r, Some(key)).map(|v| Some(Self::LinearElement(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1123 => if r.first(&mut seen)? { value = LinearElement::read_json(r)?.map(|v| Self::LinearElement(Box::new(v))); },
+                1124 => if r.first(&mut seen)? { value = LinearElementByCode::read_json(r)?.map(|v| Self::LinearElementByCode(Box::new(v))); },
+                1126 => if r.first(&mut seen)? { value = LinearElementByLineString::read_json(r)?.map(|v| Self::LinearElementByLineString(Box::new(v))); },
+                1128 => if r.first(&mut seen)? { value = LinearElementByPoints::read_json(r)?.map(|v| Self::LinearElementByPoints(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of LinearElement in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::LinearElement(v) => {
+                if w.wrapper(1123)? {
+                    w.begin_object(530)?;
+                    w.key(1123)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LinearElementByCode(v) => {
+                if w.wrapper(1124)? {
+                    w.begin_object(530)?;
+                    w.key(1124)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LinearElementByLineString(v) => {
+                if w.wrapper(1126)? {
+                    w.begin_object(530)?;
+                    w.key(1126)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LinearElementByPoints(v) => {
+                if w.wrapper(1128)? {
+                    w.begin_object(530)?;
+                    w.key(1128)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:Location`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Location {
@@ -9901,12 +17741,12 @@ impl Location {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb0035) => Self::AreaLocation(Box::new(AreaLocation::read(r)?)),
-            Some(0xb00f5) => Self::LocationByReference(Box::new(LocationByReference::read(r)?)),
-            Some(0xb00f1) => Self::LinearLocation(Box::new(LinearLocation::read(r)?)),
-            Some(0xb01da) => Self::SingleRoadLinearLocation(Box::new(SingleRoadLinearLocation::read(r)?)),
-            Some(0xb017f) => Self::PointLocation(Box::new(PointLocation::read(r)?)),
-            Some(0xc0180) => Self::PointLocationForParking(Box::new(prk::PointLocationForParking::read(r)?)),
+            Some(0xe0036) => Self::AreaLocation(Box::new(AreaLocation::read(r)?)),
+            Some(0xe00fd) => Self::LocationByReference(Box::new(LocationByReference::read(r)?)),
+            Some(0xe00f9) => Self::LinearLocation(Box::new(LinearLocation::read(r)?)),
+            Some(0xe01e8) => Self::SingleRoadLinearLocation(Box::new(SingleRoadLinearLocation::read(r)?)),
+            Some(0xe0188) => Self::PointLocation(Box::new(PointLocation::read(r)?)),
+            Some(0x100189) => Self::PointLocationForParking(Box::new(prk::PointLocationForParking::read(r)?)),
             _ => {
                 r.unknown_type("Location")?;
                 return Ok(None);
@@ -9976,6 +17816,104 @@ impl Location {
     }
 }
 
+impl Location {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1098 => if r.first(&mut seen)? { value = AreaLocation::read_json(r)?.map(|v| Self::AreaLocation(Box::new(v))); },
+                1134 => if r.first(&mut seen)? { value = LocationByReference::read_json(r)?.map(|v| Self::LocationByReference(Box::new(v))); },
+                1131 => if r.first(&mut seen)? { value = LinearLocation::read_json(r)?.map(|v| Self::LinearLocation(Box::new(v))); },
+                1201 => if r.first(&mut seen)? { value = SingleRoadLinearLocation::read_json(r)?.map(|v| Self::SingleRoadLinearLocation(Box::new(v))); },
+                1185 => if r.first(&mut seen)? { value = PointLocation::read_json(r)?.map(|v| Self::PointLocation(Box::new(v))); },
+                1710 => if r.first(&mut seen)? { value = prk::PointLocationForParking::read_json(r)?.map(|v| Self::PointLocationForParking(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Location in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::AreaLocation(v) => {
+                if w.wrapper(1098)? {
+                    w.begin_object(536)?;
+                    w.key(1098)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LocationByReference(v) => {
+                if w.wrapper(1134)? {
+                    w.begin_object(536)?;
+                    w.key(1134)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LinearLocation(v) => {
+                if w.wrapper(1131)? {
+                    w.begin_object(536)?;
+                    w.key(1131)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SingleRoadLinearLocation(v) => {
+                if w.wrapper(1201)? {
+                    w.begin_object(536)?;
+                    w.key(1201)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PointLocation(v) => {
+                if w.wrapper(1185)? {
+                    w.begin_object(536)?;
+                    w.key(1185)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PointLocationForParking(v) => {
+                if w.wrapper(1710)? {
+                    w.begin_object(536)?;
+                    w.key(1710)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:LocationGroup`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum LocationGroup {
@@ -9992,8 +17930,8 @@ impl LocationGroup {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb00f8) => Self::LocationGroupByList(Box::new(LocationGroupByList::read(r)?)),
-            Some(0xb00f9) => Self::LocationGroupByReference(Box::new(LocationGroupByReference::read(r)?)),
+            Some(0xe0100) => Self::LocationGroupByList(Box::new(LocationGroupByList::read(r)?)),
+            Some(0xe0101) => Self::LocationGroupByReference(Box::new(LocationGroupByReference::read(r)?)),
             _ => {
                 r.unknown_type("LocationGroup")?;
                 return Ok(None);
@@ -10023,6 +17961,60 @@ impl LocationGroup {
         match self {
             Self::LocationGroupByList(v) => v.write(w, tag, " xsi:type=\"loc:LocationGroupByList\"", ""),
             Self::LocationGroupByReference(v) => v.write(w, tag, " xsi:type=\"loc:LocationGroupByReference\"", ""),
+        }
+    }
+}
+
+impl LocationGroup {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1137 => if r.first(&mut seen)? { value = LocationGroupByList::read_json(r)?.map(|v| Self::LocationGroupByList(Box::new(v))); },
+                1139 => if r.first(&mut seen)? { value = LocationGroupByReference::read_json(r)?.map(|v| Self::LocationGroupByReference(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of LocationGroup in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::LocationGroupByList(v) => {
+                if w.wrapper(1137)? {
+                    w.begin_object(539)?;
+                    w.key(1137)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LocationGroupByReference(v) => {
+                if w.wrapper(1139)? {
+                    w.begin_object(539)?;
+                    w.key(1139)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
         }
     }
 }
@@ -10059,16 +18051,16 @@ impl LocationReference {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb00e6) => Self::ItineraryByIndexedLocations(Box::new(ItineraryByIndexedLocations::read(r)?)),
-            Some(0xb00e7) => Self::ItineraryByReference(Box::new(ItineraryByReference::read(r)?)),
-            Some(0xb0035) => Self::AreaLocation(Box::new(AreaLocation::read(r)?)),
-            Some(0xb00f5) => Self::LocationByReference(Box::new(LocationByReference::read(r)?)),
-            Some(0xb00f1) => Self::LinearLocation(Box::new(LinearLocation::read(r)?)),
-            Some(0xb01da) => Self::SingleRoadLinearLocation(Box::new(SingleRoadLinearLocation::read(r)?)),
-            Some(0xb017f) => Self::PointLocation(Box::new(PointLocation::read(r)?)),
-            Some(0xc0180) => Self::PointLocationForParking(Box::new(prk::PointLocationForParking::read(r)?)),
-            Some(0xb00f8) => Self::LocationGroupByList(Box::new(LocationGroupByList::read(r)?)),
-            Some(0xb00f9) => Self::LocationGroupByReference(Box::new(LocationGroupByReference::read(r)?)),
+            Some(0xe00ee) => Self::ItineraryByIndexedLocations(Box::new(ItineraryByIndexedLocations::read(r)?)),
+            Some(0xe00ef) => Self::ItineraryByReference(Box::new(ItineraryByReference::read(r)?)),
+            Some(0xe0036) => Self::AreaLocation(Box::new(AreaLocation::read(r)?)),
+            Some(0xe00fd) => Self::LocationByReference(Box::new(LocationByReference::read(r)?)),
+            Some(0xe00f9) => Self::LinearLocation(Box::new(LinearLocation::read(r)?)),
+            Some(0xe01e8) => Self::SingleRoadLinearLocation(Box::new(SingleRoadLinearLocation::read(r)?)),
+            Some(0xe0188) => Self::PointLocation(Box::new(PointLocation::read(r)?)),
+            Some(0x100189) => Self::PointLocationForParking(Box::new(prk::PointLocationForParking::read(r)?)),
+            Some(0xe0100) => Self::LocationGroupByList(Box::new(LocationGroupByList::read(r)?)),
+            Some(0xe0101) => Self::LocationGroupByReference(Box::new(LocationGroupByReference::read(r)?)),
             _ => {
                 r.unknown_type("LocationReference")?;
                 return Ok(None);
@@ -10110,6 +18102,148 @@ impl LocationReference {
     }
 }
 
+impl LocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1117 => if r.first(&mut seen)? { value = ItineraryByIndexedLocations::read_json(r)?.map(|v| Self::ItineraryByIndexedLocations(Box::new(v))); },
+                1119 => if r.first(&mut seen)? { value = ItineraryByReference::read_json(r)?.map(|v| Self::ItineraryByReference(Box::new(v))); },
+                1098 => if r.first(&mut seen)? { value = AreaLocation::read_json(r)?.map(|v| Self::AreaLocation(Box::new(v))); },
+                1134 => if r.first(&mut seen)? { value = LocationByReference::read_json(r)?.map(|v| Self::LocationByReference(Box::new(v))); },
+                1131 => if r.first(&mut seen)? { value = LinearLocation::read_json(r)?.map(|v| Self::LinearLocation(Box::new(v))); },
+                1201 => if r.first(&mut seen)? { value = SingleRoadLinearLocation::read_json(r)?.map(|v| Self::SingleRoadLinearLocation(Box::new(v))); },
+                1185 => if r.first(&mut seen)? { value = PointLocation::read_json(r)?.map(|v| Self::PointLocation(Box::new(v))); },
+                1710 => if r.first(&mut seen)? { value = prk::PointLocationForParking::read_json(r)?.map(|v| Self::PointLocationForParking(Box::new(v))); },
+                1137 => if r.first(&mut seen)? { value = LocationGroupByList::read_json(r)?.map(|v| Self::LocationGroupByList(Box::new(v))); },
+                1139 => if r.first(&mut seen)? { value = LocationGroupByReference::read_json(r)?.map(|v| Self::LocationGroupByReference(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of LocationReference in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::ItineraryByIndexedLocations(v) => {
+                if w.wrapper(1117)? {
+                    w.begin_object(541)?;
+                    w.key(1117)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ItineraryByReference(v) => {
+                if w.wrapper(1119)? {
+                    w.begin_object(541)?;
+                    w.key(1119)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::AreaLocation(v) => {
+                if w.wrapper(1098)? {
+                    w.begin_object(541)?;
+                    w.key(1098)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LocationByReference(v) => {
+                if w.wrapper(1134)? {
+                    w.begin_object(541)?;
+                    w.key(1134)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LinearLocation(v) => {
+                if w.wrapper(1131)? {
+                    w.begin_object(541)?;
+                    w.key(1131)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SingleRoadLinearLocation(v) => {
+                if w.wrapper(1201)? {
+                    w.begin_object(541)?;
+                    w.key(1201)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PointLocation(v) => {
+                if w.wrapper(1185)? {
+                    w.begin_object(541)?;
+                    w.key(1185)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PointLocationForParking(v) => {
+                if w.wrapper(1710)? {
+                    w.begin_object(541)?;
+                    w.key(1710)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LocationGroupByList(v) => {
+                if w.wrapper(1137)? {
+                    w.begin_object(541)?;
+                    w.key(1137)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::LocationGroupByReference(v) => {
+                if w.wrapper(1139)? {
+                    w.begin_object(541)?;
+                    w.key(1139)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:NamedArea`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyNamedArea {
@@ -10128,9 +18262,9 @@ impl AnyNamedArea {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb0113) => Self::NamedArea(Box::new(NamedArea::read(r)?)),
-            Some(0xb00e4) => Self::IsoNamedArea(Box::new(IsoNamedArea::read(r)?)),
-            Some(0xb0126) => Self::NutsNamedArea(Box::new(NutsNamedArea::read(r)?)),
+            Some(0xe011c) => Self::NamedArea(Box::new(NamedArea::read(r)?)),
+            Some(0xe00ec) => Self::IsoNamedArea(Box::new(IsoNamedArea::read(r)?)),
+            Some(0xe012f) => Self::NutsNamedArea(Box::new(NutsNamedArea::read(r)?)),
             None => Self::NamedArea(Box::new(NamedArea::read(r)?)),
             _ => {
                 r.unknown_type_as("NamedArea");
@@ -10195,6 +18329,77 @@ impl AnyNamedArea {
     }
 }
 
+impl AnyNamedArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 1143 | 1115 | 1146) {
+                return NamedArea::read_json_members(r, Some(key)).map(|v| Some(Self::NamedArea(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1143 => if r.first(&mut seen)? { value = NamedArea::read_json(r)?.map(|v| Self::NamedArea(Box::new(v))); },
+                1115 => if r.first(&mut seen)? { value = IsoNamedArea::read_json(r)?.map(|v| Self::IsoNamedArea(Box::new(v))); },
+                1146 => if r.first(&mut seen)? { value = NutsNamedArea::read_json(r)?.map(|v| Self::NutsNamedArea(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of NamedArea in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::NamedArea(v) => {
+                if w.wrapper(1143)? {
+                    w.begin_object(544)?;
+                    w.key(1143)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::IsoNamedArea(v) => {
+                if w.wrapper(1115)? {
+                    w.begin_object(544)?;
+                    w.key(1115)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::NutsNamedArea(v) => {
+                if w.wrapper(1146)? {
+                    w.begin_object(544)?;
+                    w.key(1146)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:NetworkLocation`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum NetworkLocation {
@@ -10215,10 +18420,10 @@ impl NetworkLocation {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb00f1) => Self::LinearLocation(Box::new(LinearLocation::read(r)?)),
-            Some(0xb01da) => Self::SingleRoadLinearLocation(Box::new(SingleRoadLinearLocation::read(r)?)),
-            Some(0xb017f) => Self::PointLocation(Box::new(PointLocation::read(r)?)),
-            Some(0xc0180) => Self::PointLocationForParking(Box::new(prk::PointLocationForParking::read(r)?)),
+            Some(0xe00f9) => Self::LinearLocation(Box::new(LinearLocation::read(r)?)),
+            Some(0xe01e8) => Self::SingleRoadLinearLocation(Box::new(SingleRoadLinearLocation::read(r)?)),
+            Some(0xe0188) => Self::PointLocation(Box::new(PointLocation::read(r)?)),
+            Some(0x100189) => Self::PointLocationForParking(Box::new(prk::PointLocationForParking::read(r)?)),
             _ => {
                 r.unknown_type("NetworkLocation")?;
                 return Ok(None);
@@ -10308,6 +18513,82 @@ impl NetworkLocation {
     }
 }
 
+impl NetworkLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1131 => if r.first(&mut seen)? { value = LinearLocation::read_json(r)?.map(|v| Self::LinearLocation(Box::new(v))); },
+                1201 => if r.first(&mut seen)? { value = SingleRoadLinearLocation::read_json(r)?.map(|v| Self::SingleRoadLinearLocation(Box::new(v))); },
+                1185 => if r.first(&mut seen)? { value = PointLocation::read_json(r)?.map(|v| Self::PointLocation(Box::new(v))); },
+                1710 => if r.first(&mut seen)? { value = prk::PointLocationForParking::read_json(r)?.map(|v| Self::PointLocationForParking(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of NetworkLocation in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::LinearLocation(v) => {
+                if w.wrapper(1131)? {
+                    w.begin_object(546)?;
+                    w.key(1131)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SingleRoadLinearLocation(v) => {
+                if w.wrapper(1201)? {
+                    w.begin_object(546)?;
+                    w.key(1201)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PointLocation(v) => {
+                if w.wrapper(1185)? {
+                    w.begin_object(546)?;
+                    w.key(1185)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PointLocationForParking(v) => {
+                if w.wrapper(1710)? {
+                    w.begin_object(546)?;
+                    w.key(1710)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:OpenlrAreaLocationReference`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum OpenlrAreaLocationReference {
@@ -10330,11 +18611,11 @@ impl OpenlrAreaLocationReference {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb0132) => Self::OpenlrCircleLocationReference(Box::new(OpenlrCircleLocationReference::read(r)?)),
-            Some(0xb0133) => Self::OpenlrClosedLineLocationReference(Box::new(OpenlrClosedLineLocationReference::read(r)?)),
-            Some(0xb0135) => Self::OpenlrGridLocationReference(Box::new(OpenlrGridLocationReference::read(r)?)),
-            Some(0xb0141) => Self::OpenlrPolygonLocationReference(Box::new(OpenlrPolygonLocationReference::read(r)?)),
-            Some(0xb0143) => Self::OpenlrRectangleLocationReference(Box::new(OpenlrRectangleLocationReference::read(r)?)),
+            Some(0xe013b) => Self::OpenlrCircleLocationReference(Box::new(OpenlrCircleLocationReference::read(r)?)),
+            Some(0xe013c) => Self::OpenlrClosedLineLocationReference(Box::new(OpenlrClosedLineLocationReference::read(r)?)),
+            Some(0xe013e) => Self::OpenlrGridLocationReference(Box::new(OpenlrGridLocationReference::read(r)?)),
+            Some(0xe014a) => Self::OpenlrPolygonLocationReference(Box::new(OpenlrPolygonLocationReference::read(r)?)),
+            Some(0xe014c) => Self::OpenlrRectangleLocationReference(Box::new(OpenlrRectangleLocationReference::read(r)?)),
             _ => {
                 r.unknown_type("OpenlrAreaLocationReference")?;
                 return Ok(None);
@@ -10366,6 +18647,93 @@ impl OpenlrAreaLocationReference {
     }
 }
 
+impl OpenlrAreaLocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1152 => if r.first(&mut seen)? { value = OpenlrCircleLocationReference::read_json(r)?.map(|v| Self::OpenlrCircleLocationReference(Box::new(v))); },
+                1154 => if r.first(&mut seen)? { value = OpenlrClosedLineLocationReference::read_json(r)?.map(|v| Self::OpenlrClosedLineLocationReference(Box::new(v))); },
+                1158 => if r.first(&mut seen)? { value = OpenlrGridLocationReference::read_json(r)?.map(|v| Self::OpenlrGridLocationReference(Box::new(v))); },
+                1173 => if r.first(&mut seen)? { value = OpenlrPolygonLocationReference::read_json(r)?.map(|v| Self::OpenlrPolygonLocationReference(Box::new(v))); },
+                1176 => if r.first(&mut seen)? { value = OpenlrRectangleLocationReference::read_json(r)?.map(|v| Self::OpenlrRectangleLocationReference(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of OpenlrAreaLocationReference in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::OpenlrCircleLocationReference(v) => {
+                if w.wrapper(1152)? {
+                    w.begin_object(550)?;
+                    w.key(1152)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::OpenlrClosedLineLocationReference(v) => {
+                if w.wrapper(1154)? {
+                    w.begin_object(550)?;
+                    w.key(1154)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::OpenlrGridLocationReference(v) => {
+                if w.wrapper(1158)? {
+                    w.begin_object(550)?;
+                    w.key(1158)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::OpenlrPolygonLocationReference(v) => {
+                if w.wrapper(1173)? {
+                    w.begin_object(550)?;
+                    w.key(1173)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::OpenlrRectangleLocationReference(v) => {
+                if w.wrapper(1176)? {
+                    w.begin_object(550)?;
+                    w.key(1176)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:OpenlrPointLocationReference`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum OpenlrPointLocationReference {
@@ -10384,9 +18752,9 @@ impl OpenlrPointLocationReference {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb013d) => Self::OpenlrPoiWithAccessPoint(Box::new(OpenlrPoiWithAccessPoint::read(r)?)),
-            Some(0xb013e) => Self::OpenlrPointAlongLine(Box::new(OpenlrPointAlongLine::read(r)?)),
-            Some(0xb0134) => Self::OpenlrGeoCoordinate(Box::new(OpenlrGeoCoordinate::read(r)?)),
+            Some(0xe0146) => Self::OpenlrPoiWithAccessPoint(Box::new(OpenlrPoiWithAccessPoint::read(r)?)),
+            Some(0xe0147) => Self::OpenlrPointAlongLine(Box::new(OpenlrPointAlongLine::read(r)?)),
+            Some(0xe013d) => Self::OpenlrGeoCoordinate(Box::new(OpenlrGeoCoordinate::read(r)?)),
             _ => {
                 r.unknown_type("OpenlrPointLocationReference")?;
                 return Ok(None);
@@ -10414,6 +18782,71 @@ impl OpenlrPointLocationReference {
     }
 }
 
+impl OpenlrPointLocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1167 => if r.first(&mut seen)? { value = OpenlrPoiWithAccessPoint::read_json(r)?.map(|v| Self::OpenlrPoiWithAccessPoint(Box::new(v))); },
+                1169 => if r.first(&mut seen)? { value = OpenlrPointAlongLine::read_json(r)?.map(|v| Self::OpenlrPointAlongLine(Box::new(v))); },
+                1156 => if r.first(&mut seen)? { value = OpenlrGeoCoordinate::read_json(r)?.map(|v| Self::OpenlrGeoCoordinate(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of OpenlrPointLocationReference in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::OpenlrPoiWithAccessPoint(v) => {
+                if w.wrapper(1167)? {
+                    w.begin_object(567)?;
+                    w.key(1167)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::OpenlrPointAlongLine(v) => {
+                if w.wrapper(1169)? {
+                    w.begin_object(567)?;
+                    w.key(1169)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::OpenlrGeoCoordinate(v) => {
+                if w.wrapper(1156)? {
+                    w.begin_object(567)?;
+                    w.key(1156)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:PointLocation`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyPointLocation {
@@ -10430,8 +18863,8 @@ impl AnyPointLocation {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb017f) => Self::PointLocation(Box::new(PointLocation::read(r)?)),
-            Some(0xc0180) => Self::PointLocationForParking(Box::new(prk::PointLocationForParking::read(r)?)),
+            Some(0xe0188) => Self::PointLocation(Box::new(PointLocation::read(r)?)),
+            Some(0x100189) => Self::PointLocationForParking(Box::new(prk::PointLocationForParking::read(r)?)),
             None => Self::PointLocation(Box::new(PointLocation::read(r)?)),
             _ => {
                 r.unknown_type_as("PointLocation");
@@ -10554,6 +18987,66 @@ impl AnyPointLocation {
     }
 }
 
+impl AnyPointLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 1185 | 1710) {
+                return PointLocation::read_json_members(r, Some(key)).map(|v| Some(Self::PointLocation(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1185 => if r.first(&mut seen)? { value = PointLocation::read_json(r)?.map(|v| Self::PointLocation(Box::new(v))); },
+                1710 => if r.first(&mut seen)? { value = prk::PointLocationForParking::read_json(r)?.map(|v| Self::PointLocationForParking(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of PointLocation in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::PointLocation(v) => {
+                if w.wrapper(1185)? {
+                    w.begin_object(579)?;
+                    w.key(1185)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PointLocationForParking(v) => {
+                if w.wrapper(1710)? {
+                    w.begin_object(579)?;
+                    w.key(1710)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:PredefinedLocationReference`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PredefinedLocationReference {
@@ -10572,9 +19065,9 @@ impl PredefinedLocationReference {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb018e) => Self::PredefinedItinerary(Box::new(PredefinedItinerary::read(r)?)),
-            Some(0xb018f) => Self::PredefinedLocation(Box::new(PredefinedLocation::read(r)?)),
-            Some(0xb0190) => Self::PredefinedLocationGroup(Box::new(PredefinedLocationGroup::read(r)?)),
+            Some(0xe0197) => Self::PredefinedItinerary(Box::new(PredefinedItinerary::read(r)?)),
+            Some(0xe0198) => Self::PredefinedLocation(Box::new(PredefinedLocation::read(r)?)),
+            Some(0xe0199) => Self::PredefinedLocationGroup(Box::new(PredefinedLocationGroup::read(r)?)),
             _ => {
                 r.unknown_type("PredefinedLocationReference")?;
                 return Ok(None);
@@ -10602,6 +19095,71 @@ impl PredefinedLocationReference {
     }
 }
 
+impl PredefinedLocationReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1189 => if r.first(&mut seen)? { value = PredefinedItinerary::read_json(r)?.map(|v| Self::PredefinedItinerary(Box::new(v))); },
+                1191 => if r.first(&mut seen)? { value = PredefinedLocation::read_json(r)?.map(|v| Self::PredefinedLocation(Box::new(v))); },
+                1193 => if r.first(&mut seen)? { value = PredefinedLocationGroup::read_json(r)?.map(|v| Self::PredefinedLocationGroup(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of PredefinedLocationReference in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::PredefinedItinerary(v) => {
+                if w.wrapper(1189)? {
+                    w.begin_object(586)?;
+                    w.key(1189)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PredefinedLocation(v) => {
+                if w.wrapper(1191)? {
+                    w.begin_object(586)?;
+                    w.key(1191)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::PredefinedLocationGroup(v) => {
+                if w.wrapper(1193)? {
+                    w.begin_object(586)?;
+                    w.key(1193)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:RoadInformation`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyRoadInformation {
@@ -10618,8 +19176,8 @@ impl AnyRoadInformation {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb01c2) => Self::RoadInformation(Box::new(RoadInformation::read(r)?)),
-            Some(0xc01c3) => Self::RoadInformationEnhanced(Box::new(prk::RoadInformationEnhanced::read(r)?)),
+            Some(0xe01cc) => Self::RoadInformation(Box::new(RoadInformation::read(r)?)),
+            Some(0x1001cd) => Self::RoadInformationEnhanced(Box::new(prk::RoadInformationEnhanced::read(r)?)),
             None => Self::RoadInformation(Box::new(RoadInformation::read(r)?)),
             _ => {
                 r.unknown_type_as("RoadInformation");
@@ -10670,6 +19228,66 @@ impl AnyRoadInformation {
     }
 }
 
+impl AnyRoadInformation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 1199 | 1720) {
+                return RoadInformation::read_json_members(r, Some(key)).map(|v| Some(Self::RoadInformation(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1199 => if r.first(&mut seen)? { value = RoadInformation::read_json(r)?.map(|v| Self::RoadInformation(Box::new(v))); },
+                1720 => if r.first(&mut seen)? { value = prk::RoadInformationEnhanced::read_json(r)?.map(|v| Self::RoadInformationEnhanced(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of RoadInformation in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::RoadInformation(v) => {
+                if w.wrapper(1199)? {
+                    w.begin_object(592)?;
+                    w.key(1199)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::RoadInformationEnhanced(v) => {
+                if w.wrapper(1720)? {
+                    w.begin_object(592)?;
+                    w.key(1720)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:TpegAreaLocation`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TpegAreaLocation {
@@ -10686,8 +19304,8 @@ impl TpegAreaLocation {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb0223) => Self::TpegGeometricArea(Box::new(TpegGeometricArea::read(r)?)),
-            Some(0xb0229) => Self::TpegNamedOnlyArea(Box::new(TpegNamedOnlyArea::read(r)?)),
+            Some(0xe0232) => Self::TpegGeometricArea(Box::new(TpegGeometricArea::read(r)?)),
+            Some(0xe0238) => Self::TpegNamedOnlyArea(Box::new(TpegNamedOnlyArea::read(r)?)),
             _ => {
                 r.unknown_type("TpegAreaLocation")?;
                 return Ok(None);
@@ -10729,6 +19347,60 @@ impl TpegAreaLocation {
     }
 }
 
+impl TpegAreaLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1209 => if r.first(&mut seen)? { value = TpegGeometricArea::read_json(r)?.map(|v| Self::TpegGeometricArea(Box::new(v))); },
+                1217 => if r.first(&mut seen)? { value = TpegNamedOnlyArea::read_json(r)?.map(|v| Self::TpegNamedOnlyArea(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of TpegAreaLocation in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::TpegGeometricArea(v) => {
+                if w.wrapper(1209)? {
+                    w.begin_object(598)?;
+                    w.key(1209)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::TpegNamedOnlyArea(v) => {
+                if w.wrapper(1217)? {
+                    w.begin_object(598)?;
+                    w.key(1217)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:TpegPoint`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TpegPoint {
@@ -10745,8 +19417,8 @@ impl TpegPoint {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb0226) => Self::TpegJunction(Box::new(TpegJunction::read(r)?)),
-            Some(0xb022a) => Self::TpegNonJunctionPoint(Box::new(TpegNonJunctionPoint::read(r)?)),
+            Some(0xe0235) => Self::TpegJunction(Box::new(TpegJunction::read(r)?)),
+            Some(0xe0239) => Self::TpegNonJunctionPoint(Box::new(TpegNonJunctionPoint::read(r)?)),
             _ => {
                 r.unknown_type("TpegPoint")?;
                 return Ok(None);
@@ -10772,6 +19444,60 @@ impl TpegPoint {
     }
 }
 
+impl TpegPoint {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1213 => if r.first(&mut seen)? { value = TpegJunction::read_json(r)?.map(|v| Self::TpegJunction(Box::new(v))); },
+                1219 => if r.first(&mut seen)? { value = TpegNonJunctionPoint::read_json(r)?.map(|v| Self::TpegNonJunctionPoint(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of TpegPoint in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::TpegJunction(v) => {
+                if w.wrapper(1213)? {
+                    w.begin_object(618)?;
+                    w.key(1213)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::TpegNonJunctionPoint(v) => {
+                if w.wrapper(1219)? {
+                    w.begin_object(618)?;
+                    w.key(1219)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `loc:TpegPointLocation`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TpegPointLocation {
@@ -10788,8 +19514,8 @@ impl TpegPointLocation {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0xb0222) => Self::TpegFramedPoint(Box::new(TpegFramedPoint::read(r)?)),
-            Some(0xb022f) => Self::TpegSimplePoint(Box::new(TpegSimplePoint::read(r)?)),
+            Some(0xe0231) => Self::TpegFramedPoint(Box::new(TpegFramedPoint::read(r)?)),
+            Some(0xe023e) => Self::TpegSimplePoint(Box::new(TpegSimplePoint::read(r)?)),
             _ => {
                 r.unknown_type("TpegPointLocation")?;
                 return Ok(None);
@@ -10819,6 +19545,60 @@ impl TpegPointLocation {
         match self {
             Self::TpegFramedPoint(v) => v.write(w, tag, " xsi:type=\"loc:TpegFramedPoint\"", ""),
             Self::TpegSimplePoint(v) => v.write(w, tag, " xsi:type=\"loc:TpegSimplePoint\"", ""),
+        }
+    }
+}
+
+impl TpegPointLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1207 => if r.first(&mut seen)? { value = TpegFramedPoint::read_json(r)?.map(|v| Self::TpegFramedPoint(Box::new(v))); },
+                1225 => if r.first(&mut seen)? { value = TpegSimplePoint::read_json(r)?.map(|v| Self::TpegSimplePoint(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of TpegPointLocation in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::TpegFramedPoint(v) => {
+                if w.wrapper(1207)? {
+                    w.begin_object(619)?;
+                    w.key(1207)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::TpegSimplePoint(v) => {
+                if w.wrapper(1225)? {
+                    w.begin_object(619)?;
+                    w.key(1225)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
         }
     }
 }

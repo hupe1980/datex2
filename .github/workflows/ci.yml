@@ -20,6 +20,11 @@ jobs:
         with:
           components: rustfmt, clippy
       - run: sudo apt-get update && sudo apt-get install --yes libxml2-utils
+      # Python `jsonschema` validates every JSON document the tests write.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install jsonschema
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       # The official schemas are fetched, checked against their pinned SHA-256, and used twice:
@@ -28,6 +33,9 @@ jobs:
       - run: cargo xtask fetch
       - run: cargo xtask codegen --check
       - run: cargo test --workspace
+        env:
+          # A missing validator fails the tests instead of skipping the validation.
+          DATEX2_REQUIRE_VALIDATORS: "1"
       - run: cargo doc --no-deps
         env:
           RUSTDOCFLAGS: -D warnings

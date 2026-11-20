@@ -4,9 +4,13 @@
 //! Names follow the standard; see <https://docs.datex2.eu/> for what each one means.
 
 #[allow(unused_imports)]
-use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst};
+use super::{common as com, common_extension as comx, location_referencing as loc, location_extension as locx, situation as sit, road_traffic_data as roa, vms, parking as prk, energy_infrastructure as egi, afir_energy_infrastructure as aegi, facilities as fac, traffic_regulation as tro, controlled_zone as cz, traffic_management_plan as tmp, rerouting_management_enhanced as rer, urban_extensions as ubx, fault_and_status as fst, message_container as con, exchange_information as ex, information_management as inf, cis_information as cis};
 #[allow(unused_imports)]
-use crate::out::{Out, Pattern};
+use crate::out::{Out, Pattern, Rules};
+#[allow(unused_imports)]
+use crate::json::{JsonReader, JsonWriter};
+#[allow(unused_imports)]
+use crate::{ErrorKind, WarningKind};
 #[allow(unused_imports)]
 use crate::xml::{Enumeration, Xml};
 #[allow(unused_imports)]
@@ -2034,7 +2038,7 @@ pub struct AfirFacilityLocation {
 }
 
 impl AfirFacilityLocation {
-    const FIELDS: &'static [u32] = &[0x20bbd, 0x20693, 0x20993];
+    const FIELDS: &'static [u32] = &[0x20c1c, 0x206bc, 0x209d7];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
         r.expect_type(0x20019);
@@ -2045,9 +2049,9 @@ impl AfirFacilityLocation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20bbd => { let v = r.string()?; r.set(&mut e0, v, 3005); }
-                    0x20693 => { let v = Some(locx::Address::read(r)?); r.set(&mut e1, v.map(Box::new), 1683); }
-                    0x20993 => { let v = Some(NutsArea::read(r)?); e2.extend(v); }
+                    0x20c1c => { let v = r.string()?; r.set(&mut e0, v, 3100); }
+                    0x206bc => { let v = Some(locx::Address::read(r)?); r.set(&mut e1, v.map(Box::new), 1724); }
+                    0x209d7 => { let v = Some(NutsArea::read(r)?); e2.extend(v); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2078,6 +2082,69 @@ impl AfirFacilityLocation {
     }
 }
 
+impl AfirFacilityLocation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2263 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                64 => if r.first(&mut seen[1])? { f1 = locx::Address::read_json(r)?.map(Box::new); },
+                1419 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = NutsArea::read_json(r)? { f2.push(v); } } },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            time_zone: f0,
+            address: f1,
+            nuts_area: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(54)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.time_zone {
+            w.key(2263)?;
+            w.max_len("timeZone", v, 1024)?; w.pattern("timeZone", v, Pattern::TimeZone)?; w.string(v)?;
+        }
+        if let Some(v) = &self.address {
+            w.key(64)?;
+            v.write_json(w, None)?;
+        }
+        if !self.nuts_area.is_empty() {
+            w.key(1419)?;
+            w.begin_array()?;
+            for v in &self.nuts_area {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:Amenities`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Amenities {
@@ -2094,10 +2161,10 @@ pub struct Amenities {
 }
 
 impl Amenities {
-    const FIELDS: &'static [u32] = &[0x20872, 0x20b0b, 0x20873, 0x20b0c, 0x2041c];
+    const FIELDS: &'static [u32] = &[0x208ae, 0x20b58, 0x208af, 0x20b59, 0x20437];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2002f);
+        r.expect_type(0x20030);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2107,11 +2174,11 @@ impl Amenities {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20872 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2162); }
-                    0x20b0b => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2827); }
-                    0x20873 => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2163); }
-                    0x20b0c => { let v = r.value::<bool>()?; r.set(&mut e3, v, 2828); }
-                    0x2041c => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1052); }
+                    0x208ae => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2222); }
+                    0x20b58 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2904); }
+                    0x208af => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2223); }
+                    0x20b59 => { let v = r.value::<bool>()?; r.set(&mut e3, v, 2905); }
+                    0x20437 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1079); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2146,6 +2213,78 @@ impl Amenities {
     }
 }
 
+impl Amenities {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                967 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1991 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                968 => if r.first(&mut seen[2])? { f2 = r.boolean()?; },
+                1992 => if r.first(&mut seen[3])? { f3 = r.boolean()?; },
+                110 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            illuminated: f0,
+            roofed: f1,
+            illuminated_recharging_parking_nearby: f2,
+            roofed_recharging_parking_nearby: f3,
+            amenities_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(55)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.illuminated {
+            w.key(967)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.roofed {
+            w.key(1991)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.illuminated_recharging_parking_nearby {
+            w.key(968)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.roofed_recharging_parking_nearby {
+            w.key(1992)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.amenities_extension {
+            w.key(110)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:AmountInCurrency`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AmountInCurrency {
@@ -2158,10 +2297,10 @@ pub struct AmountInCurrency {
 }
 
 impl AmountInCurrency {
-    const FIELDS: &'static [u32] = &[0x20751, 0x20750, 0x2041d];
+    const FIELDS: &'static [u32] = &[0x20780, 0x2077f, 0x20438];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20030);
+        r.expect_type(0x20031);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2169,9 +2308,9 @@ impl AmountInCurrency {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20751 => { let v = r.value::<Decimal>()?; r.set(&mut e0, v, 1873); }
-                    0x20750 => { let v = r.string()?; r.set(&mut e1, v, 1872); }
-                    0x2041d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1053); }
+                    0x20780 => { let v = r.value::<Decimal>()?; r.set(&mut e0, v, 1920); }
+                    0x2077f => { let v = r.string()?; r.set(&mut e1, v, 1919); }
+                    0x20438 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1080); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2180,8 +2319,8 @@ impl AmountInCurrency {
                 break;
             }
         }
-        r.required(&e0, 1873);
-        r.required(&e1, 1872);
+        r.required(&e0, 1920);
+        r.required(&e1, 1919);
         let v = Self {
             currency_value: e0,
             currency_type: e1,
@@ -2207,6 +2346,72 @@ impl AmountInCurrency {
         }
         if let Some(v) = &self.amount_in_currency_extension { w.extension("afac:_amountInCurrencyExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl AmountInCurrency {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                478 => if r.first(&mut seen[0])? { f0 = r.number::<Decimal>()?; },
+                477 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                111 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 478);
+        r.required(&f1, 477);
+        Ok(Self {
+            currency_value: f0,
+            currency_type: f1,
+            amount_in_currency_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(56)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.currency_value {
+            Some(v) => {
+                w.key(478)?;
+                w.digits("currencyValue", v, 8, 2)?; w.decimal(v)?;
+            }
+            None => w.absent(478, w.missing("currencyValue"))?,
+        }
+        match &self.currency_type {
+            Some(v) => {
+                w.key(477)?;
+                w.max_len("currencyType", v, 1024)?; w.pattern("currencyType", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            None => w.absent(477, w.missing("currencyType"))?,
+        }
+        if let Some(v) = &self.amount_in_currency_extension {
+            w.key(111)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -2256,10 +2461,10 @@ pub struct AnOrganisation {
 }
 
 impl AnOrganisation {
-    const FIELDS: &'static [u32] = &[0x2083f, 0x20537, 0x208ba, 0x20949, 0x208c3, 0x20777, 0x208d6, 0x208d7, 0x208d8, 0x206dd, 0x20aed, 0x20a95, 0x20bfe, 0x20950, 0x20951, 0x20c2e, 0x209e0, 0x20805, 0x20b89, 0x2041e];
+    const FIELDS: &'static [u32] = &[0x2087b, 0x2055a, 0x208f8, 0x2098b, 0x20901, 0x207a8, 0x20914, 0x20915, 0x20916, 0x20706, 0x20b37, 0x20adc, 0x20c5d, 0x20992, 0x20993, 0x20c8e, 0x20a25, 0x20840, 0x20be4, 0x20439];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20031);
+        r.expect_type(0x20032);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2284,26 +2489,26 @@ impl AnOrganisation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2083f => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2111); }
-                    0x20537 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1335); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e3, v, 2377); }
-                    0x208c3 => { let v = r.multilingual()?; r.set(&mut e4, v, 2243); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e5, v, 1911); }
-                    0x208d6 => { let v = r.string()?; r.set(&mut e6, v, 2262); }
-                    0x208d7 => { let v = r.string()?; r.set(&mut e7, v, 2263); }
-                    0x208d8 => { let v = r.string()?; r.set(&mut e8, v, 2264); }
-                    0x206dd => { let v = r.value::<bool>()?; r.set(&mut e9, v, 1757); }
-                    0x20aed => { let v = r.multilingual()?; e10.extend(v); }
-                    0x20a95 => { let v = r.value::<bool>()?; r.set(&mut e11, v, 2709); }
-                    0x20bfe => { let v = r.enumeration::<OrganisationTypeEnum>()?; r.set(&mut e12, v, 3070); }
-                    0x20950 => { let v = r.string()?; r.set(&mut e13, v, 2384); }
-                    0x20951 => { let v = r.string()?; r.set(&mut e14, v, 2385); }
-                    0x20c2e => { let v = r.string()?; r.set(&mut e15, v, 3118); }
-                    0x209e0 => { let v = Some(OrganisationUnit::read(r)?); e16.extend(v); }
-                    0x20805 => { let v = Some(ExternalIdentifier::read(r)?); e17.extend(v); }
-                    0x20b89 => { let v = Organisation::read(r)?; e18.extend(v); }
-                    0x2041e => { let v = r.raw()?; r.set(&mut e19, v.map(Box::new), 1054); }
+                    0x2087b => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2171); }
+                    0x2055a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1370); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e3, v, 2443); }
+                    0x20901 => { let v = r.multilingual()?; r.set(&mut e4, v, 2305); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e5, v, 1960); }
+                    0x20914 => { let v = r.string()?; r.set(&mut e6, v, 2324); }
+                    0x20915 => { let v = r.string()?; r.set(&mut e7, v, 2325); }
+                    0x20916 => { let v = r.string()?; r.set(&mut e8, v, 2326); }
+                    0x20706 => { let v = r.value::<bool>()?; r.set(&mut e9, v, 1798); }
+                    0x20b37 => { let v = r.multilingual()?; e10.extend(v); }
+                    0x20adc => { let v = r.value::<bool>()?; r.set(&mut e11, v, 2780); }
+                    0x20c5d => { let v = r.enumeration::<OrganisationTypeEnum>()?; r.set(&mut e12, v, 3165); }
+                    0x20992 => { let v = r.string()?; r.set(&mut e13, v, 2450); }
+                    0x20993 => { let v = r.string()?; r.set(&mut e14, v, 2451); }
+                    0x20c8e => { let v = r.string()?; r.set(&mut e15, v, 3214); }
+                    0x20a25 => { let v = Some(OrganisationUnit::read(r)?); e16.extend(v); }
+                    0x20840 => { let v = Some(ExternalIdentifier::read(r)?); e17.extend(v); }
+                    0x20be4 => { let v = Organisation::read(r)?; e18.extend(v); }
+                    0x20439 => { let v = r.raw()?; r.set(&mut e19, v.map(Box::new), 1081); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2312,7 +2517,7 @@ impl AnOrganisation {
                 break;
             }
         }
-        r.required(&e3, 2377);
+        r.required(&e3, 2443);
         let v = Self {
             general_time_validity: e0,
             organisation_extension: e1,
@@ -2372,6 +2577,207 @@ impl AnOrganisation {
     }
 }
 
+impl AnOrganisation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 20];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = Vec::new();
+        let mut f17 = Vec::new();
+        let mut f18 = Vec::new();
+        let mut f19 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                916 => if r.first(&mut seen[0])? { f0 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                153 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1043 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                1345 => if r.first(&mut seen[3])? { f3 = r.multilingual()?; },
+                1052 => if r.first(&mut seen[4])? { f4 = r.multilingual()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1071 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1072 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                1073 => if r.first(&mut seen[8])? { f8 = r.string()?; },
+                273 => if r.first(&mut seen[9])? { f9 = r.boolean()?; },
+                1894 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f10.push(v); } } },
+                1780 => if r.first(&mut seen[11])? { f11 = r.boolean()?; },
+                2495 => if r.first(&mut seen[12])? { f12 = r.enumeration::<OrganisationTypeEnum>()?; },
+                1351 => if r.first(&mut seen[13])? { f13 = r.string()?; },
+                1352 => if r.first(&mut seen[14])? { f14 = r.string()?; },
+                2547 => if r.first(&mut seen[15])? { f15 = r.string()?; },
+                1496 => if r.first(&mut seen[16])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = OrganisationUnit::read_json(r)? { f16.push(v); } } },
+                739 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ExternalIdentifier::read_json(r)? { f17.push(v); } } },
+                2208 => if r.first(&mut seen[18])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Organisation::read_json(r)? { f18.push(v); } } },
+                113 => if r.first(&mut seen[19])? { f19 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f3, 1345);
+        Ok(Self {
+            general_time_validity: f0,
+            organisation_extension: f1,
+            last_updated: f2,
+            name: f3,
+            legal_name: f4,
+            description: f5,
+            link_to_general_information: f6,
+            link_to_logo: f7,
+            link_to_webform: f8,
+            available24hours: f9,
+            responsibility: f10,
+            publishing_agreement: f11,
+            r#type: f12,
+            national_organisation_number: f13,
+            national_register: f14,
+            vat_identification_number: f15,
+            organisation_unit: f16,
+            external_identifier: f17,
+            sub_organisation: f18,
+            an_organisation_extension: f19,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(57)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.general_time_validity {
+            w.key(916)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.organisation_extension {
+            w.key(153)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        match &self.name {
+            Some(v) => {
+                w.key(1345)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(1345, w.missing("name"))?,
+        }
+        if let Some(v) = &self.legal_name {
+            w.key(1052)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.link_to_general_information {
+            w.key(1071)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.link_to_logo {
+            w.key(1072)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.link_to_webform {
+            w.key(1073)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.available24hours {
+            w.key(273)?;
+            w.boolean(*v)?;
+        }
+        if !self.responsibility.is_empty() {
+            w.key(1894)?;
+            w.begin_array()?;
+            for v in &self.responsibility {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.publishing_agreement {
+            w.key(1780)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.r#type {
+            w.key(2495)?;
+            w.enumeration(99, v.literal())?;
+        }
+        if let Some(v) = &self.national_organisation_number {
+            w.key(1351)?;
+            w.max_len("nationalOrganisationNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.national_register {
+            w.key(1352)?;
+            w.max_len("nationalRegister", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.vat_identification_number {
+            w.key(2547)?;
+            w.max_len("vatIdentificationNumber", v, 1024)?; w.string(v)?;
+        }
+        if !self.organisation_unit.is_empty() {
+            w.key(1496)?;
+            w.begin_array()?;
+            for v in &self.organisation_unit {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.sub_organisation.is_empty() {
+            w.key(2208)?;
+            w.begin_array()?;
+            for v in &self.sub_organisation {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.an_organisation_extension {
+            w.key(113)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:AssociatedFacility`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AssociatedFacility {
@@ -2386,10 +2792,10 @@ pub struct AssociatedFacility {
 }
 
 impl AssociatedFacility {
-    const FIELDS: &'static [u32] = &[0x20bfe, 0x2080c, 0x20777, 0x20425];
+    const FIELDS: &'static [u32] = &[0x20c5d, 0x20848, 0x207a8, 0x20440];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20038);
+        r.expect_type(0x20039);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2398,10 +2804,10 @@ impl AssociatedFacility {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20bfe => { let v = r.enumeration::<FacilityTypeEnum>()?; r.set(&mut e0, v, 3070); }
-                    0x2080c => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2060); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e2, v, 1911); }
-                    0x20425 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1061); }
+                    0x20c5d => { let v = r.enumeration::<FacilityTypeEnum>()?; r.set(&mut e0, v, 3165); }
+                    0x20848 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e1, v.map(Box::new), 2120); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e2, v, 1960); }
+                    0x20440 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1088); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2410,7 +2816,7 @@ impl AssociatedFacility {
                 break;
             }
         }
-        r.required(&e0, 3070);
+        r.required(&e0, 3165);
         let v = Self {
             r#type: e0,
             facility_reference: e1,
@@ -2438,6 +2844,75 @@ impl AssociatedFacility {
     }
 }
 
+impl AssociatedFacility {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2495 => if r.first(&mut seen[0])? { f0 = r.enumeration::<FacilityTypeEnum>()?; },
+                830 => if r.first(&mut seen[1])? { f1 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                545 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                116 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2495);
+        Ok(Self {
+            r#type: f0,
+            facility_reference: f1,
+            description: f2,
+            associated_facility_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(60)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.r#type {
+            Some(v) => {
+                w.key(2495)?;
+                w.enumeration(79, v.literal())?;
+            }
+            None => w.absent(2495, w.missing("type"))?,
+        }
+        if let Some(v) = &self.facility_reference {
+            w.key(830)?;
+            v.write_json(w, Some("FacilityObject"))?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.associated_facility_extension {
+            w.key(116)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:ClosureInformation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ClosureInformation {
@@ -2454,10 +2929,10 @@ pub struct ClosureInformation {
 }
 
 impl ClosureInformation {
-    const FIELDS: &'static [u32] = &[0x20a20, 0x20ba7, 0x2071e, 0x20ba8, 0x2043b];
+    const FIELDS: &'static [u32] = &[0x20a66, 0x20c06, 0x20749, 0x20c07, 0x20457];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2004f);
+        r.expect_type(0x20051);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2467,11 +2942,11 @@ impl ClosureInformation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20a20 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2592); }
-                    0x20ba7 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2983); }
-                    0x2071e => { let v = r.date_time()?; r.set(&mut e2, v, 1822); }
-                    0x20ba8 => { let v = r.date_time()?; r.set(&mut e3, v, 2984); }
-                    0x2043b => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1083); }
+                    0x20a66 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 2662); }
+                    0x20c06 => { let v = r.value::<bool>()?; r.set(&mut e1, v, 3078); }
+                    0x20749 => { let v = r.date_time()?; r.set(&mut e2, v, 1865); }
+                    0x20c07 => { let v = r.date_time()?; r.set(&mut e3, v, 3079); }
+                    0x20457 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1111); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2506,6 +2981,78 @@ impl ClosureInformation {
     }
 }
 
+impl ClosureInformation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1560 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                2241 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                343 => if r.first(&mut seen[2])? { f2 = r.date_time()?; },
+                2242 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                117 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            permananently_closed: f0,
+            temporarily_closed: f1,
+            closed_from: f2,
+            temporarily_closed_until: f3,
+            closure_information_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(63)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.permananently_closed {
+            w.key(1560)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.temporarily_closed {
+            w.key(2241)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.closed_from {
+            w.key(343)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.temporarily_closed_until {
+            w.key(2242)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.closure_information_extension {
+            w.key(117)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:ContactInformation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ContactInformation {
@@ -2522,10 +3069,10 @@ pub struct ContactInformation {
 }
 
 impl ContactInformation {
-    const FIELDS: &'static [u32] = &[0x208b0, 0x20ba4, 0x2081c, 0x207b2, 0x20448];
+    const FIELDS: &'static [u32] = &[0x208ee, 0x20c03, 0x20858, 0x207e4, 0x20464];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2005c);
+        r.expect_type(0x2005e);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -2535,11 +3082,11 @@ impl ContactInformation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x208b0 => { let v = r.string()?; e0.extend(v); }
-                    0x20ba4 => { let v = r.string()?; r.set(&mut e1, v, 2980); }
-                    0x2081c => { let v = r.string()?; r.set(&mut e2, v, 2076); }
-                    0x207b2 => { let v = r.string()?; r.set(&mut e3, v, 1970); }
-                    0x20448 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1096); }
+                    0x208ee => { let v = r.string()?; e0.extend(v); }
+                    0x20c03 => { let v = r.string()?; r.set(&mut e1, v, 3075); }
+                    0x20858 => { let v = r.string()?; r.set(&mut e2, v, 2136); }
+                    0x207e4 => { let v = r.string()?; r.set(&mut e3, v, 2020); }
+                    0x20464 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1124); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2574,6 +3121,83 @@ impl ContactInformation {
     }
 }
 
+impl ContactInformation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1033 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f0.push(v); } } },
+                2238 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                846 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                605 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                119 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            language: f0,
+            telephone_number: f1,
+            fax_number: f2,
+            e_mail: f3,
+            contact_information_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(64)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.language.is_empty() {
+            w.key(1033)?;
+            w.begin_array()?;
+            for v in &self.language {
+                w.item()?;
+                w.pattern("language", v, Pattern::Language)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.telephone_number {
+            w.key(2238)?;
+            w.max_len("telephoneNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.fax_number {
+            w.key(846)?;
+            w.max_len("faxNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.e_mail {
+            w.key(605)?;
+            w.max_len("eMail", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.contact_information_extension {
+            w.key(119)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:ContactPerson`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ContactPerson {
@@ -2600,10 +3224,10 @@ pub struct ContactPerson {
 }
 
 impl ContactPerson {
-    const FIELDS: &'static [u32] = &[0x208b0, 0x20ba4, 0x2081c, 0x207b2, 0x20448, 0x20949, 0x20822, 0x20bbf, 0x20a4e, 0x20449];
+    const FIELDS: &'static [u32] = &[0x208ee, 0x20c03, 0x20858, 0x207e4, 0x20464, 0x2098b, 0x2085e, 0x20c1e, 0x20a94, 0x20465];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2005d);
+        r.expect_type(0x2005f);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -2618,16 +3242,16 @@ impl ContactPerson {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x208b0 => { let v = r.string()?; e0.extend(v); }
-                    0x20ba4 => { let v = r.string()?; r.set(&mut e1, v, 2980); }
-                    0x2081c => { let v = r.string()?; r.set(&mut e2, v, 2076); }
-                    0x207b2 => { let v = r.string()?; r.set(&mut e3, v, 1970); }
-                    0x20448 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1096); }
-                    0x20949 => { let v = r.string()?; r.set(&mut e5, v, 2377); }
-                    0x20822 => { let v = r.string()?; r.set(&mut e6, v, 2082); }
-                    0x20bbf => { let v = r.multilingual()?; r.set(&mut e7, v, 3007); }
-                    0x20a4e => { let v = r.multilingual()?; r.set(&mut e8, v, 2638); }
-                    0x20449 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1097); }
+                    0x208ee => { let v = r.string()?; e0.extend(v); }
+                    0x20c03 => { let v = r.string()?; r.set(&mut e1, v, 3075); }
+                    0x20858 => { let v = r.string()?; r.set(&mut e2, v, 2136); }
+                    0x207e4 => { let v = r.string()?; r.set(&mut e3, v, 2020); }
+                    0x20464 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1124); }
+                    0x2098b => { let v = r.string()?; r.set(&mut e5, v, 2443); }
+                    0x2085e => { let v = r.string()?; r.set(&mut e6, v, 2142); }
+                    0x20c1e => { let v = r.multilingual()?; r.set(&mut e7, v, 3102); }
+                    0x20a94 => { let v = r.multilingual()?; r.set(&mut e8, v, 2708); }
+                    0x20465 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1125); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2636,7 +3260,7 @@ impl ContactPerson {
                 break;
             }
         }
-        r.required(&e5, 2377);
+        r.required(&e5, 2443);
         let v = Self {
             language: e0,
             telephone_number: e1,
@@ -2676,6 +3300,122 @@ impl ContactPerson {
     }
 }
 
+impl ContactPerson {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 10];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1033 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f0.push(v); } } },
+                2238 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                846 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                605 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                119 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                1345 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                852 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                2265 => if r.first(&mut seen[7])? { f7 = r.multilingual()?; },
+                1606 => if r.first(&mut seen[8])? { f8 = r.multilingual()?; },
+                121 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f5, 1345);
+        Ok(Self {
+            language: f0,
+            telephone_number: f1,
+            fax_number: f2,
+            e_mail: f3,
+            contact_information_extension: f4,
+            name: f5,
+            first_name: f6,
+            title: f7,
+            position: f8,
+            contact_person_extension: f9,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(66)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.language.is_empty() {
+            w.key(1033)?;
+            w.begin_array()?;
+            for v in &self.language {
+                w.item()?;
+                w.pattern("language", v, Pattern::Language)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.telephone_number {
+            w.key(2238)?;
+            w.max_len("telephoneNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.fax_number {
+            w.key(846)?;
+            w.max_len("faxNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.e_mail {
+            w.key(605)?;
+            w.max_len("eMail", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.contact_information_extension {
+            w.key(119)?;
+            w.extension(v)?;
+        }
+        match &self.name {
+            Some(v) => {
+                w.key(1345)?;
+                w.max_len("name", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(1345, w.missing("name"))?,
+        }
+        if let Some(v) = &self.first_name {
+            w.key(852)?;
+            w.max_len("firstName", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.title {
+            w.key(2265)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.position {
+            w.key(1606)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.contact_person_extension {
+            w.key(121)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:Credential`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Credential {
@@ -2688,10 +3428,10 @@ pub struct Credential {
 }
 
 impl Credential {
-    const FIELDS: &'static [u32] = &[0x20bfe, 0x209ed, 0x20451];
+    const FIELDS: &'static [u32] = &[0x20c5d, 0x20a32, 0x2046d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20064);
+        r.expect_type(0x20066);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2699,9 +3439,9 @@ impl Credential {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20bfe => { let v = r.enumeration::<CredentialTypeEnum>()?; r.set(&mut e0, v, 3070); }
-                    0x209ed => { let v = r.string()?; r.set(&mut e1, v, 2541); }
-                    0x20451 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1105); }
+                    0x20c5d => { let v = r.enumeration::<CredentialTypeEnum>()?; r.set(&mut e0, v, 3165); }
+                    0x20a32 => { let v = r.string()?; r.set(&mut e1, v, 2610); }
+                    0x2046d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1133); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2710,7 +3450,7 @@ impl Credential {
                 break;
             }
         }
-        r.required(&e0, 3070);
+        r.required(&e0, 3165);
         let v = Self {
             r#type: e0,
             other_type: e1,
@@ -2736,6 +3476,68 @@ impl Credential {
     }
 }
 
+impl Credential {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2495 => if r.first(&mut seen[0])? { f0 = r.enumeration::<CredentialTypeEnum>()?; },
+                1509 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                125 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2495);
+        Ok(Self {
+            r#type: f0,
+            other_type: f1,
+            credential_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(67)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.r#type {
+            Some(v) => {
+                w.key(2495)?;
+                w.enumeration(70, v.literal())?;
+            }
+            None => w.absent(2495, w.missing("type"))?,
+        }
+        if let Some(v) = &self.other_type {
+            w.key(1509)?;
+            w.max_len("otherType", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.credential_extension {
+            w.key(125)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:CredentialAssigned`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct CredentialAssigned {
@@ -2754,10 +3556,10 @@ pub struct CredentialAssigned {
 }
 
 impl CredentialAssigned {
-    const FIELDS: &'static [u32] = &[0x20bfe, 0x209ed, 0x20451, 0x208db, 0x2089e, 0x20450];
+    const FIELDS: &'static [u32] = &[0x20c5d, 0x20a32, 0x2046d, 0x20919, 0x208dc, 0x2046c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20065);
+        r.expect_type(0x20067);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2768,12 +3570,12 @@ impl CredentialAssigned {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20bfe => { let v = r.enumeration::<CredentialTypeEnum>()?; r.set(&mut e0, v, 3070); }
-                    0x209ed => { let v = r.string()?; r.set(&mut e1, v, 2541); }
-                    0x20451 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1105); }
-                    0x208db => { let v = r.string()?; r.set(&mut e3, v, 2267); }
-                    0x2089e => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 2206); }
-                    0x20450 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1104); }
+                    0x20c5d => { let v = r.enumeration::<CredentialTypeEnum>()?; r.set(&mut e0, v, 3165); }
+                    0x20a32 => { let v = r.string()?; r.set(&mut e1, v, 2610); }
+                    0x2046d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1133); }
+                    0x20919 => { let v = r.string()?; r.set(&mut e3, v, 2329); }
+                    0x208dc => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 2268); }
+                    0x2046c => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1132); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2782,8 +3584,8 @@ impl CredentialAssigned {
                 break;
             }
         }
-        r.required(&e0, 3070);
-        r.required(&e4, 2206);
+        r.required(&e0, 3165);
+        r.required(&e4, 2268);
         let v = Self {
             r#type: e0,
             other_type: e1,
@@ -2818,6 +3620,93 @@ impl CredentialAssigned {
     }
 }
 
+impl CredentialAssigned {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2495 => if r.first(&mut seen[0])? { f0 = r.enumeration::<CredentialTypeEnum>()?; },
+                1509 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                125 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1227 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1015 => if r.first(&mut seen[4])? { f4 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                124 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2495);
+        r.required(&f4, 1015);
+        Ok(Self {
+            r#type: f0,
+            other_type: f1,
+            credential_extension: f2,
+            local_identifier: f3,
+            issuer: f4,
+            credential_assigned_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(68)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.r#type {
+            Some(v) => {
+                w.key(2495)?;
+                w.enumeration(70, v.literal())?;
+            }
+            None => w.absent(2495, w.missing("type"))?,
+        }
+        if let Some(v) = &self.other_type {
+            w.key(1509)?;
+            w.max_len("otherType", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.credential_extension {
+            w.key(125)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.local_identifier {
+            w.key(1227)?;
+            w.max_len("localIdentifier", v, 1024)?; w.string(v)?;
+        }
+        match &self.issuer {
+            Some(v) => {
+                w.key(1015)?;
+                v.write_json(w, Some("Organisation"))?;
+            }
+            None => w.absent(1015, w.missing("issuer"))?,
+        }
+        if let Some(v) = &self.credential_assigned_extension {
+            w.key(124)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:Dimension`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Dimension {
@@ -2834,10 +3723,10 @@ pub struct Dimension {
 }
 
 impl Dimension {
-    const FIELDS: &'static [u32] = &[0x208c5, 0x20c75, 0x2085b, 0x20c15, 0x20468];
+    const FIELDS: &'static [u32] = &[0x20903, 0x20cd7, 0x20897, 0x20c75, 0x20484];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2007d);
+        r.expect_type(0x2007f);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2847,11 +3736,11 @@ impl Dimension {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x208c5 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2245); }
-                    0x20c75 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 3189); }
-                    0x2085b => { let v = r.value::<f32>()?; r.set(&mut e2, v, 2139); }
-                    0x20c15 => { let v = r.value::<u64>()?; r.set(&mut e3, v, 3093); }
-                    0x20468 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1128); }
+                    0x20903 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 2307); }
+                    0x20cd7 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 3287); }
+                    0x20897 => { let v = r.value::<f32>()?; r.set(&mut e2, v, 2199); }
+                    0x20c75 => { let v = r.value::<u64>()?; r.set(&mut e3, v, 3189); }
+                    0x20484 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1156); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2886,6 +3775,78 @@ impl Dimension {
     }
 }
 
+impl Dimension {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1054 => if r.first(&mut seen[0])? { f0 = r.number::<f32>()?; },
+                2668 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                944 => if r.first(&mut seen[2])? { f2 = r.number::<f32>()?; },
+                2522 => if r.first(&mut seen[3])? { f3 = r.number::<u64>()?; },
+                126 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            length: f0,
+            width: f1,
+            height: f2,
+            usable_area: f3,
+            dimension_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(71)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.length {
+            w.key(1054)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.width {
+            w.key(2668)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.height {
+            w.key(944)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.usable_area {
+            w.key(2522)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.dimension_extension {
+            w.key(126)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:DurationValue`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DurationValue {
@@ -2916,17 +3877,17 @@ pub struct DurationValue {
 }
 
 impl DurationValue {
-    const FIELDS: &'static [u32] = &[0x30759, 0x30ab2, 0x30454, 0x207aa, 0x20475];
+    const FIELDS: &'static [u32] = &[0x40789, 0x40af9, 0x40470, 0x207db, 0x20491];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2008a);
-        let a0 = r.attr_value::<f32>(1648)?;
-        let a1 = r.attr_enum::<com::ComputationMethodEnum>(1840);
-        let a2 = r.attr_value::<u64>(2421)?;
-        let a3 = r.attr_value::<u64>(2422)?;
-        let a4 = r.attr_value::<f32>(2891)?;
-        let a5 = r.attr_value::<f32>(2922)?;
-        let a6 = r.attr_value::<f32>(2966)?;
+        r.expect_type(0x2008c);
+        let a0 = r.attr_value::<f32>(1689)?;
+        let a1 = r.attr_enum::<com::ComputationMethodEnum>(1886);
+        let a2 = r.attr_value::<u64>(2489)?;
+        let a3 = r.attr_value::<u64>(2490)?;
+        let a4 = r.attr_value::<f32>(2981)?;
+        let a5 = r.attr_value::<f32>(3012)?;
+        let a6 = r.attr_value::<f32>(3060)?;
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -2936,11 +3897,11 @@ impl DurationValue {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x30759 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 1881); }
-                    0x30ab2 => { let v = r.multilingual()?; r.set(&mut e1, v, 2738); }
-                    0x30454 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1108); }
-                    0x207aa => { let v = r.value::<f32>()?; r.set(&mut e3, v, 1962); }
-                    0x20475 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1141); }
+                    0x40789 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 1929); }
+                    0x40af9 => { let v = r.multilingual()?; r.set(&mut e1, v, 2809); }
+                    0x40470 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1136); }
+                    0x207db => { let v = r.value::<f32>()?; r.set(&mut e3, v, 2011); }
+                    0x20491 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1169); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -2949,7 +3910,7 @@ impl DurationValue {
                 break;
             }
         }
-        r.required(&e3, 1962);
+        r.required(&e3, 2011);
         let v = Self {
             accuracy: a0,
             computational_method: a1,
@@ -2993,6 +3954,132 @@ impl DurationValue {
     }
 }
 
+impl DurationValue {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                29 => if r.first(&mut seen[0])? { f0 = r.number::<f32>()?; },
+                428 => if r.first(&mut seen[1])? { f1 = r.enumeration::<com::ComputationMethodEnum>()?; },
+                1389 => if r.first(&mut seen[2])? { f2 = r.number::<u64>()?; },
+                1390 => if r.first(&mut seen[3])? { f3 = r.number::<u64>()?; },
+                2146 => if r.first(&mut seen[4])? { f4 = r.number::<f32>()?; },
+                2177 => if r.first(&mut seen[5])? { f5 = r.number::<f32>()?; },
+                2223 => if r.first(&mut seen[6])? { f6 = r.number::<f32>()?; },
+                515 => if r.first(&mut seen[7])? { f7 = r.boolean()?; },
+                1809 => if r.first(&mut seen[8])? { f8 = r.multilingual()?; },
+                356 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                596 => if r.first(&mut seen[10])? { f10 = r.number::<f32>()?; },
+                127 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                432 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f10, 596);
+        Ok(Self {
+            accuracy: f0,
+            computational_method: f1,
+            number_of_incomplete_inputs: f2,
+            number_of_input_values_used: f3,
+            smoothing_factor: f4,
+            standard_deviation: f5,
+            supplier_calculated_data_quality: f6,
+            data_error: f7,
+            reason_for_data_error: f8,
+            data_value_extension: f9,
+            duration: f10,
+            duration_value_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(72)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.accuracy {
+            w.key(29)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.computational_method {
+            w.key(428)?;
+            w.enumeration(158, v.literal())?;
+        }
+        if let Some(v) = &self.number_of_incomplete_inputs {
+            w.key(1389)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.number_of_input_values_used {
+            w.key(1390)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.smoothing_factor {
+            w.key(2146)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.standard_deviation {
+            w.key(2177)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.supplier_calculated_data_quality {
+            w.key(2223)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.data_error {
+            w.key(515)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.reason_for_data_error {
+            w.key(1809)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.data_value_extension {
+            w.key(356)?;
+            w.extension(v)?;
+        }
+        match &self.duration {
+            Some(v) => {
+                w.key(596)?;
+                w.float32(*v)?;
+            }
+            None => w.absent(596, w.missing("duration"))?,
+        }
+        if let Some(v) = &self.duration_value_extension {
+            w.key(127)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:Eligibility`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Eligibility {
@@ -3017,10 +4104,10 @@ pub struct Eligibility {
 }
 
 impl Eligibility {
-    const FIELDS: &'static [u32] = &[0x20949, 0x2095c, 0x20777, 0x20a78, 0x20724, 0x20a96, 0x20a9e, 0x20af2, 0x20481];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x2099e, 0x207a8, 0x20abf, 0x20751, 0x20add, 0x20ae5, 0x20b3f, 0x2049f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20096);
+        r.expect_type(0x2009a);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3034,15 +4121,15 @@ impl Eligibility {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x2095c => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2396); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e2, v, 1911); }
-                    0x20a78 => { let v = r.value::<u64>()?; r.set(&mut e3, v, 2680); }
-                    0x20724 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 1828); }
-                    0x20a96 => { let v = Some(Qualification::read(r)?); e5.extend(v); }
-                    0x20a9e => { let v = Some(RateDiscount::read(r)?); r.set(&mut e6, v.map(Box::new), 2718); }
-                    0x20af2 => { let v = Some(RightSpecification::read(r)?); e7.extend(v); }
-                    0x20481 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1153); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x2099e => { let v = r.value::<bool>()?; r.set(&mut e1, v, 2462); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e2, v, 1960); }
+                    0x20abf => { let v = r.value::<u64>()?; r.set(&mut e3, v, 2751); }
+                    0x20751 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 1873); }
+                    0x20add => { let v = Some(Qualification::read(r)?); e5.extend(v); }
+                    0x20ae5 => { let v = Some(RateDiscount::read(r)?); r.set(&mut e6, v.map(Box::new), 2789); }
+                    0x20b3f => { let v = Some(RightSpecification::read(r)?); e7.extend(v); }
+                    0x2049f => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1183); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3085,6 +4172,116 @@ impl Eligibility {
     }
 }
 
+impl Eligibility {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 9];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        let mut f7 = Vec::new();
+        let mut f8 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1345 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                1362 => if r.first(&mut seen[1])? { f1 = r.boolean()?; },
+                545 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                1649 => if r.first(&mut seen[3])? { f3 = r.number::<u64>()?; },
+                415 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                1781 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Qualification::read_json(r)? { f5.push(v); } } },
+                1789 => if r.first(&mut seen[6])? { f6 = RateDiscount::read_json(r)?.map(Box::new); },
+                1902 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = RightSpecification::read_json(r)? { f7.push(v); } } },
+                128 => if r.first(&mut seen[8])? { f8 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            name: f0,
+            no_fee_to_use: f1,
+            description: f2,
+            priority: f3,
+            combinable: f4,
+            qualification: f5,
+            rate_discount: f6,
+            right_specification: f7,
+            eligibility_extension: f8,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(73)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.no_fee_to_use {
+            w.key(1362)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.priority {
+            w.key(1649)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.combinable {
+            w.key(415)?;
+            w.boolean(*v)?;
+        }
+        if !self.qualification.is_empty() {
+            w.key(1781)?;
+            w.begin_array()?;
+            for v in &self.qualification {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rate_discount {
+            w.key(1789)?;
+            v.write_json(w, None)?;
+        }
+        if !self.right_specification.is_empty() {
+            w.key(1902)?;
+            w.begin_array()?;
+            for v in &self.right_specification {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.eligibility_extension {
+            w.key(128)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:ExternalIdentifier`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ExternalIdentifier {
@@ -3099,10 +4296,10 @@ pub struct ExternalIdentifier {
 }
 
 impl ExternalIdentifier {
-    const FIELDS: &'static [u32] = &[0x20870, 0x20c01, 0x209ee, 0x20494];
+    const FIELDS: &'static [u32] = &[0x208ac, 0x20c60, 0x20a33, 0x204b4];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x200a9);
+        r.expect_type(0x200af);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3111,10 +4308,10 @@ impl ExternalIdentifier {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20870 => { let v = r.string()?; r.set(&mut e0, v, 2160); }
-                    0x20c01 => { let v = r.enumeration::<TypeOfIdentifierEnum>()?; r.set(&mut e1, v, 3073); }
-                    0x209ee => { let v = r.string()?; r.set(&mut e2, v, 2542); }
-                    0x20494 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1172); }
+                    0x208ac => { let v = r.string()?; r.set(&mut e0, v, 2220); }
+                    0x20c60 => { let v = r.enumeration::<TypeOfIdentifierEnum>()?; r.set(&mut e1, v, 3168); }
+                    0x20a33 => { let v = r.string()?; r.set(&mut e2, v, 2611); }
+                    0x204b4 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1204); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3123,7 +4320,7 @@ impl ExternalIdentifier {
                 break;
             }
         }
-        r.required(&e0, 2160);
+        r.required(&e0, 2220);
         let v = Self {
             identifier: e0,
             type_of_identifier: e1,
@@ -3148,6 +4345,75 @@ impl ExternalIdentifier {
         if let Some(v) = &self.other_type_of_identifier { w.max_len("otherTypeOfIdentifier", v, 1024)?; w.leaf("afac:otherTypeOfIdentifier", v)?; }
         if let Some(v) = &self.external_identifier_extension { w.extension("afac:_externalIdentifierExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl ExternalIdentifier {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 4];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                965 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2498 => if r.first(&mut seen[1])? { f1 = r.enumeration::<TypeOfIdentifierEnum>()?; },
+                1510 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                129 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 965);
+        Ok(Self {
+            identifier: f0,
+            type_of_identifier: f1,
+            other_type_of_identifier: f2,
+            external_identifier_extension: f3,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(76)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.identifier {
+            Some(v) => {
+                w.key(965)?;
+                w.max_len("identifier", v, 1024)?; w.string(v)?;
+            }
+            None => w.absent(965, w.missing("identifier"))?,
+        }
+        if let Some(v) = &self.type_of_identifier {
+            w.key(2498)?;
+            w.enumeration(135, v.literal())?;
+        }
+        if let Some(v) = &self.other_type_of_identifier {
+            w.key(1510)?;
+            w.max_len("otherTypeOfIdentifier", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.external_identifier_extension {
+            w.key(129)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -3177,10 +4443,10 @@ pub struct FacilityObjectStatus {
 }
 
 impl FacilityObjectStatus {
-    const FIELDS: &'static [u32] = &[0x20aba, 0x208ba, 0x209a8, 0x209ce, 0x20aca, 0x20b77, 0x20958, 0x20959, 0x2080d, 0x20498];
+    const FIELDS: &'static [u32] = &[0x20b01, 0x208f8, 0x209ec, 0x20a13, 0x20b13, 0x20bd2, 0x2099a, 0x2099b, 0x20849, 0x204b8];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x200ae);
+        r.expect_type(0x200b4);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3195,16 +4461,16 @@ impl FacilityObjectStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20aba => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2746); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e1, v, 2234); }
-                    0x209a8 => { let v = r.enumeration::<OpeningStatusEnum>()?; r.set(&mut e2, v, 2472); }
-                    0x209ce => { let v = r.enumeration::<OperationStatusEnum>()?; r.set(&mut e3, v, 2510); }
-                    0x20aca => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2762); }
-                    0x20b77 => { let v = r.multilingual()?; r.set(&mut e5, v, 2935); }
-                    0x20958 => { let v = OperatingHours::read(r)?; r.set(&mut e6, v, 2392); }
-                    0x20959 => { let v = Rates::read(r)?; r.set(&mut e7, v, 2393); }
-                    0x2080d => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2061); }
-                    0x20498 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1176); }
+                    0x20b01 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2817); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e1, v, 2296); }
+                    0x209ec => { let v = r.enumeration::<OpeningStatusEnum>()?; r.set(&mut e2, v, 2540); }
+                    0x20a13 => { let v = r.enumeration::<OperationStatusEnum>()?; r.set(&mut e3, v, 2579); }
+                    0x20b13 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2835); }
+                    0x20bd2 => { let v = r.multilingual()?; r.set(&mut e5, v, 3026); }
+                    0x2099a => { let v = OperatingHours::read(r)?; r.set(&mut e6, v, 2458); }
+                    0x2099b => { let v = Rates::read(r)?; r.set(&mut e7, v, 2459); }
+                    0x20849 => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2121); }
+                    0x204b8 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1208); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3213,7 +4479,7 @@ impl FacilityObjectStatus {
                 break;
             }
         }
-        r.required(&e0, 2746);
+        r.required(&e0, 2817);
         let v = Self {
             reference: e0,
             last_updated: e1,
@@ -3253,6 +4519,117 @@ impl FacilityObjectStatus {
     }
 }
 
+impl FacilityObjectStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 10];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1817 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1043 => if r.first(&mut seen[1])? { f1 = r.date_time()?; },
+                1440 => if r.first(&mut seen[2])? { f2 = r.enumeration::<OpeningStatusEnum>()?; },
+                1479 => if r.first(&mut seen[3])? { f3 = r.enumeration::<OperationStatusEnum>()?; },
+                1835 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                2191 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1358 => if r.first(&mut seen[6])? { f6 = OperatingHours::read_json(r)?; },
+                1359 => if r.first(&mut seen[7])? { f7 = Rates::read_json(r)?; },
+                831 => if r.first(&mut seen[8])? { f8 = com::AnyFault::read_json(r)?; },
+                132 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1817);
+        Ok(Self {
+            reference: f0,
+            last_updated: f1,
+            opening_status: f2,
+            operation_status: f3,
+            regular_operating_hours_in_force: f4,
+            status_description: f5,
+            new_operating_hours: f6,
+            new_rates: f7,
+            fault: f8,
+            facility_object_status_extension: f9,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(77)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.reference {
+            Some(v) => {
+                w.key(1817)?;
+                v.write_json(w, Some("FacilityObject"))?;
+            }
+            None => w.absent(1817, w.missing("reference"))?,
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.opening_status {
+            w.key(1440)?;
+            w.enumeration(88, v.literal())?;
+        }
+        if let Some(v) = &self.operation_status {
+            w.key(1479)?;
+            w.enumeration(94, v.literal())?;
+        }
+        if let Some(v) = &self.regular_operating_hours_in_force {
+            w.key(1835)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.status_description {
+            w.key(2191)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.new_operating_hours {
+            w.key(1358)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.new_rates {
+            w.key(1359)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.fault {
+            w.key(831)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.facility_object_status_extension {
+            w.key(132)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:FacilityStatus`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct FacilityStatus {
@@ -3283,10 +4660,10 @@ pub struct FacilityStatus {
 }
 
 impl FacilityStatus {
-    const FIELDS: &'static [u32] = &[0x20aba, 0x208ba, 0x209a8, 0x209ce, 0x20aca, 0x20b77, 0x20958, 0x20959, 0x2080d, 0x20498, 0x20b91, 0x20499];
+    const FIELDS: &'static [u32] = &[0x20b01, 0x208f8, 0x209ec, 0x20a13, 0x20b13, 0x20bd2, 0x2099a, 0x2099b, 0x20849, 0x204b8, 0x20bef, 0x204b9];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x200af);
+        r.expect_type(0x200b5);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3303,18 +4680,18 @@ impl FacilityStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20aba => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2746); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e1, v, 2234); }
-                    0x209a8 => { let v = r.enumeration::<OpeningStatusEnum>()?; r.set(&mut e2, v, 2472); }
-                    0x209ce => { let v = r.enumeration::<OperationStatusEnum>()?; r.set(&mut e3, v, 2510); }
-                    0x20aca => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2762); }
-                    0x20b77 => { let v = r.multilingual()?; r.set(&mut e5, v, 2935); }
-                    0x20958 => { let v = OperatingHours::read(r)?; r.set(&mut e6, v, 2392); }
-                    0x20959 => { let v = Rates::read(r)?; r.set(&mut e7, v, 2393); }
-                    0x2080d => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2061); }
-                    0x20498 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1176); }
-                    0x20b91 => { let v = Some(SupplementalFacilityStatus::read(r)?); e10.extend(v); }
-                    0x20499 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1177); }
+                    0x20b01 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2817); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e1, v, 2296); }
+                    0x209ec => { let v = r.enumeration::<OpeningStatusEnum>()?; r.set(&mut e2, v, 2540); }
+                    0x20a13 => { let v = r.enumeration::<OperationStatusEnum>()?; r.set(&mut e3, v, 2579); }
+                    0x20b13 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2835); }
+                    0x20bd2 => { let v = r.multilingual()?; r.set(&mut e5, v, 3026); }
+                    0x2099a => { let v = OperatingHours::read(r)?; r.set(&mut e6, v, 2458); }
+                    0x2099b => { let v = Rates::read(r)?; r.set(&mut e7, v, 2459); }
+                    0x20849 => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2121); }
+                    0x204b8 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1208); }
+                    0x20bef => { let v = Some(SupplementalFacilityStatus::read(r)?); e10.extend(v); }
+                    0x204b9 => { let v = r.raw()?; r.set(&mut e11, v.map(Box::new), 1209); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3323,7 +4700,7 @@ impl FacilityStatus {
                 break;
             }
         }
-        r.required(&e0, 2746);
+        r.required(&e0, 2817);
         let v = Self {
             reference: e0,
             last_updated: e1,
@@ -3367,6 +4744,136 @@ impl FacilityStatus {
     }
 }
 
+impl FacilityStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1817 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1043 => if r.first(&mut seen[1])? { f1 = r.date_time()?; },
+                1440 => if r.first(&mut seen[2])? { f2 = r.enumeration::<OpeningStatusEnum>()?; },
+                1479 => if r.first(&mut seen[3])? { f3 = r.enumeration::<OperationStatusEnum>()?; },
+                1835 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                2191 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1358 => if r.first(&mut seen[6])? { f6 = OperatingHours::read_json(r)?; },
+                1359 => if r.first(&mut seen[7])? { f7 = Rates::read_json(r)?; },
+                831 => if r.first(&mut seen[8])? { f8 = com::AnyFault::read_json(r)?; },
+                132 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                2219 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = SupplementalFacilityStatus::read_json(r)? { f10.push(v); } } },
+                133 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1817);
+        Ok(Self {
+            reference: f0,
+            last_updated: f1,
+            opening_status: f2,
+            operation_status: f3,
+            regular_operating_hours_in_force: f4,
+            status_description: f5,
+            new_operating_hours: f6,
+            new_rates: f7,
+            fault: f8,
+            facility_object_status_extension: f9,
+            supplemental_facility_status: f10,
+            facility_status_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(78)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.reference {
+            Some(v) => {
+                w.key(1817)?;
+                v.write_json(w, Some("FacilityObject"))?;
+            }
+            None => w.absent(1817, w.missing("reference"))?,
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.opening_status {
+            w.key(1440)?;
+            w.enumeration(88, v.literal())?;
+        }
+        if let Some(v) = &self.operation_status {
+            w.key(1479)?;
+            w.enumeration(94, v.literal())?;
+        }
+        if let Some(v) = &self.regular_operating_hours_in_force {
+            w.key(1835)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.status_description {
+            w.key(2191)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.new_operating_hours {
+            w.key(1358)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.new_rates {
+            w.key(1359)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.fault {
+            w.key(831)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.facility_object_status_extension {
+            w.key(132)?;
+            w.extension(v)?;
+        }
+        if !self.supplemental_facility_status.is_empty() {
+            w.key(2219)?;
+            w.begin_array()?;
+            for v in &self.supplemental_facility_status {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.facility_status_extension {
+            w.key(133)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:FreeOfCharge`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct FreeOfCharge {
@@ -3383,10 +4890,10 @@ pub struct FreeOfCharge {
 }
 
 impl FreeOfCharge {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20a10, 0x209f1, 0x2058d, 0x2049e];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20a56, 0x20a36, 0x205b0, 0x204be];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x200b4);
+        r.expect_type(0x200ba);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -3396,11 +4903,11 @@ impl FreeOfCharge {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; e0.extend(v); }
-                    0x20a10 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2576); }
-                    0x209f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2545); }
-                    0x2058d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1421); }
-                    0x2049e => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1182); }
+                    0x206e8 => { let v = r.string()?; e0.extend(v); }
+                    0x20a56 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2646); }
+                    0x20a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2614); }
+                    0x205b0 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1456); }
+                    0x204be => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1214); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3435,6 +4942,83 @@ impl FreeOfCharge {
     }
 }
 
+impl FreeOfCharge {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                243 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f0.push(v); } } },
+                1545 => if r.first(&mut seen[1])? { f1 = Payment::read_json(r)?.map(Box::new); },
+                1513 => if r.first(&mut seen[2])? { f2 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                173 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                135 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            applicable_currency: f0,
+            payment: f1,
+            overall_period: f2,
+            rates_extension: f3,
+            free_of_charge_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(80)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.applicable_currency.is_empty() {
+            w.key(243)?;
+            w.begin_array()?;
+            for v in &self.applicable_currency {
+                w.item()?;
+                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.payment {
+            w.key(1545)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rates_extension {
+            w.key(173)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.free_of_charge_extension {
+            w.key(135)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:GeneralRateInformation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct GeneralRateInformation {
@@ -3451,10 +5035,10 @@ pub struct GeneralRateInformation {
 }
 
 impl GeneralRateInformation {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20a10, 0x209f1, 0x2058d, 0x204ab];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20a56, 0x20a36, 0x205b0, 0x204cb];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x200c1);
+        r.expect_type(0x200c7);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -3464,11 +5048,11 @@ impl GeneralRateInformation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; e0.extend(v); }
-                    0x20a10 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2576); }
-                    0x209f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2545); }
-                    0x2058d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1421); }
-                    0x204ab => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1195); }
+                    0x206e8 => { let v = r.string()?; e0.extend(v); }
+                    0x20a56 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2646); }
+                    0x20a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2614); }
+                    0x205b0 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1456); }
+                    0x204cb => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1227); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3503,6 +5087,83 @@ impl GeneralRateInformation {
     }
 }
 
+impl GeneralRateInformation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                243 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f0.push(v); } } },
+                1545 => if r.first(&mut seen[1])? { f1 = Payment::read_json(r)?.map(Box::new); },
+                1513 => if r.first(&mut seen[2])? { f2 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                173 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                137 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            applicable_currency: f0,
+            payment: f1,
+            overall_period: f2,
+            rates_extension: f3,
+            general_rate_information_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(81)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.applicable_currency.is_empty() {
+            w.key(243)?;
+            w.begin_array()?;
+            for v in &self.applicable_currency {
+                w.item()?;
+                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.payment {
+            w.key(1545)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rates_extension {
+            w.key(173)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.general_rate_information_extension {
+            w.key(137)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:Image`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Image {
@@ -3515,10 +5176,10 @@ pub struct Image {
 }
 
 impl Image {
-    const FIELDS: &'static [u32] = &[0x20876, 0x20877, 0x204c5];
+    const FIELDS: &'static [u32] = &[0x208b2, 0x208b3, 0x204e5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x200da);
+        r.expect_type(0x200e0);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3526,9 +5187,9 @@ impl Image {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20876 => { let v = r.base64()?; r.set(&mut e0, v, 2166); }
-                    0x20877 => { let v = r.enumeration::<ImageFormatEnum>()?; r.set(&mut e1, v, 2167); }
-                    0x204c5 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1221); }
+                    0x208b2 => { let v = r.base64()?; r.set(&mut e0, v, 2226); }
+                    0x208b3 => { let v = r.enumeration::<ImageFormatEnum>()?; r.set(&mut e1, v, 2227); }
+                    0x204e5 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1253); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3537,8 +5198,8 @@ impl Image {
                 break;
             }
         }
-        r.required(&e0, 2166);
-        r.required(&e1, 2167);
+        r.required(&e0, 2226);
+        r.required(&e1, 2227);
         let v = Self {
             image_data: e0,
             image_format: e1,
@@ -3567,6 +5228,72 @@ impl Image {
     }
 }
 
+impl Image {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                971 => if r.first(&mut seen[0])? { f0 = r.base64()?; },
+                972 => if r.first(&mut seen[1])? { f1 = r.enumeration::<ImageFormatEnum>()?; },
+                138 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 971);
+        r.required(&f1, 972);
+        Ok(Self {
+            image_data: f0,
+            image_format: f1,
+            image_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(82)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.image_data {
+            Some(v) => {
+                w.key(971)?;
+                w.base64(v)?;
+            }
+            None => w.absent(971, w.missing("imageData"))?,
+        }
+        match &self.image_format {
+            Some(v) => {
+                w.key(972)?;
+                w.enumeration(83, v.literal())?;
+            }
+            None => w.absent(972, w.missing("imageFormat"))?,
+        }
+        if let Some(v) = &self.image_extension {
+            w.key(138)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:LinkedRightSpecification`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LinkedRightSpecification {
@@ -3579,10 +5306,10 @@ pub struct LinkedRightSpecification {
 }
 
 impl LinkedRightSpecification {
-    const FIELDS: &'static [u32] = &[0x20a97, 0x206d0, 0x204dc];
+    const FIELDS: &'static [u32] = &[0x20ade, 0x206f9, 0x204fe];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x200f3);
+        r.expect_type(0x200fb);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3590,9 +5317,9 @@ impl LinkedRightSpecification {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20a97 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2711); }
-                    0x206d0 => { let v = AssignedRightTimeRelative::read(r)?; r.set(&mut e1, v, 1744); }
-                    0x204dc => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1244); }
+                    0x20ade => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2782); }
+                    0x206f9 => { let v = AssignedRightTimeRelative::read(r)?; r.set(&mut e1, v, 1785); }
+                    0x204fe => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1278); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3623,6 +5350,64 @@ impl LinkedRightSpecification {
     }
 }
 
+impl LinkedRightSpecification {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1782 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                260 => if r.first(&mut seen[1])? { f1 = AssignedRightTimeRelative::read_json(r)?; },
+                139 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            qualifying_right_spec: f0,
+            assigned_right_time_relative: f1,
+            linked_right_specification_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(84)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.qualifying_right_spec {
+            w.key(1782)?;
+            v.write_json(w, Some("RightSpecification"))?;
+        }
+        if let Some(v) = &self.assigned_right_time_relative {
+            w.key(260)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.linked_right_specification_extension {
+            w.key(139)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:NutsArea`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct NutsArea {
@@ -3635,10 +5420,10 @@ pub struct NutsArea {
 }
 
 impl NutsArea {
-    const FIELDS: &'static [u32] = &[0x20995, 0x20994, 0x2050a];
+    const FIELDS: &'static [u32] = &[0x209d9, 0x209d8, 0x2052d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20125);
+        r.expect_type(0x2012e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3646,9 +5431,9 @@ impl NutsArea {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20995 => { let v = r.enumeration::<loc::NutsCodeTypeEnum>()?; r.set(&mut e0, v, 2453); }
-                    0x20994 => { let v = r.string()?; r.set(&mut e1, v, 2452); }
-                    0x2050a => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1290); }
+                    0x209d9 => { let v = r.enumeration::<loc::NutsCodeTypeEnum>()?; r.set(&mut e0, v, 2521); }
+                    0x209d8 => { let v = r.string()?; r.set(&mut e1, v, 2520); }
+                    0x2052d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1325); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3657,8 +5442,8 @@ impl NutsArea {
                 break;
             }
         }
-        r.required(&e0, 2453);
-        r.required(&e1, 2452);
+        r.required(&e0, 2521);
+        r.required(&e1, 2520);
         let v = Self {
             nuts_code_type: e0,
             nuts_code: e1,
@@ -3687,6 +5472,73 @@ impl NutsArea {
     }
 }
 
+impl NutsArea {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1421 => if r.first(&mut seen[0])? { f0 = r.enumeration::<loc::NutsCodeTypeEnum>()?; },
+                1420 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                140 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                1244 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1421);
+        r.required(&f1, 1420);
+        Ok(Self {
+            nuts_code_type: f0,
+            nuts_code: f1,
+            nuts_area_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(86)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.nuts_code_type {
+            Some(v) => {
+                w.key(1421)?;
+                w.enumeration(547, v.literal())?;
+            }
+            None => w.absent(1421, w.missing("nutsCodeType"))?,
+        }
+        match &self.nuts_code {
+            Some(v) => {
+                w.key(1420)?;
+                w.max_len("nutsCode", v, 5)?; w.string(v)?;
+            }
+            None => w.absent(1420, w.missing("nutsCode"))?,
+        }
+        if let Some(v) = &self.nuts_area_extension {
+            w.key(140)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:OpenAllHours`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OpenAllHours {
@@ -3699,10 +5551,10 @@ pub struct OpenAllHours {
 }
 
 impl OpenAllHours {
-    const FIELDS: &'static [u32] = &[0x2071f, 0x2052a, 0x20513];
+    const FIELDS: &'static [u32] = &[0x2074a, 0x2054d, 0x20536];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2012e);
+        r.expect_type(0x20137);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3710,9 +5562,9 @@ impl OpenAllHours {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2071f => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1823); }
-                    0x2052a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1322); }
-                    0x20513 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1299); }
+                    0x2074a => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1866); }
+                    0x2054d => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1357); }
+                    0x20536 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1334); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3743,6 +5595,64 @@ impl OpenAllHours {
     }
 }
 
+impl OpenAllHours {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                344 => if r.first(&mut seen[0])? { f0 = ClosureInformation::read_json(r)?.map(Box::new); },
+                145 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                142 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            closure_information: f0,
+            operating_hours_extension: f1,
+            open_all_hours_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(87)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.closure_information {
+            w.key(344)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.operating_hours_extension {
+            w.key(145)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.open_all_hours_extension {
+            w.key(142)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:OperatingHoursByReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OperatingHoursByReference {
@@ -3759,10 +5669,10 @@ pub struct OperatingHoursByReference {
 }
 
 impl OperatingHoursByReference {
-    const FIELDS: &'static [u32] = &[0x2071f, 0x2052a, 0x209c6, 0x209c9, 0x20529];
+    const FIELDS: &'static [u32] = &[0x2074a, 0x2054d, 0x20a0a, 0x20a0d, 0x2054c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20145);
+        r.expect_type(0x2014e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3772,11 +5682,11 @@ impl OperatingHoursByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2071f => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1823); }
-                    0x2052a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1322); }
-                    0x209c6 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2502); }
-                    0x209c9 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2505); }
-                    0x20529 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1321); }
+                    0x2074a => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1866); }
+                    0x2054d => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1357); }
+                    0x20a0a => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2570); }
+                    0x20a0d => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2573); }
+                    0x2054c => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1356); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3785,7 +5695,7 @@ impl OperatingHoursByReference {
                 break;
             }
         }
-        r.required(&e2, 2502);
+        r.required(&e2, 2570);
         let v = Self {
             closure_information: e0,
             operating_hours_extension: e1,
@@ -3812,6 +5722,82 @@ impl OperatingHoursByReference {
         if let Some(v) = &self.operating_hours_table_reference { v.write(w, "afac:operatingHoursTableReference", "", " targetClass=\"afac:OperatingHoursTable\"")?; }
         if let Some(v) = &self.operating_hours_by_reference_extension { w.extension("afac:_operatingHoursByReferenceExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl OperatingHoursByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                344 => if r.first(&mut seen[0])? { f0 = ClosureInformation::read_json(r)?.map(Box::new); },
+                145 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1470 => if r.first(&mut seen[2])? { f2 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1473 => if r.first(&mut seen[3])? { f3 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                144 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 1470);
+        Ok(Self {
+            closure_information: f0,
+            operating_hours_extension: f1,
+            operating_hours_reference: f2,
+            operating_hours_table_reference: f3,
+            operating_hours_by_reference_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(89)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.closure_information {
+            w.key(344)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.operating_hours_extension {
+            w.key(145)?;
+            w.extension(v)?;
+        }
+        match &self.operating_hours_reference {
+            Some(v) => {
+                w.key(1470)?;
+                v.write_json(w, Some("OperatingHoursSpecification"))?;
+            }
+            None => w.absent(1470, w.missing("operatingHoursReference"))?,
+        }
+        if let Some(v) = &self.operating_hours_table_reference {
+            w.key(1473)?;
+            v.write_json(w, Some("OperatingHoursTable"))?;
+        }
+        if let Some(v) = &self.operating_hours_by_reference_extension {
+            w.key(144)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -3847,16 +5833,16 @@ pub struct OperatingHoursPublication {
 }
 
 impl OperatingHoursPublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x20857, 0x209c8, 0x2052b];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x20893, 0x20a0c, 0x2054e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20146);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0x2014f);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3869,14 +5855,14 @@ impl OperatingHoursPublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x20857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2135); }
-                    0x209c8 => { let v = Some(OperatingHoursTable::read(r)?); e6.extend(v); }
-                    0x2052b => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1323); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x20893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2195); }
+                    0x20a0c => { let v = Some(OperatingHoursTable::read(r)?); e6.extend(v); }
+                    0x2054e => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1358); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -3885,8 +5871,8 @@ impl OperatingHoursPublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -3940,6 +5926,132 @@ impl OperatingHoursPublication {
     }
 }
 
+impl OperatingHoursPublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                940 => if r.first(&mut seen[10])? { f10 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                1472 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = OperatingHoursTable::read_json(r)? { f11.push(v); } } },
+                147 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            header_information: f10,
+            operating_hours_table: f11,
+            operating_hours_publication_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(91)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.header_information {
+            w.key(940)?;
+            v.write_json(w, None)?;
+        }
+        w.count("operatingHoursTable", self.operating_hours_table.len(), 1, usize::MAX)?;
+        if !self.operating_hours_table.is_empty() {
+            w.key(1472)?;
+            w.begin_array()?;
+            for v in &self.operating_hours_table {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours_publication_extension {
+            w.key(147)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:OperatingHoursSpecification`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OperatingHoursSpecification {
@@ -3966,12 +6078,12 @@ pub struct OperatingHoursSpecification {
 }
 
 impl OperatingHoursSpecification {
-    const FIELDS: &'static [u32] = &[0x2071f, 0x2052a, 0x208ba, 0x208a9, 0x209c4, 0x20c11, 0x209f1, 0x2052c];
+    const FIELDS: &'static [u32] = &[0x2074a, 0x2054d, 0x208f8, 0x208e7, 0x20a08, 0x20c71, 0x20a36, 0x2054f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20147);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x20150);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -3984,14 +6096,14 @@ impl OperatingHoursSpecification {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2071f => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1823); }
-                    0x2052a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1322); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x208a9 => { let v = r.string()?; r.set(&mut e3, v, 2217); }
-                    0x209c4 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2500); }
-                    0x20c11 => { let v = r.string()?; r.set(&mut e5, v, 3089); }
-                    0x209f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e6, v.map(Box::new), 2545); }
-                    0x2052c => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1324); }
+                    0x2074a => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1866); }
+                    0x2054d => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1357); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x208e7 => { let v = r.string()?; r.set(&mut e3, v, 2279); }
+                    0x20a08 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2568); }
+                    0x20c71 => { let v = r.string()?; r.set(&mut e5, v, 3185); }
+                    0x20a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e6, v.map(Box::new), 2614); }
+                    0x2054f => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1359); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4000,7 +6112,7 @@ impl OperatingHoursSpecification {
                 break;
             }
         }
-        r.required(&e6, 2545);
+        r.required(&e6, 2614);
         let v = Self {
             id: a0,
             version: a1,
@@ -4046,6 +6158,125 @@ impl OperatingHoursSpecification {
     }
 }
 
+impl OperatingHoursSpecification {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 10];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                344 => if r.first(&mut seen[2])? { f2 = ClosureInformation::read_json(r)?.map(Box::new); },
+                145 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                1026 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                1468 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                2518 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                1513 => if r.first(&mut seen[8])? { f8 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                149 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f8, 1513);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            closure_information: f2,
+            operating_hours_extension: f3,
+            last_updated: f4,
+            label: f5,
+            operating_all_year: f6,
+            url_link_address: f7,
+            overall_period: f8,
+            operating_hours_specification_extension: f9,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(92)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.closure_information {
+            w.key(344)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.operating_hours_extension {
+            w.key(145)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.label {
+            w.key(1026)?;
+            w.max_len("label", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.operating_all_year {
+            w.key(1468)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.url_link_address {
+            w.key(2518)?;
+            w.string(v)?;
+        }
+        match &self.overall_period {
+            Some(v) => {
+                w.key(1513)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1513, w.missing("overallPeriod"))?,
+        }
+        if let Some(v) = &self.operating_hours_specification_extension {
+            w.key(149)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:OperatingHoursTable`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OperatingHoursTable {
@@ -4066,12 +6297,12 @@ pub struct OperatingHoursTable {
 }
 
 impl OperatingHoursTable {
-    const FIELDS: &'static [u32] = &[0x20949, 0x20c4e, 0x20884, 0x209c7, 0x2052d];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x20caf, 0x208c2, 0x20a0b, 0x20550];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20148);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x20151);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4081,11 +6312,11 @@ impl OperatingHoursTable {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x20c4e => { let v = r.date_time()?; r.set(&mut e1, v, 3150); }
-                    0x20884 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e2, v.map(Box::new), 2180); }
-                    0x209c7 => { let v = Some(OperatingHoursSpecification::read(r)?); e3.extend(v); }
-                    0x2052d => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1325); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x20caf => { let v = r.date_time()?; r.set(&mut e1, v, 3247); }
+                    0x208c2 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e2, v.map(Box::new), 2242); }
+                    0x20a0b => { let v = Some(OperatingHoursSpecification::read(r)?); e3.extend(v); }
+                    0x20550 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1360); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4094,7 +6325,7 @@ impl OperatingHoursTable {
                 break;
             }
         }
-        r.required(&e1, 3150);
+        r.required(&e1, 3247);
         let v = Self {
             id: a0,
             version: a1,
@@ -4135,6 +6366,110 @@ impl OperatingHoursTable {
     }
 }
 
+impl OperatingHoursTable {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                2580 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                989 => if r.first(&mut seen[4])? { f4 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                1471 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = OperatingHoursSpecification::read_json(r)? { f5.push(v); } } },
+                150 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f3, 2580);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            version_time: f3,
+            information_manager: f4,
+            operating_hours_specification: f5,
+            operating_hours_table_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(93)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.information_manager {
+            w.key(989)?;
+            v.write_json(w, None)?;
+        }
+        w.count("operatingHoursSpecification", self.operating_hours_specification.len(), 1, usize::MAX)?;
+        if !self.operating_hours_specification.is_empty() {
+            w.key(1471)?;
+            w.begin_array()?;
+            for v in &self.operating_hours_specification {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours_table_extension {
+            w.key(150)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:OrganisationByReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OrganisationByReference {
@@ -4151,10 +6486,10 @@ pub struct OrganisationByReference {
 }
 
 impl OrganisationByReference {
-    const FIELDS: &'static [u32] = &[0x2083f, 0x20537, 0x209dc, 0x209df, 0x20536];
+    const FIELDS: &'static [u32] = &[0x2087b, 0x2055a, 0x20a21, 0x20a24, 0x20559];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20153);
+        r.expect_type(0x2015c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4164,11 +6499,11 @@ impl OrganisationByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2083f => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2111); }
-                    0x20537 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1335); }
-                    0x209dc => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2524); }
-                    0x209df => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2527); }
-                    0x20536 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1334); }
+                    0x2087b => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2171); }
+                    0x2055a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1370); }
+                    0x20a21 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e2, v.map(Box::new), 2593); }
+                    0x20a24 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2596); }
+                    0x20559 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1369); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4177,7 +6512,7 @@ impl OrganisationByReference {
                 break;
             }
         }
-        r.required(&e2, 2524);
+        r.required(&e2, 2593);
         let v = Self {
             general_time_validity: e0,
             organisation_extension: e1,
@@ -4204,6 +6539,82 @@ impl OrganisationByReference {
         if let Some(v) = &self.organisation_table_reference { v.write(w, "afac:organisationTableReference", "", " targetClass=\"afac:OrganisationTable\"")?; }
         if let Some(v) = &self.organisation_by_reference_extension { w.extension("afac:_organisationByReferenceExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl OrganisationByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                916 => if r.first(&mut seen[0])? { f0 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                153 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                1492 => if r.first(&mut seen[2])? { f2 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1495 => if r.first(&mut seen[3])? { f3 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                152 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 1492);
+        Ok(Self {
+            general_time_validity: f0,
+            organisation_extension: f1,
+            organisation_reference: f2,
+            organisation_table_reference: f3,
+            organisation_by_reference_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(95)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.general_time_validity {
+            w.key(916)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.organisation_extension {
+            w.key(153)?;
+            w.extension(v)?;
+        }
+        match &self.organisation_reference {
+            Some(v) => {
+                w.key(1492)?;
+                v.write_json(w, Some("ReferenceableOrganisation"))?;
+            }
+            None => w.absent(1492, w.missing("organisationReference"))?,
+        }
+        if let Some(v) = &self.organisation_table_reference {
+            w.key(1495)?;
+            v.write_json(w, Some("OrganisationTable"))?;
+        }
+        if let Some(v) = &self.organisation_by_reference_extension {
+            w.key(152)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -4239,16 +6650,16 @@ pub struct OrganisationPublication {
 }
 
 impl OrganisationPublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x20857, 0x209de, 0x20538];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x20893, 0x20a23, 0x2055b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20154);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0x2015d);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4261,14 +6672,14 @@ impl OrganisationPublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x20857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2135); }
-                    0x209de => { let v = Some(OrganisationTable::read(r)?); e6.extend(v); }
-                    0x20538 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1336); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x20893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2195); }
+                    0x20a23 => { let v = Some(OrganisationTable::read(r)?); e6.extend(v); }
+                    0x2055b => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1371); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4277,8 +6688,8 @@ impl OrganisationPublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -4332,6 +6743,132 @@ impl OrganisationPublication {
     }
 }
 
+impl OrganisationPublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                940 => if r.first(&mut seen[10])? { f10 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                1494 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = OrganisationTable::read_json(r)? { f11.push(v); } } },
+                155 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            header_information: f10,
+            organisation_table: f11,
+            organisation_publication_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(97)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.header_information {
+            w.key(940)?;
+            v.write_json(w, None)?;
+        }
+        w.count("organisationTable", self.organisation_table.len(), 1, usize::MAX)?;
+        if !self.organisation_table.is_empty() {
+            w.key(1494)?;
+            w.begin_array()?;
+            for v in &self.organisation_table {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.organisation_publication_extension {
+            w.key(155)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:OrganisationTable`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OrganisationTable {
@@ -4352,12 +6889,12 @@ pub struct OrganisationTable {
 }
 
 impl OrganisationTable {
-    const FIELDS: &'static [u32] = &[0x20949, 0x20c4e, 0x20884, 0x206ba, 0x2053a];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x20caf, 0x208c2, 0x206e3, 0x2055d];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20156);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x2015f);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4367,11 +6904,11 @@ impl OrganisationTable {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x20c4e => { let v = r.date_time()?; r.set(&mut e1, v, 3150); }
-                    0x20884 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e2, v.map(Box::new), 2180); }
-                    0x206ba => { let v = AnyAnOrganisation::read(r)?; e3.extend(v); }
-                    0x2053a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1338); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x20caf => { let v = r.date_time()?; r.set(&mut e1, v, 3247); }
+                    0x208c2 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e2, v.map(Box::new), 2242); }
+                    0x206e3 => { let v = AnyAnOrganisation::read(r)?; e3.extend(v); }
+                    0x2055d => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1373); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4380,7 +6917,7 @@ impl OrganisationTable {
                 break;
             }
         }
-        r.required(&e1, 3150);
+        r.required(&e1, 3247);
         let v = Self {
             id: a0,
             version: a1,
@@ -4421,6 +6958,110 @@ impl OrganisationTable {
     }
 }
 
+impl OrganisationTable {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = Vec::new();
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                2580 => if r.first(&mut seen[3])? { f3 = r.date_time()?; },
+                989 => if r.first(&mut seen[4])? { f4 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                238 => if r.first(&mut seen[5])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyAnOrganisation::read_json(r)? { f5.push(v); } } },
+                156 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f3, 2580);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            version_time: f3,
+            information_manager: f4,
+            an_organisation: f5,
+            organisation_table_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(98)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.information_manager {
+            w.key(989)?;
+            v.write_json(w, None)?;
+        }
+        w.count("anOrganisation", self.an_organisation.len(), 1, usize::MAX)?;
+        if !self.an_organisation.is_empty() {
+            w.key(238)?;
+            w.begin_array()?;
+            for v in &self.an_organisation {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.organisation_table_extension {
+            w.key(156)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:OrganisationUnit`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OrganisationUnit {
@@ -4439,10 +7080,10 @@ pub struct OrganisationUnit {
 }
 
 impl OrganisationUnit {
-    const FIELDS: &'static [u32] = &[0x20949, 0x20836, 0x208e8, 0x20739, 0x209c5, 0x2053b];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x20872, 0x20926, 0x20768, 0x20a09, 0x2055e];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20157);
+        r.expect_type(0x20160);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -4453,12 +7094,12 @@ impl OrganisationUnit {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x20836 => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e2, v, 2280); }
-                    0x20739 => { let v = AnyContactInformation::read(r)?; e3.extend(v); }
-                    0x209c5 => { let v = OperatingHours::read(r)?; r.set(&mut e4, v, 2501); }
-                    0x2053b => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1339); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x20872 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e2, v, 2342); }
+                    0x20768 => { let v = AnyContactInformation::read(r)?; e3.extend(v); }
+                    0x20a09 => { let v = OperatingHours::read(r)?; r.set(&mut e4, v, 2569); }
+                    0x2055e => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1374); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4495,6 +7136,95 @@ impl OrganisationUnit {
     }
 }
 
+impl OrganisationUnit {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1345 => if r.first(&mut seen[0])? { f0 = r.multilingual()?; },
+                907 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f1.push(v); } } },
+                1240 => if r.first(&mut seen[2])? { f2 = loc::LocationReference::read_json(r)?; },
+                454 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyContactInformation::read_json(r)? { f3.push(v); } } },
+                1469 => if r.first(&mut seen[4])? { f4 = OperatingHours::read_json(r)?; },
+                157 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            name: f0,
+            function: f1,
+            location_reference: f2,
+            contact_information: f3,
+            operating_hours: f4,
+            organisation_unit_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(100)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.function.is_empty() {
+            w.key(907)?;
+            w.begin_array()?;
+            for v in &self.function {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if !self.contact_information.is_empty() {
+            w.key(454)?;
+            w.begin_array()?;
+            for v in &self.contact_information {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.organisation_unit_extension {
+            w.key(157)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:Payment`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Payment {
@@ -4513,10 +7243,10 @@ pub struct Payment {
 }
 
 impl Payment {
-    const FIELDS: &'static [u32] = &[0x20a14, 0x20a12, 0x209ea, 0x206fe, 0x209e5, 0x20548];
+    const FIELDS: &'static [u32] = &[0x20a5a, 0x20a58, 0x20a2f, 0x20727, 0x20a2a, 0x2056b];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20164);
+        r.expect_type(0x2016d);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = Vec::new();
@@ -4527,12 +7257,12 @@ impl Payment {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20a14 => { let v = r.enumeration::<PaymentModeEnum>()?; e0.extend(v); }
-                    0x20a12 => { let v = r.enumeration::<MeansOfPaymentEnum>()?; e1.extend(v); }
-                    0x209ea => { let v = r.multilingual()?; e2.extend(v); }
-                    0x206fe => { let v = r.enumeration::<PaymentBrandsEnum>()?; e3.extend(v); }
-                    0x209e5 => { let v = r.string()?; e4.extend(v); }
-                    0x20548 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1352); }
+                    0x20a5a => { let v = r.enumeration::<PaymentModeEnum>()?; e0.extend(v); }
+                    0x20a58 => { let v = r.enumeration::<MeansOfPaymentEnum>()?; e1.extend(v); }
+                    0x20a2f => { let v = r.multilingual()?; e2.extend(v); }
+                    0x20727 => { let v = r.enumeration::<PaymentBrandsEnum>()?; e3.extend(v); }
+                    0x20a2a => { let v = r.string()?; e4.extend(v); }
+                    0x2056b => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1387); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4569,6 +7299,110 @@ impl Payment {
     }
 }
 
+impl Payment {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = Vec::new();
+        let mut f1 = Vec::new();
+        let mut f2 = Vec::new();
+        let mut f3 = Vec::new();
+        let mut f4 = Vec::new();
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1549 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<PaymentModeEnum>()? { f0.push(v); } } },
+                1547 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<MeansOfPaymentEnum>()? { f1.push(v); } } },
+                1506 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f2.push(v); } } },
+                306 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<PaymentBrandsEnum>()? { f3.push(v); } } },
+                1501 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f4.push(v); } } },
+                158 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            payment_mode: f0,
+            payment_means: f1,
+            other_payment_means: f2,
+            brands_accepted: f3,
+            other_brands_accepted: f4,
+            payment_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(101)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.payment_mode.is_empty() {
+            w.key(1549)?;
+            w.begin_array()?;
+            for v in &self.payment_mode {
+                w.item()?;
+                w.enumeration(103, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.payment_means.is_empty() {
+            w.key(1547)?;
+            w.begin_array()?;
+            for v in &self.payment_means {
+                w.item()?;
+                w.enumeration(85, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.other_payment_means.is_empty() {
+            w.key(1506)?;
+            w.begin_array()?;
+            for v in &self.other_payment_means {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.brands_accepted.is_empty() {
+            w.key(306)?;
+            w.begin_array()?;
+            for v in &self.brands_accepted {
+                w.item()?;
+                w.enumeration(102, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.other_brands_accepted.is_empty() {
+            w.key(1501)?;
+            w.begin_array()?;
+            for v in &self.other_brands_accepted {
+                w.item()?;
+                w.max_len("otherBrandsAccepted", v, 1024)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.payment_extension {
+            w.key(158)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:Qualification`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Qualification {
@@ -4601,10 +7435,10 @@ pub struct Qualification {
 }
 
 impl Qualification {
-    const FIELDS: &'static [u32] = &[0x20c7e, 0x20a85, 0x2095c, 0x20c7d, 0x20929, 0x20928, 0x20aac, 0x20684, 0x20a10, 0x20c30, 0x208d9, 0x20c1d, 0x20582];
+    const FIELDS: &'static [u32] = &[0x20ce0, 0x20acc, 0x2099e, 0x20cdf, 0x20968, 0x20967, 0x20af3, 0x206ad, 0x20a56, 0x20c90, 0x20917, 0x20c7d, 0x205a5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2019f);
+        r.expect_type(0x201a8);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -4622,19 +7456,19 @@ impl Qualification {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20c7e => { let v = r.value::<bool>()?; r.set(&mut e0, v, 3198); }
-                    0x20a85 => { let v = r.enumeration::<EnergySourceEnum>()?; e1.extend(v); }
-                    0x2095c => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2396); }
-                    0x20c7d => { let v = r.value::<bool>()?; r.set(&mut e3, v, 3197); }
-                    0x20929 => { let v = r.multilingual()?; e4.extend(v); }
-                    0x20928 => { let v = r.value::<bool>()?; r.set(&mut e5, v, 2344); }
-                    0x20aac => { let v = Some(com::VersionedReference::read(r)?); e6.extend(v); }
-                    0x20684 => { let v = r.string()?; r.set(&mut e7, v, 1668); }
-                    0x20a10 => { let v = Some(Payment::read(r)?); e8.extend(v); }
-                    0x20c30 => { let v = Some(com::VehicleCharacteristics::read(r)?); e9.extend(v); }
-                    0x208d9 => { let v = Some(LinkedRightSpecification::read(r)?); r.set(&mut e10, v.map(Box::new), 2265); }
-                    0x20c1d => { let v = Some(UserQualification::read(r)?); e11.extend(v); }
-                    0x20582 => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1410); }
+                    0x20ce0 => { let v = r.value::<bool>()?; r.set(&mut e0, v, 3296); }
+                    0x20acc => { let v = r.enumeration::<EnergySourceEnum>()?; e1.extend(v); }
+                    0x2099e => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2462); }
+                    0x20cdf => { let v = r.value::<bool>()?; r.set(&mut e3, v, 3295); }
+                    0x20968 => { let v = r.multilingual()?; e4.extend(v); }
+                    0x20967 => { let v = r.value::<bool>()?; r.set(&mut e5, v, 2407); }
+                    0x20af3 => { let v = Some(com::VersionedReference::read(r)?); e6.extend(v); }
+                    0x206ad => { let v = r.string()?; r.set(&mut e7, v, 1709); }
+                    0x20a56 => { let v = Some(Payment::read(r)?); e8.extend(v); }
+                    0x20c90 => { let v = Some(com::VehicleCharacteristics::read(r)?); e9.extend(v); }
+                    0x20917 => { let v = Some(LinkedRightSpecification::read(r)?); r.set(&mut e10, v.map(Box::new), 2327); }
+                    0x20c7d => { let v = Some(UserQualification::read(r)?); e11.extend(v); }
+                    0x205a5 => { let v = r.raw()?; r.set(&mut e12, v.map(Box::new), 1445); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4685,6 +7519,164 @@ impl Qualification {
     }
 }
 
+impl Qualification {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = Vec::new();
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = Vec::new();
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = None;
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2677 => if r.first(&mut seen[0])? { f0 = r.boolean()?; },
+                1764 => if r.first(&mut seen[1])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<EnergySourceEnum>()? { f1.push(v); } } },
+                1362 => if r.first(&mut seen[2])? { f2 = r.boolean()?; },
+                2676 => if r.first(&mut seen[3])? { f3 = r.boolean()?; },
+                1309 => if r.first(&mut seen[4])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f4.push(v); } } },
+                1308 => if r.first(&mut seen[5])? { f5 = r.boolean()?; },
+                1803 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VersionedReference::read_json(r)? { f6.push(v); } } },
+                49 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                1545 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Payment::read_json(r)? { f8.push(v); } } },
+                2549 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f9.push(v); } } },
+                1074 => if r.first(&mut seen[10])? { f10 = LinkedRightSpecification::read_json(r)?.map(Box::new); },
+                2530 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = UserQualification::read_json(r)? { f11.push(v); } } },
+                159 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            with_reservation: f0,
+            propulsion_energy_type: f1,
+            no_fee_to_use: f2,
+            with_membership: f3,
+            membership_name: f4,
+            member_of_other_rate_table: f5,
+            rate_table_member: f6,
+            active_assigned_right: f7,
+            payment: f8,
+            vehicle_characteristics: f9,
+            linked_right_specification: f10,
+            user_qualification: f11,
+            qualification_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(104)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.with_reservation {
+            w.key(2677)?;
+            w.boolean(*v)?;
+        }
+        if !self.propulsion_energy_type.is_empty() {
+            w.key(1764)?;
+            w.begin_array()?;
+            for v in &self.propulsion_energy_type {
+                w.item()?;
+                w.enumeration(74, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.no_fee_to_use {
+            w.key(1362)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.with_membership {
+            w.key(2676)?;
+            w.boolean(*v)?;
+        }
+        if !self.membership_name.is_empty() {
+            w.key(1309)?;
+            w.begin_array()?;
+            for v in &self.membership_name {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.member_of_other_rate_table {
+            w.key(1308)?;
+            w.boolean(*v)?;
+        }
+        if !self.rate_table_member.is_empty() {
+            w.key(1803)?;
+            w.begin_array()?;
+            for v in &self.rate_table_member {
+                w.item()?;
+                v.write_json(w, Some("RateTable"))?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.active_assigned_right {
+            w.key(49)?;
+            w.max_len("activeAssignedRight", v, 1024)?; w.string(v)?;
+        }
+        if !self.payment.is_empty() {
+            w.key(1545)?;
+            w.begin_array()?;
+            for v in &self.payment {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.vehicle_characteristics.is_empty() {
+            w.key(2549)?;
+            w.begin_array()?;
+            for v in &self.vehicle_characteristics {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.linked_right_specification {
+            w.key(1074)?;
+            v.write_json(w, None)?;
+        }
+        if !self.user_qualification.is_empty() {
+            w.key(2530)?;
+            w.begin_array()?;
+            for v in &self.user_qualification {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.qualification_extension {
+            w.key(159)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:RateDiscount`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RateDiscount {
@@ -4697,10 +7689,10 @@ pub struct RateDiscount {
 }
 
 impl RateDiscount {
-    const FIELDS: &'static [u32] = &[0x20793, 0x20823, 0x20583];
+    const FIELDS: &'static [u32] = &[0x207c4, 0x2085f, 0x205a6];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201a0);
+        r.expect_type(0x201a9);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4708,9 +7700,9 @@ impl RateDiscount {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20793 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 1939); }
-                    0x20823 => { let v = Some(AmountInCurrency::read(r)?); r.set(&mut e1, v.map(Box::new), 2083); }
-                    0x20583 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1411); }
+                    0x207c4 => { let v = r.value::<f32>()?; r.set(&mut e0, v, 1988); }
+                    0x2085f => { let v = Some(AmountInCurrency::read(r)?); r.set(&mut e1, v.map(Box::new), 2143); }
+                    0x205a6 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1446); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4738,6 +7730,64 @@ impl RateDiscount {
         if let Some(v) = &self.fixed_value { v.write(w, "afac:fixedValue", "", "")?; }
         if let Some(v) = &self.rate_discount_extension { w.extension("afac:_rateDiscountExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl RateDiscount {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                573 => if r.first(&mut seen[0])? { f0 = r.number::<f32>()?; },
+                853 => if r.first(&mut seen[1])? { f1 = AmountInCurrency::read_json(r)?.map(Box::new); },
+                160 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            discount_rate: f0,
+            fixed_value: f1,
+            rate_discount_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(106)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.discount_rate {
+            w.key(573)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.fixed_value {
+            w.key(853)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rate_discount_extension {
+            w.key(160)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -4777,11 +7827,11 @@ pub struct RateLine {
 }
 
 impl RateLine {
-    const FIELDS: &'static [u32] = &[0x20aa3, 0x20777, 0x207ac, 0x207ab, 0x20880, 0x20c2c, 0x20933, 0x20903, 0x20c17, 0x20c19, 0x20c18, 0x20b98, 0x20aa2, 0x20586];
+    const FIELDS: &'static [u32] = &[0x20aea, 0x207a8, 0x207dd, 0x207dc, 0x208bc, 0x20c8c, 0x20975, 0x20942, 0x20c77, 0x20c79, 0x20c78, 0x20bf7, 0x20ae9, 0x205a9];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201a2);
-        let a0 = r.req_attr_value::<i64>(2858)?;
+        r.expect_type(0x201ab);
+        let a0 = r.req_attr_value::<i64>(2935)?;
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4800,20 +7850,20 @@ impl RateLine {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20aa3 => { let v = r.enumeration::<RateLineTypeEnum>()?; r.set(&mut e0, v, 2723); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e1, v, 1911); }
-                    0x207ac => { let v = r.value::<Time>()?; r.set(&mut e2, v, 1964); }
-                    0x207ab => { let v = r.value::<Time>()?; r.set(&mut e3, v, 1963); }
-                    0x20880 => { let v = r.string()?; r.set(&mut e4, v, 2176); }
-                    0x20c2c => { let v = r.value::<Decimal>()?; r.set(&mut e5, v, 3116); }
-                    0x20933 => { let v = r.value::<Decimal>()?; r.set(&mut e6, v, 2355); }
-                    0x20903 => { let v = r.value::<Decimal>()?; r.set(&mut e7, v, 2307); }
-                    0x20c17 => { let v = r.enumeration::<RateLineUsageConditionsTypeEnum>()?; r.set(&mut e8, v, 3095); }
-                    0x20c19 => { let v = r.string()?; r.set(&mut e9, v, 3097); }
-                    0x20c18 => { let v = r.value::<u64>()?; r.set(&mut e10, v, 3096); }
-                    0x20b98 => { let v = Some(Surcharge::read(r)?); e11.extend(v); }
-                    0x20aa2 => { let v = Some(RateLineTax::read(r)?); e12.extend(v); }
-                    0x20586 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1414); }
+                    0x20aea => { let v = r.enumeration::<RateLineTypeEnum>()?; r.set(&mut e0, v, 2794); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e1, v, 1960); }
+                    0x207dd => { let v = r.value::<Time>()?; r.set(&mut e2, v, 2013); }
+                    0x207dc => { let v = r.value::<Time>()?; r.set(&mut e3, v, 2012); }
+                    0x208bc => { let v = r.string()?; r.set(&mut e4, v, 2236); }
+                    0x20c8c => { let v = r.value::<Decimal>()?; r.set(&mut e5, v, 3212); }
+                    0x20975 => { let v = r.value::<Decimal>()?; r.set(&mut e6, v, 2421); }
+                    0x20942 => { let v = r.value::<Decimal>()?; r.set(&mut e7, v, 2370); }
+                    0x20c77 => { let v = r.enumeration::<RateLineUsageConditionsTypeEnum>()?; r.set(&mut e8, v, 3191); }
+                    0x20c79 => { let v = r.string()?; r.set(&mut e9, v, 3193); }
+                    0x20c78 => { let v = r.value::<u64>()?; r.set(&mut e10, v, 3192); }
+                    0x20bf7 => { let v = Some(Surcharge::read(r)?); e11.extend(v); }
+                    0x20ae9 => { let v = Some(RateLineTax::read(r)?); e12.extend(v); }
+                    0x205a9 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1449); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -4822,8 +7872,8 @@ impl RateLine {
                 break;
             }
         }
-        r.required(&e0, 2723);
-        r.required(&e5, 3116);
+        r.required(&e0, 2794);
+        r.required(&e5, 3212);
         let v = Self {
             sequence: a0,
             rate_line_type: e0,
@@ -4879,6 +7929,170 @@ impl RateLine {
     }
 }
 
+impl RateLine {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 15];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = Vec::new();
+        let mut f13 = Vec::new();
+        let mut f14 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2022 => if r.first(&mut seen[0])? { f0 = r.number::<i64>()?; },
+                1794 => if r.first(&mut seen[1])? { f1 = r.enumeration::<RateLineTypeEnum>()?; },
+                545 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                598 => if r.first(&mut seen[3])? { f3 = r.text::<Time>()?; },
+                597 => if r.first(&mut seen[4])? { f4 = r.text::<Time>()?; },
+                980 => if r.first(&mut seen[5])? { f5 = r.string()?; },
+                2545 => if r.first(&mut seen[6])? { f6 = r.number::<Decimal>()?; },
+                1323 => if r.first(&mut seen[7])? { f7 = r.number::<Decimal>()?; },
+                1271 => if r.first(&mut seen[8])? { f8 = r.number::<Decimal>()?; },
+                2524 => if r.first(&mut seen[9])? { f9 = r.enumeration::<RateLineUsageConditionsTypeEnum>()?; },
+                2526 => if r.first(&mut seen[10])? { f10 = r.string()?; },
+                2525 => if r.first(&mut seen[11])? { f11 = r.number::<u64>()?; },
+                2226 => if r.first(&mut seen[12])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Surcharge::read_json(r)? { f12.push(v); } } },
+                1793 => if r.first(&mut seen[13])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = RateLineTax::read_json(r)? { f13.push(v); } } },
+                163 => if r.first(&mut seen[14])? { f14 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2022);
+        r.required(&f1, 1794);
+        r.required(&f6, 2545);
+        Ok(Self {
+            sequence: f0,
+            rate_line_type: f1,
+            description: f2,
+            duration_start: f3,
+            duration_end: f4,
+            increment_period: f5,
+            value: f6,
+            min_value: f7,
+            max_value: f8,
+            usage_condition: f9,
+            usage_duration_limitation: f10,
+            usage_count_limitation: f11,
+            surcharge: f12,
+            rate_line_tax: f13,
+            rate_line_extension: f14,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(107)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.sequence {
+            Some(v) => {
+                w.key(2022)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(2022, w.missing_attr("sequence"))?,
+        }
+        match &self.rate_line_type {
+            Some(v) => {
+                w.key(1794)?;
+                w.enumeration(111, v.literal())?;
+            }
+            None => w.absent(1794, w.missing("rateLineType"))?,
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.duration_start {
+            w.key(598)?;
+            w.time(v)?;
+        }
+        if let Some(v) = &self.duration_end {
+            w.key(597)?;
+            w.time(v)?;
+        }
+        if let Some(v) = &self.increment_period {
+            w.key(980)?;
+            w.pattern("incrementPeriod", v, Pattern::Duration)?; w.string(v)?;
+        }
+        match &self.value {
+            Some(v) => {
+                w.key(2545)?;
+                w.digits("value", v, 8, 2)?; w.decimal(v)?;
+            }
+            None => w.absent(2545, w.missing("value"))?,
+        }
+        if let Some(v) = &self.min_value {
+            w.key(1323)?;
+            w.digits("minValue", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.max_value {
+            w.key(1271)?;
+            w.digits("maxValue", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.usage_condition {
+            w.key(2524)?;
+            w.enumeration(112, v.literal())?;
+        }
+        if let Some(v) = &self.usage_duration_limitation {
+            w.key(2526)?;
+            w.pattern("usageDurationLimitation", v, Pattern::Duration)?; w.string(v)?;
+        }
+        if let Some(v) = &self.usage_count_limitation {
+            w.key(2525)?;
+            w.integer(*v)?;
+        }
+        if !self.surcharge.is_empty() {
+            w.key(2226)?;
+            w.begin_array()?;
+            for v in &self.surcharge {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.rate_line_tax.is_empty() {
+            w.key(1793)?;
+            w.begin_array()?;
+            for v in &self.rate_line_tax {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rate_line_extension {
+            w.key(163)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:RateLineCollection`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RateLineCollection {
@@ -4915,11 +8129,11 @@ pub struct RateLineCollection {
 }
 
 impl RateLineCollection {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20934, 0x20904, 0x20c24, 0x20c22, 0x20932, 0x20902, 0x20ae5, 0x20ba1, 0x20ba2, 0x20ba3, 0x20ad6, 0x20aa0, 0x20585];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20976, 0x20943, 0x20c84, 0x20c82, 0x20974, 0x20941, 0x20b2f, 0x20c00, 0x20c01, 0x20c02, 0x20b1f, 0x20ae7, 0x205a8];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201a3);
-        let a0 = r.req_attr_value::<i64>(1825)?;
+        r.expect_type(0x201ac);
+        let a0 = r.req_attr_value::<i64>(1870)?;
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -4938,20 +8152,20 @@ impl RateLineCollection {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; r.set(&mut e0, v, 1727); }
-                    0x20934 => { let v = r.value::<Decimal>()?; r.set(&mut e1, v, 2356); }
-                    0x20904 => { let v = r.value::<Decimal>()?; r.set(&mut e2, v, 2308); }
-                    0x20c24 => { let v = r.date_time()?; r.set(&mut e3, v, 3108); }
-                    0x20c22 => { let v = r.date_time()?; r.set(&mut e4, v, 3106); }
-                    0x20932 => { let v = r.string()?; r.set(&mut e5, v, 2354); }
-                    0x20902 => { let v = r.string()?; r.set(&mut e6, v, 2306); }
-                    0x20ae5 => { let v = r.value::<Time>()?; r.set(&mut e7, v, 2789); }
-                    0x20ba1 => { let v = r.value::<bool>()?; r.set(&mut e8, v, 2977); }
-                    0x20ba2 => { let v = r.value::<f32>()?; r.set(&mut e9, v, 2978); }
-                    0x20ba3 => { let v = r.value::<Decimal>()?; r.set(&mut e10, v, 2979); }
-                    0x20ad6 => { let v = r.value::<bool>()?; r.set(&mut e11, v, 2774); }
-                    0x20aa0 => { let v = Some(RateLine::read(r)?); e12.extend(v); }
-                    0x20585 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1413); }
+                    0x206e8 => { let v = r.string()?; r.set(&mut e0, v, 1768); }
+                    0x20976 => { let v = r.value::<Decimal>()?; r.set(&mut e1, v, 2422); }
+                    0x20943 => { let v = r.value::<Decimal>()?; r.set(&mut e2, v, 2371); }
+                    0x20c84 => { let v = r.date_time()?; r.set(&mut e3, v, 3204); }
+                    0x20c82 => { let v = r.date_time()?; r.set(&mut e4, v, 3202); }
+                    0x20974 => { let v = r.string()?; r.set(&mut e5, v, 2420); }
+                    0x20941 => { let v = r.string()?; r.set(&mut e6, v, 2369); }
+                    0x20b2f => { let v = r.value::<Time>()?; r.set(&mut e7, v, 2863); }
+                    0x20c00 => { let v = r.value::<bool>()?; r.set(&mut e8, v, 3072); }
+                    0x20c01 => { let v = r.value::<f32>()?; r.set(&mut e9, v, 3073); }
+                    0x20c02 => { let v = r.value::<Decimal>()?; r.set(&mut e10, v, 3074); }
+                    0x20b1f => { let v = r.value::<bool>()?; r.set(&mut e11, v, 2847); }
+                    0x20ae7 => { let v = Some(RateLine::read(r)?); e12.extend(v); }
+                    0x205a8 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1448); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5010,6 +8224,158 @@ impl RateLineCollection {
     }
 }
 
+impl RateLineCollection {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 15];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = Vec::new();
+        let mut f14 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                348 => if r.first(&mut seen[0])? { f0 = r.number::<i64>()?; },
+                243 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1324 => if r.first(&mut seen[2])? { f2 = r.number::<Decimal>()?; },
+                1272 => if r.first(&mut seen[3])? { f3 = r.number::<Decimal>()?; },
+                2537 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                2535 => if r.first(&mut seen[5])? { f5 = r.date_time()?; },
+                1322 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1270 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                1886 => if r.first(&mut seen[8])? { f8 = r.text::<Time>()?; },
+                2235 => if r.first(&mut seen[9])? { f9 = r.boolean()?; },
+                2236 => if r.first(&mut seen[10])? { f10 = r.number::<f32>()?; },
+                2237 => if r.first(&mut seen[11])? { f11 = r.number::<Decimal>()?; },
+                1847 => if r.first(&mut seen[12])? { f12 = r.boolean()?; },
+                1791 => if r.first(&mut seen[13])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = RateLine::read_json(r)? { f13.push(v); } } },
+                162 => if r.first(&mut seen[14])? { f14 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 348);
+        Ok(Self {
+            collection_sequence: f0,
+            applicable_currency: f1,
+            min_value_collection: f2,
+            max_value_collection: f3,
+            valid_start: f4,
+            valid_end: f5,
+            min_time: f6,
+            max_time: f7,
+            reset_time: f8,
+            tax_included: f9,
+            tax_rate: f10,
+            tax_value: f11,
+            relative_times: f12,
+            rate_line: f13,
+            rate_line_collection_extension: f14,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(108)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.collection_sequence {
+            Some(v) => {
+                w.key(348)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(348, w.missing_attr("collectionSequence"))?,
+        }
+        if let Some(v) = &self.applicable_currency {
+            w.key(243)?;
+            w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+        }
+        if let Some(v) = &self.min_value_collection {
+            w.key(1324)?;
+            w.digits("minValueCollection", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.max_value_collection {
+            w.key(1272)?;
+            w.digits("maxValueCollection", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.valid_start {
+            w.key(2537)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.valid_end {
+            w.key(2535)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.min_time {
+            w.key(1322)?;
+            w.pattern("minTime", v, Pattern::Duration)?; w.string(v)?;
+        }
+        if let Some(v) = &self.max_time {
+            w.key(1270)?;
+            w.pattern("maxTime", v, Pattern::Duration)?; w.string(v)?;
+        }
+        if let Some(v) = &self.reset_time {
+            w.key(1886)?;
+            w.time(v)?;
+        }
+        if let Some(v) = &self.tax_included {
+            w.key(2235)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.tax_rate {
+            w.key(2236)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.tax_value {
+            w.key(2237)?;
+            w.digits("taxValue", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.relative_times {
+            w.key(1847)?;
+            w.boolean(*v)?;
+        }
+        w.count("rateLine", self.rate_line.len(), 1, usize::MAX)?;
+        if !self.rate_line.is_empty() {
+            w.key(1791)?;
+            w.begin_array()?;
+            for v in &self.rate_line {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rate_line_collection_extension {
+            w.key(162)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:RateLineTax`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RateLineTax {
@@ -5028,10 +8394,10 @@ pub struct RateLineTax {
 }
 
 impl RateLineTax {
-    const FIELDS: &'static [u32] = &[0x20ba3, 0x20ba2, 0x20ba1, 0x20bf8, 0x208aa, 0x20587];
+    const FIELDS: &'static [u32] = &[0x20c02, 0x20c01, 0x20c00, 0x20c57, 0x208e8, 0x205aa];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201a4);
+        r.expect_type(0x201ad);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5042,12 +8408,12 @@ impl RateLineTax {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20ba3 => { let v = r.value::<Decimal>()?; r.set(&mut e0, v, 2979); }
-                    0x20ba2 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 2978); }
-                    0x20ba1 => { let v = r.value::<bool>()?; r.set(&mut e2, v, 2977); }
-                    0x20bf8 => { let v = r.multilingual()?; r.set(&mut e3, v, 3064); }
-                    0x208aa => { let v = r.multilingual()?; r.set(&mut e4, v, 2218); }
-                    0x20587 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1415); }
+                    0x20c02 => { let v = r.value::<Decimal>()?; r.set(&mut e0, v, 3074); }
+                    0x20c01 => { let v = r.value::<f32>()?; r.set(&mut e1, v, 3073); }
+                    0x20c00 => { let v = r.value::<bool>()?; r.set(&mut e2, v, 3072); }
+                    0x20c57 => { let v = r.multilingual()?; r.set(&mut e3, v, 3159); }
+                    0x208e8 => { let v = r.multilingual()?; r.set(&mut e4, v, 2280); }
+                    0x205aa => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1450); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5056,7 +8422,7 @@ impl RateLineTax {
                 break;
             }
         }
-        r.required(&e2, 2977);
+        r.required(&e2, 3072);
         let v = Self {
             tax_value: e0,
             tax_rate: e1,
@@ -5085,6 +8451,89 @@ impl RateLineTax {
         if let Some(v) = &self.label_for_display { w.multilingual("afac:labelForDisplay", v)?; }
         if let Some(v) = &self.rate_line_tax_extension { w.extension("afac:_rateLineTaxExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl RateLineTax {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2237 => if r.first(&mut seen[0])? { f0 = r.number::<Decimal>()?; },
+                2236 => if r.first(&mut seen[1])? { f1 = r.number::<f32>()?; },
+                2235 => if r.first(&mut seen[2])? { f2 = r.boolean()?; },
+                2384 => if r.first(&mut seen[3])? { f3 = r.multilingual()?; },
+                1027 => if r.first(&mut seen[4])? { f4 = r.multilingual()?; },
+                164 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f2, 2235);
+        Ok(Self {
+            tax_value: f0,
+            tax_rate: f1,
+            tax_included: f2,
+            trigger: f3,
+            label_for_display: f4,
+            rate_line_tax_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(110)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.tax_value {
+            w.key(2237)?;
+            w.digits("taxValue", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.tax_rate {
+            w.key(2236)?;
+            w.float32(*v)?;
+        }
+        match &self.tax_included {
+            Some(v) => {
+                w.key(2235)?;
+                w.boolean(*v)?;
+            }
+            None => w.absent(2235, w.missing("taxIncluded"))?,
+        }
+        if let Some(v) = &self.trigger {
+            w.key(2384)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.label_for_display {
+            w.key(1027)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.rate_line_tax_extension {
+            w.key(164)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -5118,12 +8567,12 @@ pub struct RateMatrix {
 }
 
 impl RateMatrix {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20a10, 0x209f1, 0x2058d, 0x20949, 0x20777, 0x20c4e, 0x20884, 0x20aab, 0x20589];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20a56, 0x20a36, 0x205b0, 0x2098b, 0x207a8, 0x20caf, 0x208c2, 0x20af2, 0x205ac];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201a5);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x201ae);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -5138,16 +8587,16 @@ impl RateMatrix {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; e0.extend(v); }
-                    0x20a10 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2576); }
-                    0x209f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2545); }
-                    0x2058d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1421); }
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e4, v, 2377); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e5, v, 1911); }
-                    0x20c4e => { let v = r.date_time()?; r.set(&mut e6, v, 3150); }
-                    0x20884 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e7, v.map(Box::new), 2180); }
-                    0x20aab => { let v = Some(RateTable::read(r)?); e8.extend(v); }
-                    0x20589 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1417); }
+                    0x206e8 => { let v = r.string()?; e0.extend(v); }
+                    0x20a56 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2646); }
+                    0x20a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2614); }
+                    0x205b0 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1456); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e4, v, 2443); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e5, v, 1960); }
+                    0x20caf => { let v = r.date_time()?; r.set(&mut e6, v, 3247); }
+                    0x208c2 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e7, v.map(Box::new), 2242); }
+                    0x20af2 => { let v = Some(RateTable::read(r)?); e8.extend(v); }
+                    0x205ac => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1452); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5156,7 +8605,7 @@ impl RateMatrix {
                 break;
             }
         }
-        r.required(&e6, 3150);
+        r.required(&e6, 3247);
         let v = Self {
             id: a0,
             version: a1,
@@ -5207,6 +8656,150 @@ impl RateMatrix {
     }
 }
 
+impl RateMatrix {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 12];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = Vec::new();
+        let mut f11 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                243 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f2.push(v); } } },
+                1545 => if r.first(&mut seen[3])? { f3 = Payment::read_json(r)?.map(Box::new); },
+                1513 => if r.first(&mut seen[4])? { f4 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                173 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                1345 => if r.first(&mut seen[6])? { f6 = r.multilingual()?; },
+                545 => if r.first(&mut seen[7])? { f7 = r.multilingual()?; },
+                2580 => if r.first(&mut seen[8])? { f8 = r.date_time()?; },
+                989 => if r.first(&mut seen[9])? { f9 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                1802 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = RateTable::read_json(r)? { f10.push(v); } } },
+                168 => if r.first(&mut seen[11])? { f11 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f8, 2580);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            applicable_currency: f2,
+            payment: f3,
+            overall_period: f4,
+            rates_extension: f5,
+            name: f6,
+            description: f7,
+            version_time: f8,
+            information_manager: f9,
+            rate_table: f10,
+            rate_matrix_extension: f11,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(113)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if !self.applicable_currency.is_empty() {
+            w.key(243)?;
+            w.begin_array()?;
+            for v in &self.applicable_currency {
+                w.item()?;
+                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.payment {
+            w.key(1545)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rates_extension {
+            w.key(173)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        match &self.version_time {
+            Some(v) => {
+                w.key(2580)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(2580, w.missing("versionTime"))?,
+        }
+        if let Some(v) = &self.information_manager {
+            w.key(989)?;
+            v.write_json(w, None)?;
+        }
+        w.count("rateTable", self.rate_table.len(), 1, usize::MAX)?;
+        if !self.rate_table.is_empty() {
+            w.key(1802)?;
+            w.begin_array()?;
+            for v in &self.rate_table {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rate_matrix_extension {
+            w.key(168)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:RateMatrixByReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RateMatrixByReference {
@@ -5225,10 +8818,10 @@ pub struct RateMatrixByReference {
 }
 
 impl RateMatrixByReference {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20a10, 0x209f1, 0x2058d, 0x20aae, 0x20588];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20a56, 0x20a36, 0x205b0, 0x20af5, 0x205ab];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201a6);
+        r.expect_type(0x201af);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -5239,12 +8832,12 @@ impl RateMatrixByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; e0.extend(v); }
-                    0x20a10 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2576); }
-                    0x209f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2545); }
-                    0x2058d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1421); }
-                    0x20aae => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 2734); }
-                    0x20588 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1416); }
+                    0x206e8 => { let v = r.string()?; e0.extend(v); }
+                    0x20a56 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2646); }
+                    0x20a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2614); }
+                    0x205b0 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1456); }
+                    0x20af5 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 2805); }
+                    0x205ab => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1451); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5253,7 +8846,7 @@ impl RateMatrixByReference {
                 break;
             }
         }
-        r.required(&e4, 2734);
+        r.required(&e4, 2805);
         let v = Self {
             applicable_currency: e0,
             payment: e1,
@@ -5282,6 +8875,94 @@ impl RateMatrixByReference {
         }
         if let Some(v) = &self.rate_matrix_by_reference_extension { w.extension("afac:_rateMatrixByReferenceExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl RateMatrixByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                243 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f0.push(v); } } },
+                1545 => if r.first(&mut seen[1])? { f1 = Payment::read_json(r)?.map(Box::new); },
+                1513 => if r.first(&mut seen[2])? { f2 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                173 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                1805 => if r.first(&mut seen[4])? { f4 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                167 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f4, 1805);
+        Ok(Self {
+            applicable_currency: f0,
+            payment: f1,
+            overall_period: f2,
+            rates_extension: f3,
+            rate_table_reference: f4,
+            rate_matrix_by_reference_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(114)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.applicable_currency.is_empty() {
+            w.key(243)?;
+            w.begin_array()?;
+            for v in &self.applicable_currency {
+                w.item()?;
+                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.payment {
+            w.key(1545)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rates_extension {
+            w.key(173)?;
+            w.extension(v)?;
+        }
+        match &self.rate_table_reference {
+            Some(v) => {
+                w.key(1805)?;
+                v.write_json(w, Some("RateMatrix"))?;
+            }
+            None => w.absent(1805, w.missing("rateTableReference"))?,
+        }
+        if let Some(v) = &self.rate_matrix_by_reference_extension {
+            w.key(167)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -5331,12 +9012,12 @@ pub struct RateTable {
 }
 
 impl RateTable {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20a10, 0x209f1, 0x2058d, 0x208ba, 0x20aad, 0x20685, 0x206dc, 0x20aa9, 0x20aaa, 0x20c25, 0x20aaf, 0x20c29, 0x20c28, 0x20690, 0x20aa1, 0x207bd, 0x2058b];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20a56, 0x20a36, 0x205b0, 0x208f8, 0x20af4, 0x206ae, 0x20705, 0x20af0, 0x20af1, 0x20c85, 0x20af6, 0x20c89, 0x20c88, 0x206b9, 0x20ae8, 0x207f2, 0x205ae];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201a7);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x201b0);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -5359,24 +9040,24 @@ impl RateTable {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; e0.extend(v); }
-                    0x20a10 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2576); }
-                    0x209f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2545); }
-                    0x2058d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1421); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e4, v, 2234); }
-                    0x20aad => { let v = r.multilingual()?; r.set(&mut e5, v, 2733); }
-                    0x20685 => { let v = r.string()?; e6.extend(v); }
-                    0x206dc => { let v = r.enumeration::<RateAvailabilityTypeEnum>()?; r.set(&mut e7, v, 1756); }
-                    0x20aa9 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e8, v.map(Box::new), 2729); }
-                    0x20aaa => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e9, v.map(Box::new), 2730); }
-                    0x20c25 => { let v = r.value::<bool>()?; r.set(&mut e10, v, 3109); }
-                    0x20aaf => { let v = r.enumeration::<RateTypeEnum>()?; r.set(&mut e11, v, 2735); }
-                    0x20c29 => { let v = r.date_time()?; r.set(&mut e12, v, 3113); }
-                    0x20c28 => { let v = r.date_time()?; r.set(&mut e13, v, 3112); }
-                    0x20690 => { let v = r.string()?; r.set(&mut e14, v, 1680); }
-                    0x20aa1 => { let v = AnyRateLineCollection::read(r)?; e15.extend(v); }
-                    0x207bd => { let v = Some(Eligibility::read(r)?); r.set(&mut e16, v.map(Box::new), 1981); }
-                    0x2058b => { let v = r.raw()?; r.set(&mut e17, v.map(Box::new), 1419); }
+                    0x206e8 => { let v = r.string()?; e0.extend(v); }
+                    0x20a56 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2646); }
+                    0x20a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2614); }
+                    0x205b0 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1456); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e4, v, 2296); }
+                    0x20af4 => { let v = r.multilingual()?; r.set(&mut e5, v, 2804); }
+                    0x206ae => { let v = r.string()?; e6.extend(v); }
+                    0x20705 => { let v = r.enumeration::<RateAvailabilityTypeEnum>()?; r.set(&mut e7, v, 1797); }
+                    0x20af0 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e8, v.map(Box::new), 2800); }
+                    0x20af1 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e9, v.map(Box::new), 2801); }
+                    0x20c85 => { let v = r.value::<bool>()?; r.set(&mut e10, v, 3205); }
+                    0x20af6 => { let v = r.enumeration::<RateTypeEnum>()?; r.set(&mut e11, v, 2806); }
+                    0x20c89 => { let v = r.date_time()?; r.set(&mut e12, v, 3209); }
+                    0x20c88 => { let v = r.date_time()?; r.set(&mut e13, v, 3208); }
+                    0x206b9 => { let v = r.string()?; r.set(&mut e14, v, 1721); }
+                    0x20ae8 => { let v = AnyRateLineCollection::read(r)?; e15.extend(v); }
+                    0x207f2 => { let v = Some(Eligibility::read(r)?); r.set(&mut e16, v.map(Box::new), 2034); }
+                    0x205ae => { let v = r.raw()?; r.set(&mut e17, v.map(Box::new), 1454); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5447,6 +9128,206 @@ impl RateTable {
     }
 }
 
+impl RateTable {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 20];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = Vec::new();
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = Vec::new();
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                243 => if r.first(&mut seen[2])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f2.push(v); } } },
+                1545 => if r.first(&mut seen[3])? { f3 = Payment::read_json(r)?.map(Box::new); },
+                1513 => if r.first(&mut seen[4])? { f4 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                173 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                1043 => if r.first(&mut seen[6])? { f6 = r.date_time()?; },
+                1804 => if r.first(&mut seen[7])? { f7 = r.multilingual()?; },
+                50 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f8.push(v); } } },
+                272 => if r.first(&mut seen[9])? { f9 = r.enumeration::<RateAvailabilityTypeEnum>()?; },
+                1800 => if r.first(&mut seen[10])? { f10 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1801 => if r.first(&mut seen[11])? { f11 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                2538 => if r.first(&mut seen[12])? { f12 = r.boolean()?; },
+                1806 => if r.first(&mut seen[13])? { f13 = r.enumeration::<RateTypeEnum>()?; },
+                2542 => if r.first(&mut seen[14])? { f14 = r.date_time()?; },
+                2541 => if r.first(&mut seen[15])? { f15 = r.date_time()?; },
+                61 => if r.first(&mut seen[16])? { f16 = r.string()?; },
+                1792 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyRateLineCollection::read_json(r)? { f17.push(v); } } },
+                654 => if r.first(&mut seen[18])? { f18 = Eligibility::read_json(r)?.map(Box::new); },
+                172 => if r.first(&mut seen[19])? { f19 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            applicable_currency: f2,
+            payment: f3,
+            overall_period: f4,
+            rates_extension: f5,
+            last_updated: f6,
+            rate_table_name: f7,
+            active_times: f8,
+            availability: f9,
+            rate_responsible_party: f10,
+            rate_supersede_link: f11,
+            validation: f12,
+            rate_type: f13,
+            validity_start: f14,
+            validity_end: f15,
+            additional_information: f16,
+            rate_line_collection: f17,
+            eligibility: f18,
+            rate_table_extension: f19,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(115)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if !self.applicable_currency.is_empty() {
+            w.key(243)?;
+            w.begin_array()?;
+            for v in &self.applicable_currency {
+                w.item()?;
+                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.payment {
+            w.key(1545)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rates_extension {
+            w.key(173)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.rate_table_name {
+            w.key(1804)?;
+            w.multilingual(v)?;
+        }
+        if !self.active_times.is_empty() {
+            w.key(50)?;
+            w.begin_array()?;
+            for v in &self.active_times {
+                w.item()?;
+                w.pattern("activeTimes", v, Pattern::Duration)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.availability {
+            w.key(272)?;
+            w.enumeration(105, v.literal())?;
+        }
+        if let Some(v) = &self.rate_responsible_party {
+            w.key(1800)?;
+            v.write_json(w, Some("ReferenceableOrganisation"))?;
+        }
+        if let Some(v) = &self.rate_supersede_link {
+            w.key(1801)?;
+            v.write_json(w, Some("RateTable"))?;
+        }
+        if let Some(v) = &self.validation {
+            w.key(2538)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.rate_type {
+            w.key(1806)?;
+            w.enumeration(117, v.literal())?;
+        }
+        if let Some(v) = &self.validity_start {
+            w.key(2542)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.validity_end {
+            w.key(2541)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.additional_information {
+            w.key(61)?;
+            w.string(v)?;
+        }
+        if !self.rate_line_collection.is_empty() {
+            w.key(1792)?;
+            w.begin_array()?;
+            for v in &self.rate_line_collection {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.eligibility {
+            w.key(654)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rate_table_extension {
+            w.key(172)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:RateTableByReference`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RateTableByReference {
@@ -5465,10 +9346,10 @@ pub struct RateTableByReference {
 }
 
 impl RateTableByReference {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20a10, 0x209f1, 0x2058d, 0x20aa8, 0x2058a];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20a56, 0x20a36, 0x205b0, 0x20aef, 0x205ad];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201a8);
+        r.expect_type(0x201b1);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -5479,12 +9360,12 @@ impl RateTableByReference {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; e0.extend(v); }
-                    0x20a10 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2576); }
-                    0x209f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2545); }
-                    0x2058d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1421); }
-                    0x20aa8 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 2728); }
-                    0x2058a => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1418); }
+                    0x206e8 => { let v = r.string()?; e0.extend(v); }
+                    0x20a56 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2646); }
+                    0x20a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2614); }
+                    0x205b0 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1456); }
+                    0x20aef => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e4, v.map(Box::new), 2799); }
+                    0x205ad => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1453); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5493,7 +9374,7 @@ impl RateTableByReference {
                 break;
             }
         }
-        r.required(&e4, 2728);
+        r.required(&e4, 2799);
         let v = Self {
             applicable_currency: e0,
             payment: e1,
@@ -5522,6 +9403,94 @@ impl RateTableByReference {
         }
         if let Some(v) = &self.rate_table_by_reference_extension { w.extension("afac:_rateTableByReferenceExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl RateTableByReference {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                243 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f0.push(v); } } },
+                1545 => if r.first(&mut seen[1])? { f1 = Payment::read_json(r)?.map(Box::new); },
+                1513 => if r.first(&mut seen[2])? { f2 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                173 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                1799 => if r.first(&mut seen[4])? { f4 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                171 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f4, 1799);
+        Ok(Self {
+            applicable_currency: f0,
+            payment: f1,
+            overall_period: f2,
+            rates_extension: f3,
+            rate_reference: f4,
+            rate_table_by_reference_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(116)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.applicable_currency.is_empty() {
+            w.key(243)?;
+            w.begin_array()?;
+            for v in &self.applicable_currency {
+                w.item()?;
+                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.payment {
+            w.key(1545)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rates_extension {
+            w.key(173)?;
+            w.extension(v)?;
+        }
+        match &self.rate_reference {
+            Some(v) => {
+                w.key(1799)?;
+                v.write_json(w, Some("RateTable"))?;
+            }
+            None => w.absent(1799, w.missing("rateReference"))?,
+        }
+        if let Some(v) = &self.rate_table_by_reference_extension {
+            w.key(171)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -5557,16 +9526,16 @@ pub struct RatesPublication {
 }
 
 impl RatesPublication {
-    const FIELDS: &'static [u32] = &[0x3081d, 0x3081e, 0x30a94, 0x30a93, 0x30547, 0x20857, 0x20aa4, 0x2058e];
+    const FIELDS: &'static [u32] = &[0x40859, 0x4085a, 0x40adb, 0x40ada, 0x4056a, 0x20893, 0x20aeb, 0x205b1];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201ab);
-        let a0 = r.req_attr(2223);
-        let _ = r.attr(2373);
-        let a2 = r.attr(2046);
-        let a3 = r.attr(2047);
-        let a4 = r.attr(2689);
-        let a5 = r.attr(2690);
+        r.expect_type(0x201b4);
+        let a0 = r.req_attr(2285);
+        let _ = r.attr(2439);
+        let a2 = r.attr(2104);
+        let a3 = r.attr(2105);
+        let a4 = r.attr(2760);
+        let a5 = r.attr(2761);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5579,14 +9548,14 @@ impl RatesPublication {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x3081d => { let v = r.multilingual()?; r.set(&mut e0, v, 2077); }
-                    0x3081e => { let v = r.string()?; r.set(&mut e1, v, 2078); }
-                    0x30a94 => { let v = r.date_time()?; r.set(&mut e2, v, 2708); }
-                    0x30a93 => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2707); }
-                    0x30547 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1351); }
-                    0x20857 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2135); }
-                    0x20aa4 => { let v = Some(RateMatrix::read(r)?); e6.extend(v); }
-                    0x2058e => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1422); }
+                    0x40859 => { let v = r.multilingual()?; r.set(&mut e0, v, 2137); }
+                    0x4085a => { let v = r.string()?; r.set(&mut e1, v, 2138); }
+                    0x40adb => { let v = r.date_time()?; r.set(&mut e2, v, 2779); }
+                    0x40ada => { let v = Some(com::InternationalIdentifier::read(r)?); r.set(&mut e3, v.map(Box::new), 2778); }
+                    0x4056a => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1386); }
+                    0x20893 => { let v = Some(com::HeaderInformation::read(r)?); r.set(&mut e5, v.map(Box::new), 2195); }
+                    0x20aeb => { let v = Some(RateMatrix::read(r)?); e6.extend(v); }
+                    0x205b1 => { let v = r.raw()?; r.set(&mut e7, v.map(Box::new), 1457); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5595,8 +9564,8 @@ impl RatesPublication {
                 break;
             }
         }
-        r.required(&e2, 2708);
-        r.required(&e3, 2707);
+        r.required(&e2, 2779);
+        r.required(&e3, 2778);
         let v = Self {
             lang: a0,
             extension_name: a2,
@@ -5647,6 +9616,132 @@ impl RatesPublication {
         for v in &self.rate_matrix { v.write(w, "afac:rateMatrix", "", "")?; }
         if let Some(v) = &self.rates_publication_extension { w.extension("afac:_ratesPublicationExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl RatesPublication {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 13];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1032 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                847 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                848 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1779 => if r.first(&mut seen[7])? { f7 = r.date_time()?; },
+                1778 => if r.first(&mut seen[8])? { f8 = com::InternationalIdentifier::read_json(r)?.map(Box::new); },
+                387 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                940 => if r.first(&mut seen[10])? { f10 = com::HeaderInformation::read_json(r)?.map(Box::new); },
+                1795 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = RateMatrix::read_json(r)? { f11.push(v); } } },
+                175 => if r.first(&mut seen[12])? { f12 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1032);
+        r.required(&f7, 1779);
+        r.required(&f8, 1778);
+        Ok(Self {
+            lang: f0,
+            extension_name: f1,
+            extension_version: f2,
+            profile_name: f3,
+            profile_version: f4,
+            feed_description: f5,
+            feed_type: f6,
+            publication_time: f7,
+            publication_creator: f8,
+            payload_publication_extension: f9,
+            header_information: f10,
+            rate_matrix: f11,
+            rates_publication_extension: f12,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(119)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.lang {
+            Some(v) => {
+                w.key(1032)?;
+                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+            }
+            None => w.absent(1032, w.missing_attr("lang"))?,
+        }
+        if let Some(v) = &self.feed_description {
+            w.key(847)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.feed_type {
+            w.key(848)?;
+            w.max_len("feedType", v, 1024)?; w.string(v)?;
+        }
+        match &self.publication_time {
+            Some(v) => {
+                w.key(1779)?;
+                w.date_time(v)?;
+            }
+            None => w.absent(1779, w.missing("publicationTime"))?,
+        }
+        match &self.publication_creator {
+            Some(v) => {
+                w.key(1778)?;
+                v.write_json(w, None)?;
+            }
+            None => w.absent(1778, w.missing("publicationCreator"))?,
+        }
+        if let Some(v) = &self.payload_publication_extension {
+            w.key(387)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.header_information {
+            w.key(940)?;
+            v.write_json(w, None)?;
+        }
+        w.count("rateMatrix", self.rate_matrix.len(), 1, usize::MAX)?;
+        if !self.rate_matrix.is_empty() {
+            w.key(1795)?;
+            w.begin_array()?;
+            for v in &self.rate_matrix {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates_publication_extension {
+            w.key(175)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -5702,12 +9797,12 @@ pub struct ReferenceableOrganisation {
 }
 
 impl ReferenceableOrganisation {
-    const FIELDS: &'static [u32] = &[0x2083f, 0x20537, 0x208ba, 0x20949, 0x208c3, 0x20777, 0x208d6, 0x208d7, 0x208d8, 0x206dd, 0x20aed, 0x20a95, 0x20bfe, 0x20950, 0x20951, 0x20c2e, 0x209e0, 0x20805, 0x20b89, 0x2041e, 0x20590];
+    const FIELDS: &'static [u32] = &[0x2087b, 0x2055a, 0x208f8, 0x2098b, 0x20901, 0x207a8, 0x20914, 0x20915, 0x20916, 0x20706, 0x20b37, 0x20adc, 0x20c5d, 0x20992, 0x20993, 0x20c8e, 0x20a25, 0x20840, 0x20be4, 0x20439, 0x205b3];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201ae);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x201b7);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5733,27 +9828,27 @@ impl ReferenceableOrganisation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2083f => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2111); }
-                    0x20537 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1335); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e3, v, 2377); }
-                    0x208c3 => { let v = r.multilingual()?; r.set(&mut e4, v, 2243); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e5, v, 1911); }
-                    0x208d6 => { let v = r.string()?; r.set(&mut e6, v, 2262); }
-                    0x208d7 => { let v = r.string()?; r.set(&mut e7, v, 2263); }
-                    0x208d8 => { let v = r.string()?; r.set(&mut e8, v, 2264); }
-                    0x206dd => { let v = r.value::<bool>()?; r.set(&mut e9, v, 1757); }
-                    0x20aed => { let v = r.multilingual()?; e10.extend(v); }
-                    0x20a95 => { let v = r.value::<bool>()?; r.set(&mut e11, v, 2709); }
-                    0x20bfe => { let v = r.enumeration::<OrganisationTypeEnum>()?; r.set(&mut e12, v, 3070); }
-                    0x20950 => { let v = r.string()?; r.set(&mut e13, v, 2384); }
-                    0x20951 => { let v = r.string()?; r.set(&mut e14, v, 2385); }
-                    0x20c2e => { let v = r.string()?; r.set(&mut e15, v, 3118); }
-                    0x209e0 => { let v = Some(OrganisationUnit::read(r)?); e16.extend(v); }
-                    0x20805 => { let v = Some(ExternalIdentifier::read(r)?); e17.extend(v); }
-                    0x20b89 => { let v = Organisation::read(r)?; e18.extend(v); }
-                    0x2041e => { let v = r.raw()?; r.set(&mut e19, v.map(Box::new), 1054); }
-                    0x20590 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1424); }
+                    0x2087b => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2171); }
+                    0x2055a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1370); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e3, v, 2443); }
+                    0x20901 => { let v = r.multilingual()?; r.set(&mut e4, v, 2305); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e5, v, 1960); }
+                    0x20914 => { let v = r.string()?; r.set(&mut e6, v, 2324); }
+                    0x20915 => { let v = r.string()?; r.set(&mut e7, v, 2325); }
+                    0x20916 => { let v = r.string()?; r.set(&mut e8, v, 2326); }
+                    0x20706 => { let v = r.value::<bool>()?; r.set(&mut e9, v, 1798); }
+                    0x20b37 => { let v = r.multilingual()?; e10.extend(v); }
+                    0x20adc => { let v = r.value::<bool>()?; r.set(&mut e11, v, 2780); }
+                    0x20c5d => { let v = r.enumeration::<OrganisationTypeEnum>()?; r.set(&mut e12, v, 3165); }
+                    0x20992 => { let v = r.string()?; r.set(&mut e13, v, 2450); }
+                    0x20993 => { let v = r.string()?; r.set(&mut e14, v, 2451); }
+                    0x20c8e => { let v = r.string()?; r.set(&mut e15, v, 3214); }
+                    0x20a25 => { let v = Some(OrganisationUnit::read(r)?); e16.extend(v); }
+                    0x20840 => { let v = Some(ExternalIdentifier::read(r)?); e17.extend(v); }
+                    0x20be4 => { let v = Organisation::read(r)?; e18.extend(v); }
+                    0x20439 => { let v = r.raw()?; r.set(&mut e19, v.map(Box::new), 1081); }
+                    0x205b3 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1459); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5762,7 +9857,7 @@ impl ReferenceableOrganisation {
                 break;
             }
         }
-        r.required(&e3, 2377);
+        r.required(&e3, 2443);
         let v = Self {
             id: a0,
             version: a1,
@@ -5834,6 +9929,236 @@ impl ReferenceableOrganisation {
     }
 }
 
+impl ReferenceableOrganisation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 23];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = Vec::new();
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = None;
+        let mut f18 = Vec::new();
+        let mut f19 = Vec::new();
+        let mut f20 = Vec::new();
+        let mut f21 = None;
+        let mut f22 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                916 => if r.first(&mut seen[2])? { f2 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                153 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                1345 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1052 => if r.first(&mut seen[6])? { f6 = r.multilingual()?; },
+                545 => if r.first(&mut seen[7])? { f7 = r.multilingual()?; },
+                1071 => if r.first(&mut seen[8])? { f8 = r.string()?; },
+                1072 => if r.first(&mut seen[9])? { f9 = r.string()?; },
+                1073 => if r.first(&mut seen[10])? { f10 = r.string()?; },
+                273 => if r.first(&mut seen[11])? { f11 = r.boolean()?; },
+                1894 => if r.first(&mut seen[12])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f12.push(v); } } },
+                1780 => if r.first(&mut seen[13])? { f13 = r.boolean()?; },
+                2495 => if r.first(&mut seen[14])? { f14 = r.enumeration::<OrganisationTypeEnum>()?; },
+                1351 => if r.first(&mut seen[15])? { f15 = r.string()?; },
+                1352 => if r.first(&mut seen[16])? { f16 = r.string()?; },
+                2547 => if r.first(&mut seen[17])? { f17 = r.string()?; },
+                1496 => if r.first(&mut seen[18])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = OrganisationUnit::read_json(r)? { f18.push(v); } } },
+                739 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ExternalIdentifier::read_json(r)? { f19.push(v); } } },
+                2208 => if r.first(&mut seen[20])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Organisation::read_json(r)? { f20.push(v); } } },
+                113 => if r.first(&mut seen[21])? { f21 = r.raw_object()?.map(Box::new); },
+                177 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f5, 1345);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            general_time_validity: f2,
+            organisation_extension: f3,
+            last_updated: f4,
+            name: f5,
+            legal_name: f6,
+            description: f7,
+            link_to_general_information: f8,
+            link_to_logo: f9,
+            link_to_webform: f10,
+            available24hours: f11,
+            responsibility: f12,
+            publishing_agreement: f13,
+            r#type: f14,
+            national_organisation_number: f15,
+            national_register: f16,
+            vat_identification_number: f17,
+            organisation_unit: f18,
+            external_identifier: f19,
+            sub_organisation: f20,
+            an_organisation_extension: f21,
+            referenceable_organisation_extension: f22,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(120)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.general_time_validity {
+            w.key(916)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.organisation_extension {
+            w.key(153)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        match &self.name {
+            Some(v) => {
+                w.key(1345)?;
+                w.multilingual(v)?;
+            }
+            None => w.absent(1345, w.missing("name"))?,
+        }
+        if let Some(v) = &self.legal_name {
+            w.key(1052)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.link_to_general_information {
+            w.key(1071)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.link_to_logo {
+            w.key(1072)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.link_to_webform {
+            w.key(1073)?;
+            w.string(v)?;
+        }
+        if let Some(v) = &self.available24hours {
+            w.key(273)?;
+            w.boolean(*v)?;
+        }
+        if !self.responsibility.is_empty() {
+            w.key(1894)?;
+            w.begin_array()?;
+            for v in &self.responsibility {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.publishing_agreement {
+            w.key(1780)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.r#type {
+            w.key(2495)?;
+            w.enumeration(99, v.literal())?;
+        }
+        if let Some(v) = &self.national_organisation_number {
+            w.key(1351)?;
+            w.max_len("nationalOrganisationNumber", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.national_register {
+            w.key(1352)?;
+            w.max_len("nationalRegister", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.vat_identification_number {
+            w.key(2547)?;
+            w.max_len("vatIdentificationNumber", v, 1024)?; w.string(v)?;
+        }
+        if !self.organisation_unit.is_empty() {
+            w.key(1496)?;
+            w.begin_array()?;
+            for v in &self.organisation_unit {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.sub_organisation.is_empty() {
+            w.key(2208)?;
+            w.begin_array()?;
+            for v in &self.sub_organisation {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.an_organisation_extension {
+            w.key(113)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.referenceable_organisation_extension {
+            w.key(177)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:RelativeOffsets`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RelativeOffsets {
@@ -5852,10 +10177,10 @@ pub struct RelativeOffsets {
 }
 
 impl RelativeOffsets {
-    const FIELDS: &'static [u32] = &[0x20423, 0x207b6, 0x208be, 0x207b4, 0x208bc, 0x20597];
+    const FIELDS: &'static [u32] = &[0x2043e, 0x207e8, 0x208fc, 0x207e6, 0x208fa, 0x205ba];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201b5);
+        r.expect_type(0x201be);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5866,12 +10191,12 @@ impl RelativeOffsets {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20423 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1059); }
-                    0x207b6 => { let v = r.string()?; r.set(&mut e1, v, 1974); }
-                    0x208be => { let v = r.string()?; r.set(&mut e2, v, 2238); }
-                    0x207b4 => { let v = r.string()?; r.set(&mut e3, v, 1972); }
-                    0x208bc => { let v = r.string()?; r.set(&mut e4, v, 2236); }
-                    0x20597 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1431); }
+                    0x2043e => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1086); }
+                    0x207e8 => { let v = r.string()?; r.set(&mut e1, v, 2024); }
+                    0x208fc => { let v = r.string()?; r.set(&mut e2, v, 2300); }
+                    0x207e6 => { let v = r.string()?; r.set(&mut e3, v, 2022); }
+                    0x208fa => { let v = r.string()?; r.set(&mut e4, v, 2298); }
+                    0x205ba => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1466); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -5905,6 +10230,85 @@ impl RelativeOffsets {
         if let Some(v) = &self.latest_end_relative { w.pattern("latestEndRelative", v, Pattern::Duration)?; w.leaf("afac:latestEndRelative", v)?; }
         if let Some(v) = &self.relative_offsets_extension { w.extension("afac:_relativeOffsetsExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl RelativeOffsets {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                114 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                609 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1047 => if r.first(&mut seen[2])? { f2 = r.string()?; },
+                607 => if r.first(&mut seen[3])? { f3 = r.string()?; },
+                1045 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                179 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            assigned_right_time_relative_extension: f0,
+            earliest_start_relative: f1,
+            latest_start_relative: f2,
+            earliest_end_relative: f3,
+            latest_end_relative: f4,
+            relative_offsets_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(122)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.assigned_right_time_relative_extension {
+            w.key(114)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.earliest_start_relative {
+            w.key(609)?;
+            w.pattern("earliestStartRelative", v, Pattern::Duration)?; w.string(v)?;
+        }
+        if let Some(v) = &self.latest_start_relative {
+            w.key(1047)?;
+            w.pattern("latestStartRelative", v, Pattern::Duration)?; w.string(v)?;
+        }
+        if let Some(v) = &self.earliest_end_relative {
+            w.key(607)?;
+            w.pattern("earliestEndRelative", v, Pattern::Duration)?; w.string(v)?;
+        }
+        if let Some(v) = &self.latest_end_relative {
+            w.key(1045)?;
+            w.pattern("latestEndRelative", v, Pattern::Duration)?; w.string(v)?;
+        }
+        if let Some(v) = &self.relative_offsets_extension {
+            w.key(179)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -5950,11 +10354,11 @@ pub struct RelativeTimeRates {
 }
 
 impl RelativeTimeRates {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20934, 0x20904, 0x20c24, 0x20c22, 0x20932, 0x20902, 0x20ae5, 0x20ba1, 0x20ba2, 0x20ba3, 0x20ad6, 0x20aa0, 0x20585, 0x20abd, 0x20abc, 0x20598];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20976, 0x20943, 0x20c84, 0x20c82, 0x20974, 0x20941, 0x20b2f, 0x20c00, 0x20c01, 0x20c02, 0x20b1f, 0x20ae7, 0x205a8, 0x20b05, 0x20b04, 0x205bb];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201b6);
-        let a0 = r.req_attr_value::<i64>(1825)?;
+        r.expect_type(0x201bf);
+        let a0 = r.req_attr_value::<i64>(1870)?;
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -5976,23 +10380,23 @@ impl RelativeTimeRates {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; r.set(&mut e0, v, 1727); }
-                    0x20934 => { let v = r.value::<Decimal>()?; r.set(&mut e1, v, 2356); }
-                    0x20904 => { let v = r.value::<Decimal>()?; r.set(&mut e2, v, 2308); }
-                    0x20c24 => { let v = r.date_time()?; r.set(&mut e3, v, 3108); }
-                    0x20c22 => { let v = r.date_time()?; r.set(&mut e4, v, 3106); }
-                    0x20932 => { let v = r.string()?; r.set(&mut e5, v, 2354); }
-                    0x20902 => { let v = r.string()?; r.set(&mut e6, v, 2306); }
-                    0x20ae5 => { let v = r.value::<Time>()?; r.set(&mut e7, v, 2789); }
-                    0x20ba1 => { let v = r.value::<bool>()?; r.set(&mut e8, v, 2977); }
-                    0x20ba2 => { let v = r.value::<f32>()?; r.set(&mut e9, v, 2978); }
-                    0x20ba3 => { let v = r.value::<Decimal>()?; r.set(&mut e10, v, 2979); }
-                    0x20ad6 => { let v = r.value::<bool>()?; r.set(&mut e11, v, 2774); }
-                    0x20aa0 => { let v = Some(RateLine::read(r)?); e12.extend(v); }
-                    0x20585 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1413); }
-                    0x20abd => { let v = r.date_time()?; r.set(&mut e14, v, 2749); }
-                    0x20abc => { let v = r.date_time()?; r.set(&mut e15, v, 2748); }
-                    0x20598 => { let v = r.raw()?; r.set(&mut e16, v.map(Box::new), 1432); }
+                    0x206e8 => { let v = r.string()?; r.set(&mut e0, v, 1768); }
+                    0x20976 => { let v = r.value::<Decimal>()?; r.set(&mut e1, v, 2422); }
+                    0x20943 => { let v = r.value::<Decimal>()?; r.set(&mut e2, v, 2371); }
+                    0x20c84 => { let v = r.date_time()?; r.set(&mut e3, v, 3204); }
+                    0x20c82 => { let v = r.date_time()?; r.set(&mut e4, v, 3202); }
+                    0x20974 => { let v = r.string()?; r.set(&mut e5, v, 2420); }
+                    0x20941 => { let v = r.string()?; r.set(&mut e6, v, 2369); }
+                    0x20b2f => { let v = r.value::<Time>()?; r.set(&mut e7, v, 2863); }
+                    0x20c00 => { let v = r.value::<bool>()?; r.set(&mut e8, v, 3072); }
+                    0x20c01 => { let v = r.value::<f32>()?; r.set(&mut e9, v, 3073); }
+                    0x20c02 => { let v = r.value::<Decimal>()?; r.set(&mut e10, v, 3074); }
+                    0x20b1f => { let v = r.value::<bool>()?; r.set(&mut e11, v, 2847); }
+                    0x20ae7 => { let v = Some(RateLine::read(r)?); e12.extend(v); }
+                    0x205a8 => { let v = r.raw()?; r.set(&mut e13, v.map(Box::new), 1448); }
+                    0x20b05 => { let v = r.date_time()?; r.set(&mut e14, v, 2821); }
+                    0x20b04 => { let v = r.date_time()?; r.set(&mut e15, v, 2820); }
+                    0x205bb => { let v = r.raw()?; r.set(&mut e16, v.map(Box::new), 1467); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6057,6 +10461,179 @@ impl RelativeTimeRates {
     }
 }
 
+impl RelativeTimeRates {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 18];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = Vec::new();
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                348 => if r.first(&mut seen[0])? { f0 = r.number::<i64>()?; },
+                243 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1324 => if r.first(&mut seen[2])? { f2 = r.number::<Decimal>()?; },
+                1272 => if r.first(&mut seen[3])? { f3 = r.number::<Decimal>()?; },
+                2537 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                2535 => if r.first(&mut seen[5])? { f5 = r.date_time()?; },
+                1322 => if r.first(&mut seen[6])? { f6 = r.string()?; },
+                1270 => if r.first(&mut seen[7])? { f7 = r.string()?; },
+                1886 => if r.first(&mut seen[8])? { f8 = r.text::<Time>()?; },
+                2235 => if r.first(&mut seen[9])? { f9 = r.boolean()?; },
+                2236 => if r.first(&mut seen[10])? { f10 = r.number::<f32>()?; },
+                2237 => if r.first(&mut seen[11])? { f11 = r.number::<Decimal>()?; },
+                1847 => if r.first(&mut seen[12])? { f12 = r.boolean()?; },
+                1791 => if r.first(&mut seen[13])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = RateLine::read_json(r)? { f13.push(v); } } },
+                162 => if r.first(&mut seen[14])? { f14 = r.raw_object()?.map(Box::new); },
+                1821 => if r.first(&mut seen[15])? { f15 = r.date_time()?; },
+                1820 => if r.first(&mut seen[16])? { f16 = r.date_time()?; },
+                181 => if r.first(&mut seen[17])? { f17 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 348);
+        Ok(Self {
+            collection_sequence: f0,
+            applicable_currency: f1,
+            min_value_collection: f2,
+            max_value_collection: f3,
+            valid_start: f4,
+            valid_end: f5,
+            min_time: f6,
+            max_time: f7,
+            reset_time: f8,
+            tax_included: f9,
+            tax_rate: f10,
+            tax_value: f11,
+            relative_times: f12,
+            rate_line: f13,
+            rate_line_collection_extension: f14,
+            reference_time_start: f15,
+            reference_time_end: f16,
+            relative_time_rates_extension: f17,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(123)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.collection_sequence {
+            Some(v) => {
+                w.key(348)?;
+                w.integer(*v)?;
+            }
+            None => w.absent(348, w.missing_attr("collectionSequence"))?,
+        }
+        if let Some(v) = &self.applicable_currency {
+            w.key(243)?;
+            w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+        }
+        if let Some(v) = &self.min_value_collection {
+            w.key(1324)?;
+            w.digits("minValueCollection", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.max_value_collection {
+            w.key(1272)?;
+            w.digits("maxValueCollection", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.valid_start {
+            w.key(2537)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.valid_end {
+            w.key(2535)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.min_time {
+            w.key(1322)?;
+            w.pattern("minTime", v, Pattern::Duration)?; w.string(v)?;
+        }
+        if let Some(v) = &self.max_time {
+            w.key(1270)?;
+            w.pattern("maxTime", v, Pattern::Duration)?; w.string(v)?;
+        }
+        if let Some(v) = &self.reset_time {
+            w.key(1886)?;
+            w.time(v)?;
+        }
+        if let Some(v) = &self.tax_included {
+            w.key(2235)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.tax_rate {
+            w.key(2236)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.tax_value {
+            w.key(2237)?;
+            w.digits("taxValue", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.relative_times {
+            w.key(1847)?;
+            w.boolean(*v)?;
+        }
+        w.count("rateLine", self.rate_line.len(), 1, usize::MAX)?;
+        if !self.rate_line.is_empty() {
+            w.key(1791)?;
+            w.begin_array()?;
+            for v in &self.rate_line {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rate_line_collection_extension {
+            w.key(162)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.reference_time_start {
+            w.key(1821)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.reference_time_end {
+            w.key(1820)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.relative_time_rates_extension {
+            w.key(181)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:RightSpecification`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RightSpecification {
@@ -6085,12 +10662,12 @@ pub struct RightSpecification {
 }
 
 impl RightSpecification {
-    const FIELDS: &'static [u32] = &[0x20bfe, 0x20777, 0x20820, 0x2089e, 0x20bed, 0x20bee, 0x2074e, 0x20c26, 0x205a1];
+    const FIELDS: &'static [u32] = &[0x20c5d, 0x207a8, 0x2085c, 0x208dc, 0x20c4c, 0x20c4d, 0x2077d, 0x20c86, 0x205c5];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201c0);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x201ca);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -6104,15 +10681,15 @@ impl RightSpecification {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20bfe => { let v = r.enumeration::<RightTypeEnum>()?; r.set(&mut e0, v, 3070); }
-                    0x20777 => { let v = r.multilingual()?; e1.extend(v); }
-                    0x20820 => { let v = r.string()?; r.set(&mut e2, v, 2080); }
-                    0x2089e => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2206); }
-                    0x20bed => { let v = r.value::<bool>()?; r.set(&mut e4, v, 3053); }
-                    0x20bee => { let v = r.multilingual()?; r.set(&mut e5, v, 3054); }
-                    0x2074e => { let v = AnyCredential::read(r)?; e6.extend(v); }
-                    0x20c26 => { let v = Some(com::Validity::read(r)?); r.set(&mut e7, v.map(Box::new), 3110); }
-                    0x205a1 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1441); }
+                    0x20c5d => { let v = r.enumeration::<RightTypeEnum>()?; r.set(&mut e0, v, 3165); }
+                    0x207a8 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x2085c => { let v = r.string()?; r.set(&mut e2, v, 2140); }
+                    0x208dc => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e3, v.map(Box::new), 2268); }
+                    0x20c4c => { let v = r.value::<bool>()?; r.set(&mut e4, v, 3148); }
+                    0x20c4d => { let v = r.multilingual()?; r.set(&mut e5, v, 3149); }
+                    0x2077d => { let v = AnyCredential::read(r)?; e6.extend(v); }
+                    0x20c86 => { let v = Some(com::Validity::read(r)?); r.set(&mut e7, v.map(Box::new), 3206); }
+                    0x205c5 => { let v = r.raw()?; r.set(&mut e8, v.map(Box::new), 1477); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6162,6 +10739,138 @@ impl RightSpecification {
         if let Some(v) = &self.validity { v.write(w, "afac:validity", "", "")?; }
         if let Some(v) = &self.right_specification_extension { w.extension("afac:_rightSpecificationExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl RightSpecification {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 11];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = Vec::new();
+        let mut f9 = None;
+        let mut f10 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                2495 => if r.first(&mut seen[2])? { f2 = r.enumeration::<RightTypeEnum>()?; },
+                545 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                850 => if r.first(&mut seen[4])? { f4 = r.string()?; },
+                1015 => if r.first(&mut seen[5])? { f5 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                2373 => if r.first(&mut seen[6])? { f6 = r.boolean()?; },
+                2374 => if r.first(&mut seen[7])? { f7 = r.multilingual()?; },
+                475 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyCredential::read_json(r)? { f8.push(v); } } },
+                2539 => if r.first(&mut seen[9])? { f9 = com::Validity::read_json(r)?.map(Box::new); },
+                182 => if r.first(&mut seen[10])? { f10 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            r#type: f2,
+            description: f3,
+            financial_reference: f4,
+            issuer: f5,
+            transferable: f6,
+            transferable_conditions: f7,
+            credential: f8,
+            validity: f9,
+            right_specification_extension: f10,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(125)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.r#type {
+            w.key(2495)?;
+            w.enumeration(126, v.literal())?;
+        }
+        if !self.description.is_empty() {
+            w.key(545)?;
+            w.begin_array()?;
+            for v in &self.description {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.financial_reference {
+            w.key(850)?;
+            w.max_len("financialReference", v, 1024)?; w.string(v)?;
+        }
+        if let Some(v) = &self.issuer {
+            w.key(1015)?;
+            v.write_json(w, Some("ReferenceableOrganisation"))?;
+        }
+        if let Some(v) = &self.transferable {
+            w.key(2373)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.transferable_conditions {
+            w.key(2374)?;
+            w.multilingual(v)?;
+        }
+        if !self.credential.is_empty() {
+            w.key(475)?;
+            w.begin_array()?;
+            for v in &self.credential {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.validity {
+            w.key(2539)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.right_specification_extension {
+            w.key(182)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -6233,12 +10942,12 @@ pub struct SupplementalEquipment {
 }
 
 impl SupplementalEquipment {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x206dc, 0x20a98, 0x20acc, 0x206c5, 0x20954, 0x205dc, 0x207ea, 0x205db];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x20705, 0x20adf, 0x20b15, 0x206ee, 0x20996, 0x20605, 0x2081f, 0x20604];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201fc);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x2020b);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -6272,35 +10981,35 @@ impl SupplementalEquipment {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x206dc => { let v = r.enumeration::<AvailabilityEnum>()?; r.set(&mut e21, v, 1756); }
-                    0x20a98 => { let v = r.value::<u64>()?; r.set(&mut e22, v, 2712); }
-                    0x20acc => { let v = r.value::<bool>()?; r.set(&mut e23, v, 2764); }
-                    0x206c5 => { let v = r.enumeration::<UserTypeEnum>()?; e24.extend(v); }
-                    0x20954 => { let v = r.value::<bool>()?; r.set(&mut e25, v, 2388); }
-                    0x205dc => { let v = r.raw()?; r.set(&mut e26, v.map(Box::new), 1500); }
-                    0x207ea => { let v = r.enumeration::<EquipmentTypeEnum>()?; r.set(&mut e27, v, 2026); }
-                    0x205db => { let v = r.raw()?; r.set(&mut e28, v.map(Box::new), 1499); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x20705 => { let v = r.enumeration::<AvailabilityEnum>()?; r.set(&mut e21, v, 1797); }
+                    0x20adf => { let v = r.value::<u64>()?; r.set(&mut e22, v, 2783); }
+                    0x20b15 => { let v = r.value::<bool>()?; r.set(&mut e23, v, 2837); }
+                    0x206ee => { let v = r.enumeration::<UserTypeEnum>()?; e24.extend(v); }
+                    0x20996 => { let v = r.value::<bool>()?; r.set(&mut e25, v, 2454); }
+                    0x20605 => { let v = r.raw()?; r.set(&mut e26, v.map(Box::new), 1541); }
+                    0x2081f => { let v = r.enumeration::<EquipmentTypeEnum>()?; r.set(&mut e27, v, 2079); }
+                    0x20604 => { let v = r.raw()?; r.set(&mut e28, v.map(Box::new), 1540); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6309,7 +11018,7 @@ impl SupplementalEquipment {
                 break;
             }
         }
-        r.required(&e27, 2026);
+        r.required(&e27, 2079);
         let v = Self {
             id: a0,
             version: a1,
@@ -6397,6 +11106,322 @@ impl SupplementalEquipment {
     }
 }
 
+impl SupplementalEquipment {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 31];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = None;
+        let mut f24 = None;
+        let mut f25 = None;
+        let mut f26 = Vec::new();
+        let mut f27 = None;
+        let mut f28 = None;
+        let mut f29 = None;
+        let mut f30 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                272 => if r.first(&mut seen[23])? { f23 = r.enumeration::<AvailabilityEnum>()?; },
+                1783 => if r.first(&mut seen[24])? { f24 = r.number::<u64>()?; },
+                1837 => if r.first(&mut seen[25])? { f25 = r.boolean()?; },
+                249 => if r.first(&mut seen[26])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<UserTypeEnum>()? { f26.push(v); } } },
+                1355 => if r.first(&mut seen[27])? { f27 = r.boolean()?; },
+                185 => if r.first(&mut seen[28])? { f28 = r.raw_object()?.map(Box::new); },
+                698 => if r.first(&mut seen[29])? { f29 = r.enumeration::<EquipmentTypeEnum>()?; },
+                184 => if r.first(&mut seen[30])? { f30 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f29, 698);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            availability: f23,
+            quantity: f24,
+            regularly_cleaned: f25,
+            applicable_for_user: f26,
+            nearby: f27,
+            supplemental_facility_extension: f28,
+            equipment_type: f29,
+            supplemental_equipment_extension: f30,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(128)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.availability {
+            w.key(272)?;
+            w.enumeration(62, v.literal())?;
+        }
+        if let Some(v) = &self.quantity {
+            w.key(1783)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.regularly_cleaned {
+            w.key(1837)?;
+            w.boolean(*v)?;
+        }
+        if !self.applicable_for_user.is_empty() {
+            w.key(249)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_user {
+                w.item()?;
+                w.enumeration(144, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.nearby {
+            w.key(1355)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.supplemental_facility_extension {
+            w.key(185)?;
+            w.extension(v)?;
+        }
+        match &self.equipment_type {
+            Some(v) => {
+                w.key(698)?;
+                w.enumeration(75, v.literal())?;
+            }
+            None => w.absent(698, w.missing("equipmentType"))?,
+        }
+        if let Some(v) = &self.supplemental_equipment_extension {
+            w.key(184)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:SupplementalFacilityStatus`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SupplementalFacilityStatus {
@@ -6433,10 +11458,10 @@ pub struct SupplementalFacilityStatus {
 }
 
 impl SupplementalFacilityStatus {
-    const FIELDS: &'static [u32] = &[0x20aba, 0x208ba, 0x209a8, 0x209ce, 0x20aca, 0x20b77, 0x20958, 0x20959, 0x2080d, 0x20498, 0x20a99, 0x20985, 0x20c21, 0x207e8, 0x205dd];
+    const FIELDS: &'static [u32] = &[0x20b01, 0x208f8, 0x209ec, 0x20a13, 0x20b13, 0x20bd2, 0x2099a, 0x2099b, 0x20849, 0x204b8, 0x20ae0, 0x209c9, 0x20c81, 0x2081d, 0x20606];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201fe);
+        r.expect_type(0x2020d);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6456,21 +11481,21 @@ impl SupplementalFacilityStatus {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20aba => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2746); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e1, v, 2234); }
-                    0x209a8 => { let v = r.enumeration::<OpeningStatusEnum>()?; r.set(&mut e2, v, 2472); }
-                    0x209ce => { let v = r.enumeration::<OperationStatusEnum>()?; r.set(&mut e3, v, 2510); }
-                    0x20aca => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2762); }
-                    0x20b77 => { let v = r.multilingual()?; r.set(&mut e5, v, 2935); }
-                    0x20958 => { let v = OperatingHours::read(r)?; r.set(&mut e6, v, 2392); }
-                    0x20959 => { let v = Rates::read(r)?; r.set(&mut e7, v, 2393); }
-                    0x2080d => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2061); }
-                    0x20498 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1176); }
-                    0x20a99 => { let v = r.value::<u64>()?; r.set(&mut e10, v, 2713); }
-                    0x20985 => { let v = r.value::<u64>()?; r.set(&mut e11, v, 2437); }
-                    0x20c21 => { let v = r.value::<u64>()?; r.set(&mut e12, v, 3105); }
-                    0x207e8 => { let v = r.enumeration::<OperationStatusEnum>()?; r.set(&mut e13, v, 2024); }
-                    0x205dd => { let v = r.raw()?; r.set(&mut e14, v.map(Box::new), 1501); }
+                    0x20b01 => { let v = Some(com::VersionedReference::read(r)?); r.set(&mut e0, v.map(Box::new), 2817); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e1, v, 2296); }
+                    0x209ec => { let v = r.enumeration::<OpeningStatusEnum>()?; r.set(&mut e2, v, 2540); }
+                    0x20a13 => { let v = r.enumeration::<OperationStatusEnum>()?; r.set(&mut e3, v, 2579); }
+                    0x20b13 => { let v = r.value::<bool>()?; r.set(&mut e4, v, 2835); }
+                    0x20bd2 => { let v = r.multilingual()?; r.set(&mut e5, v, 3026); }
+                    0x2099a => { let v = OperatingHours::read(r)?; r.set(&mut e6, v, 2458); }
+                    0x2099b => { let v = Rates::read(r)?; r.set(&mut e7, v, 2459); }
+                    0x20849 => { let v = com::AnyFault::read(r)?; r.set(&mut e8, v, 2121); }
+                    0x204b8 => { let v = r.raw()?; r.set(&mut e9, v.map(Box::new), 1208); }
+                    0x20ae0 => { let v = r.value::<u64>()?; r.set(&mut e10, v, 2784); }
+                    0x209c9 => { let v = r.value::<u64>()?; r.set(&mut e11, v, 2505); }
+                    0x20c81 => { let v = r.value::<u64>()?; r.set(&mut e12, v, 3201); }
+                    0x2081d => { let v = r.enumeration::<OperationStatusEnum>()?; r.set(&mut e13, v, 2077); }
+                    0x20606 => { let v = r.raw()?; r.set(&mut e14, v.map(Box::new), 1542); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6479,7 +11504,7 @@ impl SupplementalFacilityStatus {
                 break;
             }
         }
-        r.required(&e0, 2746);
+        r.required(&e0, 2817);
         let v = Self {
             reference: e0,
             last_updated: e1,
@@ -6526,6 +11551,152 @@ impl SupplementalFacilityStatus {
         if let Some(v) = &self.equipment_operation_status { w.enumeration("afac:equipmentOperationStatus", v.literal())?; }
         if let Some(v) = &self.supplemental_facility_status_extension { w.extension("afac:_supplementalFacilityStatusExtension", v)?; }
         w.end(tag)
+    }
+}
+
+impl SupplementalFacilityStatus {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 15];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        let mut f7 = None;
+        let mut f8 = None;
+        let mut f9 = None;
+        let mut f10 = None;
+        let mut f11 = None;
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                1817 => if r.first(&mut seen[0])? { f0 = com::VersionedReference::read_json(r)?.map(Box::new); },
+                1043 => if r.first(&mut seen[1])? { f1 = r.date_time()?; },
+                1440 => if r.first(&mut seen[2])? { f2 = r.enumeration::<OpeningStatusEnum>()?; },
+                1479 => if r.first(&mut seen[3])? { f3 = r.enumeration::<OperationStatusEnum>()?; },
+                1835 => if r.first(&mut seen[4])? { f4 = r.boolean()?; },
+                2191 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                1358 => if r.first(&mut seen[6])? { f6 = OperatingHours::read_json(r)?; },
+                1359 => if r.first(&mut seen[7])? { f7 = Rates::read_json(r)?; },
+                831 => if r.first(&mut seen[8])? { f8 = com::AnyFault::read_json(r)?; },
+                132 => if r.first(&mut seen[9])? { f9 = r.raw_object()?.map(Box::new); },
+                1784 => if r.first(&mut seen[10])? { f10 = r.number::<u64>()?; },
+                1405 => if r.first(&mut seen[11])? { f11 = r.number::<u64>()?; },
+                2534 => if r.first(&mut seen[12])? { f12 = r.number::<u64>()?; },
+                696 => if r.first(&mut seen[13])? { f13 = r.enumeration::<OperationStatusEnum>()?; },
+                186 => if r.first(&mut seen[14])? { f14 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 1817);
+        Ok(Self {
+            reference: f0,
+            last_updated: f1,
+            opening_status: f2,
+            operation_status: f3,
+            regular_operating_hours_in_force: f4,
+            status_description: f5,
+            new_operating_hours: f6,
+            new_rates: f7,
+            fault: f8,
+            facility_object_status_extension: f9,
+            quantity_override: f10,
+            number_of_subitems_override: f11,
+            vacant_subitems: f12,
+            equipment_operation_status: f13,
+            supplemental_facility_status_extension: f14,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(130)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.reference {
+            Some(v) => {
+                w.key(1817)?;
+                v.write_json(w, Some("FacilityObject"))?;
+            }
+            None => w.absent(1817, w.missing("reference"))?,
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.opening_status {
+            w.key(1440)?;
+            w.enumeration(88, v.literal())?;
+        }
+        if let Some(v) = &self.operation_status {
+            w.key(1479)?;
+            w.enumeration(94, v.literal())?;
+        }
+        if let Some(v) = &self.regular_operating_hours_in_force {
+            w.key(1835)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.status_description {
+            w.key(2191)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.new_operating_hours {
+            w.key(1358)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.new_rates {
+            w.key(1359)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.fault {
+            w.key(831)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.facility_object_status_extension {
+            w.key(132)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.quantity_override {
+            w.key(1784)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.number_of_subitems_override {
+            w.key(1405)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.vacant_subitems {
+            w.key(2534)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.equipment_operation_status {
+            w.key(696)?;
+            w.enumeration(94, v.literal())?;
+        }
+        if let Some(v) = &self.supplemental_facility_status_extension {
+            w.key(186)?;
+            w.extension(v)?;
+        }
+        w.end_object()
     }
 }
 
@@ -6601,12 +11772,12 @@ pub struct SupplementalServiceFacility {
 }
 
 impl SupplementalServiceFacility {
-    const FIELDS: &'static [u32] = &[0x20949, 0x206ad, 0x208ba, 0x20777, 0x2066b, 0x20690, 0x20805, 0x20887, 0x20a2d, 0x20a2c, 0x209c5, 0x208e8, 0x209f8, 0x209d2, 0x20864, 0x206d3, 0x20ab0, 0x206c6, 0x20786, 0x206b8, 0x20497, 0x206dc, 0x20a98, 0x20acc, 0x206c5, 0x20954, 0x205dc, 0x20b33, 0x20984, 0x207a1, 0x205de];
+    const FIELDS: &'static [u32] = &[0x2098b, 0x206d6, 0x208f8, 0x207a8, 0x20694, 0x206b9, 0x20840, 0x208c5, 0x20a73, 0x20a72, 0x20a09, 0x20926, 0x20a3d, 0x20a17, 0x208a0, 0x206fc, 0x20af7, 0x206ef, 0x207b7, 0x206e1, 0x204b7, 0x20705, 0x20adf, 0x20b15, 0x206ee, 0x20996, 0x20605, 0x20b80, 0x209c8, 0x207d2, 0x20607];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x201ff);
-        let a0 = r.req_attr(2159);
-        let a1 = r.req_attr(3149);
+        r.expect_type(0x2020e);
+        let a0 = r.req_attr(2219);
+        let a1 = r.req_attr(3245);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = Vec::new();
@@ -6642,37 +11813,37 @@ impl SupplementalServiceFacility {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20949 => { let v = r.multilingual()?; r.set(&mut e0, v, 2377); }
-                    0x206ad => { let v = r.multilingual()?; e1.extend(v); }
-                    0x208ba => { let v = r.date_time()?; r.set(&mut e2, v, 2234); }
-                    0x20777 => { let v = r.multilingual()?; r.set(&mut e3, v, 1911); }
-                    0x2066b => { let v = r.enumeration::<AccessibilityEnum>()?; e4.extend(v); }
-                    0x20690 => { let v = r.multilingual()?; e5.extend(v); }
-                    0x20805 => { let v = Some(ExternalIdentifier::read(r)?); e6.extend(v); }
-                    0x20887 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
-                    0x20a2d => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
-                    0x20a2c => { let v = Some(Image::read(r)?); e9.extend(v); }
-                    0x209c5 => { let v = OperatingHours::read(r)?; r.set(&mut e10, v, 2501); }
-                    0x208e8 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2280); }
-                    0x209f8 => { let v = Organisation::read(r)?; r.set(&mut e12, v, 2552); }
-                    0x209d2 => { let v = Organisation::read(r)?; r.set(&mut e13, v, 2514); }
-                    0x20864 => { let v = Organisation::read(r)?; r.set(&mut e14, v, 2148); }
-                    0x206d3 => { let v = AnyAssociatedFacility::read(r)?; e15.extend(v); }
-                    0x20ab0 => { let v = Rates::read(r)?; r.set(&mut e16, v, 2736); }
-                    0x206c6 => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
-                    0x20786 => { let v = Some(Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1926); }
-                    0x206b8 => { let v = Some(Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1720); }
-                    0x20497 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1175); }
-                    0x206dc => { let v = r.enumeration::<AvailabilityEnum>()?; r.set(&mut e21, v, 1756); }
-                    0x20a98 => { let v = r.value::<u64>()?; r.set(&mut e22, v, 2712); }
-                    0x20acc => { let v = r.value::<bool>()?; r.set(&mut e23, v, 2764); }
-                    0x206c5 => { let v = r.enumeration::<UserTypeEnum>()?; e24.extend(v); }
-                    0x20954 => { let v = r.value::<bool>()?; r.set(&mut e25, v, 2388); }
-                    0x205dc => { let v = r.raw()?; r.set(&mut e26, v.map(Box::new), 1500); }
-                    0x20b33 => { let v = r.enumeration::<ServiceFacilityTypeEnum>()?; r.set(&mut e27, v, 2867); }
-                    0x20984 => { let v = r.value::<u64>()?; r.set(&mut e28, v, 2436); }
-                    0x207a1 => { let v = r.value::<u64>()?; r.set(&mut e29, v, 1953); }
-                    0x205de => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1502); }
+                    0x2098b => { let v = r.multilingual()?; r.set(&mut e0, v, 2443); }
+                    0x206d6 => { let v = r.multilingual()?; e1.extend(v); }
+                    0x208f8 => { let v = r.date_time()?; r.set(&mut e2, v, 2296); }
+                    0x207a8 => { let v = r.multilingual()?; r.set(&mut e3, v, 1960); }
+                    0x20694 => { let v = r.enumeration::<AccessibilityEnum>()?; e4.extend(v); }
+                    0x206b9 => { let v = r.multilingual()?; e5.extend(v); }
+                    0x20840 => { let v = Some(ExternalIdentifier::read(r)?); e6.extend(v); }
+                    0x208c5 => { let v = Some(com::UrlLink::read(r)?); e7.extend(v); }
+                    0x20a73 => { let v = Some(com::UrlLink::read(r)?); e8.extend(v); }
+                    0x20a72 => { let v = Some(Image::read(r)?); e9.extend(v); }
+                    0x20a09 => { let v = OperatingHours::read(r)?; r.set(&mut e10, v, 2569); }
+                    0x20926 => { let v = loc::LocationReference::read(r)?; r.set(&mut e11, v, 2342); }
+                    0x20a3d => { let v = Organisation::read(r)?; r.set(&mut e12, v, 2621); }
+                    0x20a17 => { let v = Organisation::read(r)?; r.set(&mut e13, v, 2583); }
+                    0x208a0 => { let v = Organisation::read(r)?; r.set(&mut e14, v, 2208); }
+                    0x206fc => { let v = AnyAssociatedFacility::read(r)?; e15.extend(v); }
+                    0x20af7 => { let v = Rates::read(r)?; r.set(&mut e16, v, 2807); }
+                    0x206ef => { let v = Some(com::VehicleCharacteristics::read(r)?); e17.extend(v); }
+                    0x207b7 => { let v = Some(Dimension::read(r)?); r.set(&mut e18, v.map(Box::new), 1975); }
+                    0x206e1 => { let v = Some(Amenities::read(r)?); r.set(&mut e19, v.map(Box::new), 1761); }
+                    0x204b7 => { let v = r.raw()?; r.set(&mut e20, v.map(Box::new), 1207); }
+                    0x20705 => { let v = r.enumeration::<AvailabilityEnum>()?; r.set(&mut e21, v, 1797); }
+                    0x20adf => { let v = r.value::<u64>()?; r.set(&mut e22, v, 2783); }
+                    0x20b15 => { let v = r.value::<bool>()?; r.set(&mut e23, v, 2837); }
+                    0x206ee => { let v = r.enumeration::<UserTypeEnum>()?; e24.extend(v); }
+                    0x20996 => { let v = r.value::<bool>()?; r.set(&mut e25, v, 2454); }
+                    0x20605 => { let v = r.raw()?; r.set(&mut e26, v.map(Box::new), 1541); }
+                    0x20b80 => { let v = r.enumeration::<ServiceFacilityTypeEnum>()?; r.set(&mut e27, v, 2944); }
+                    0x209c8 => { let v = r.value::<u64>()?; r.set(&mut e28, v, 2504); }
+                    0x207d2 => { let v = r.value::<u64>()?; r.set(&mut e29, v, 2002); }
+                    0x20607 => { let v = r.raw()?; r.set(&mut e30, v.map(Box::new), 1543); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6681,7 +11852,7 @@ impl SupplementalServiceFacility {
                 break;
             }
         }
-        r.required(&e27, 2867);
+        r.required(&e27, 2944);
         let v = Self {
             id: a0,
             version: a1,
@@ -6773,6 +11944,336 @@ impl SupplementalServiceFacility {
     }
 }
 
+impl SupplementalServiceFacility {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 33];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = Vec::new();
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = Vec::new();
+        let mut f7 = Vec::new();
+        let mut f8 = Vec::new();
+        let mut f9 = Vec::new();
+        let mut f10 = Vec::new();
+        let mut f11 = Vec::new();
+        let mut f12 = None;
+        let mut f13 = None;
+        let mut f14 = None;
+        let mut f15 = None;
+        let mut f16 = None;
+        let mut f17 = Vec::new();
+        let mut f18 = None;
+        let mut f19 = Vec::new();
+        let mut f20 = None;
+        let mut f21 = None;
+        let mut f22 = None;
+        let mut f23 = None;
+        let mut f24 = None;
+        let mut f25 = None;
+        let mut f26 = Vec::new();
+        let mut f27 = None;
+        let mut f28 = None;
+        let mut f29 = None;
+        let mut f30 = None;
+        let mut f31 = None;
+        let mut f32 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                964 => if r.first(&mut seen[0])? { f0 = r.string()?; },
+                2578 => if r.first(&mut seen[1])? { f1 = r.string()?; },
+                1345 => if r.first(&mut seen[2])? { f2 = r.multilingual()?; },
+                225 => if r.first(&mut seen[3])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f3.push(v); } } },
+                1043 => if r.first(&mut seen[4])? { f4 = r.date_time()?; },
+                545 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                25 => if r.first(&mut seen[6])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<AccessibilityEnum>()? { f6.push(v); } } },
+                61 => if r.first(&mut seen[7])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.multilingual()? { f7.push(v); } } },
+                739 => if r.first(&mut seen[8])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = ExternalIdentifier::read_json(r)? { f8.push(v); } } },
+                992 => if r.first(&mut seen[9])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f9.push(v); } } },
+                1573 => if r.first(&mut seen[10])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::UrlLink::read_json(r)? { f10.push(v); } } },
+                1572 => if r.first(&mut seen[11])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = Image::read_json(r)? { f11.push(v); } } },
+                1469 => if r.first(&mut seen[12])? { f12 = OperatingHours::read_json(r)?; },
+                1240 => if r.first(&mut seen[13])? { f13 = loc::LocationReference::read_json(r)?; },
+                1520 => if r.first(&mut seen[14])? { f14 = Organisation::read_json(r)?; },
+                1483 => if r.first(&mut seen[15])? { f15 = Organisation::read_json(r)?; },
+                953 => if r.first(&mut seen[16])? { f16 = Organisation::read_json(r)?; },
+                263 => if r.first(&mut seen[17])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = AnyAssociatedFacility::read_json(r)? { f17.push(v); } } },
+                1807 => if r.first(&mut seen[18])? { f18 = Rates::read_json(r)?; },
+                250 => if r.first(&mut seen[19])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = com::VehicleCharacteristics::read_json(r)? { f19.push(v); } } },
+                560 => if r.first(&mut seen[20])? { f20 = Dimension::read_json(r)?.map(Box::new); },
+                236 => if r.first(&mut seen[21])? { f21 = Amenities::read_json(r)?.map(Box::new); },
+                131 => if r.first(&mut seen[22])? { f22 = r.raw_object()?.map(Box::new); },
+                272 => if r.first(&mut seen[23])? { f23 = r.enumeration::<AvailabilityEnum>()?; },
+                1783 => if r.first(&mut seen[24])? { f24 = r.number::<u64>()?; },
+                1837 => if r.first(&mut seen[25])? { f25 = r.boolean()?; },
+                249 => if r.first(&mut seen[26])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.enumeration::<UserTypeEnum>()? { f26.push(v); } } },
+                1355 => if r.first(&mut seen[27])? { f27 = r.boolean()?; },
+                185 => if r.first(&mut seen[28])? { f28 = r.raw_object()?.map(Box::new); },
+                2031 => if r.first(&mut seen[29])? { f29 = r.enumeration::<ServiceFacilityTypeEnum>()?; },
+                1404 => if r.first(&mut seen[30])? { f30 = r.number::<u64>()?; },
+                587 => if r.first(&mut seen[31])? { f31 = r.number::<u64>()?; },
+                188 => if r.first(&mut seen[32])? { f32 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 964);
+        r.required(&f1, 2578);
+        r.required(&f29, 2031);
+        Ok(Self {
+            id: f0,
+            version: f1,
+            name: f2,
+            alias: f3,
+            last_updated: f4,
+            description: f5,
+            accessibility: f6,
+            additional_information: f7,
+            external_identifier: f8,
+            information_website: f9,
+            photo_url: f10,
+            photo: f11,
+            operating_hours: f12,
+            location_reference: f13,
+            owner: f14,
+            operator: f15,
+            helpdesk: f16,
+            associated_facility: f17,
+            rates: f18,
+            applicable_for_vehicles: f19,
+            dimension: f20,
+            amenities: f21,
+            facility_object_extension: f22,
+            availability: f23,
+            quantity: f24,
+            regularly_cleaned: f25,
+            applicable_for_user: f26,
+            nearby: f27,
+            supplemental_facility_extension: f28,
+            service_facility_type: f29,
+            number_of_subitems: f30,
+            distance_from_origin_facility: f31,
+            supplemental_service_facility_extension: f32,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(131)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.id {
+            Some(v) => {
+                w.key(964)?;
+                w.string(v)?;
+            }
+            None => w.absent(964, w.missing_attr("idG"))?,
+        }
+        match &self.version {
+            Some(v) => {
+                w.key(2578)?;
+                w.string(v)?;
+            }
+            None => w.absent(2578, w.missing_attr("versionG"))?,
+        }
+        if let Some(v) = &self.name {
+            w.key(1345)?;
+            w.multilingual(v)?;
+        }
+        if !self.alias.is_empty() {
+            w.key(225)?;
+            w.begin_array()?;
+            for v in &self.alias {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.last_updated {
+            w.key(1043)?;
+            w.date_time(v)?;
+        }
+        if let Some(v) = &self.description {
+            w.key(545)?;
+            w.multilingual(v)?;
+        }
+        if !self.accessibility.is_empty() {
+            w.key(25)?;
+            w.begin_array()?;
+            for v in &self.accessibility {
+                w.item()?;
+                w.enumeration(53, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if !self.additional_information.is_empty() {
+            w.key(61)?;
+            w.begin_array()?;
+            for v in &self.additional_information {
+                w.item()?;
+                w.multilingual(v)?;
+            }
+            w.end_array()?;
+        }
+        if !self.external_identifier.is_empty() {
+            w.key(739)?;
+            w.begin_array()?;
+            for v in &self.external_identifier {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.information_website.is_empty() {
+            w.key(992)?;
+            w.begin_array()?;
+            for v in &self.information_website {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo_url.is_empty() {
+            w.key(1573)?;
+            w.begin_array()?;
+            for v in &self.photo_url {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if !self.photo.is_empty() {
+            w.key(1572)?;
+            w.begin_array()?;
+            for v in &self.photo {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.operating_hours {
+            w.key(1469)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.location_reference {
+            w.key(1240)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.owner {
+            w.key(1520)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.operator {
+            w.key(1483)?;
+            v.write_json(w)?;
+        }
+        if let Some(v) = &self.helpdesk {
+            w.key(953)?;
+            v.write_json(w)?;
+        }
+        if !self.associated_facility.is_empty() {
+            w.key(263)?;
+            w.begin_array()?;
+            for v in &self.associated_facility {
+                w.item()?;
+                v.write_json(w)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.rates {
+            w.key(1807)?;
+            v.write_json(w)?;
+        }
+        if !self.applicable_for_vehicles.is_empty() {
+            w.key(250)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_vehicles {
+                w.item()?;
+                v.write_json(w, None)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.dimension {
+            w.key(560)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.amenities {
+            w.key(236)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.facility_object_extension {
+            w.key(131)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.availability {
+            w.key(272)?;
+            w.enumeration(62, v.literal())?;
+        }
+        if let Some(v) = &self.quantity {
+            w.key(1783)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.regularly_cleaned {
+            w.key(1837)?;
+            w.boolean(*v)?;
+        }
+        if !self.applicable_for_user.is_empty() {
+            w.key(249)?;
+            w.begin_array()?;
+            for v in &self.applicable_for_user {
+                w.item()?;
+                w.enumeration(144, v.literal())?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.nearby {
+            w.key(1355)?;
+            w.boolean(*v)?;
+        }
+        if let Some(v) = &self.supplemental_facility_extension {
+            w.key(185)?;
+            w.extension(v)?;
+        }
+        match &self.service_facility_type {
+            Some(v) => {
+                w.key(2031)?;
+                w.enumeration(127, v.literal())?;
+            }
+            None => w.absent(2031, w.missing("serviceFacilityType"))?,
+        }
+        if let Some(v) = &self.number_of_subitems {
+            w.key(1404)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.distance_from_origin_facility {
+            w.key(587)?;
+            w.integer(*v)?;
+        }
+        if let Some(v) = &self.supplemental_service_facility_extension {
+            w.key(188)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:Surcharge`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Surcharge {
@@ -6793,10 +12294,10 @@ pub struct Surcharge {
 }
 
 impl Surcharge {
-    const FIELDS: &'static [u32] = &[0x20b99, 0x20c2c, 0x20a9d, 0x20bf8, 0x20ac8, 0x208aa, 0x205e6];
+    const FIELDS: &'static [u32] = &[0x20bf8, 0x20c8c, 0x20ae4, 0x20c57, 0x20b11, 0x208e8, 0x2060f];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20208);
+        r.expect_type(0x20217);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6808,13 +12309,13 @@ impl Surcharge {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20b99 => { let v = r.enumeration::<SurchargeTypeEnum>()?; r.set(&mut e0, v, 2969); }
-                    0x20c2c => { let v = r.value::<Decimal>()?; r.set(&mut e1, v, 3116); }
-                    0x20a9d => { let v = r.value::<f32>()?; r.set(&mut e2, v, 2717); }
-                    0x20bf8 => { let v = r.multilingual()?; r.set(&mut e3, v, 3064); }
-                    0x20ac8 => { let v = r.enumeration::<RefundTypeEnum>()?; r.set(&mut e4, v, 2760); }
-                    0x208aa => { let v = r.multilingual()?; r.set(&mut e5, v, 2218); }
-                    0x205e6 => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1510); }
+                    0x20bf8 => { let v = r.enumeration::<SurchargeTypeEnum>()?; r.set(&mut e0, v, 3064); }
+                    0x20c8c => { let v = r.value::<Decimal>()?; r.set(&mut e1, v, 3212); }
+                    0x20ae4 => { let v = r.value::<f32>()?; r.set(&mut e2, v, 2788); }
+                    0x20c57 => { let v = r.multilingual()?; r.set(&mut e3, v, 3159); }
+                    0x20b11 => { let v = r.enumeration::<RefundTypeEnum>()?; r.set(&mut e4, v, 2833); }
+                    0x208e8 => { let v = r.multilingual()?; r.set(&mut e5, v, 2280); }
+                    0x2060f => { let v = r.raw()?; r.set(&mut e6, v.map(Box::new), 1551); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6823,7 +12324,7 @@ impl Surcharge {
                 break;
             }
         }
-        r.required(&e0, 2969);
+        r.required(&e0, 3064);
         let v = Self {
             surcharge_type: e0,
             value: e1,
@@ -6857,6 +12358,96 @@ impl Surcharge {
     }
 }
 
+impl Surcharge {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 7];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        let mut f6 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2227 => if r.first(&mut seen[0])? { f0 = r.enumeration::<SurchargeTypeEnum>()?; },
+                2545 => if r.first(&mut seen[1])? { f1 = r.number::<Decimal>()?; },
+                1788 => if r.first(&mut seen[2])? { f2 = r.number::<f32>()?; },
+                2384 => if r.first(&mut seen[3])? { f3 = r.multilingual()?; },
+                1833 => if r.first(&mut seen[4])? { f4 = r.enumeration::<RefundTypeEnum>()?; },
+                1027 => if r.first(&mut seen[5])? { f5 = r.multilingual()?; },
+                189 => if r.first(&mut seen[6])? { f6 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2227);
+        Ok(Self {
+            surcharge_type: f0,
+            value: f1,
+            rate: f2,
+            trigger: f3,
+            refund: f4,
+            label_for_display: f5,
+            surcharge_extension: f6,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(132)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.surcharge_type {
+            Some(v) => {
+                w.key(2227)?;
+                w.enumeration(133, v.literal())?;
+            }
+            None => w.absent(2227, w.missing("surchargeType"))?,
+        }
+        if let Some(v) = &self.value {
+            w.key(2545)?;
+            w.digits("value", v, 8, 2)?; w.decimal(v)?;
+        }
+        if let Some(v) = &self.rate {
+            w.key(1788)?;
+            w.float32(*v)?;
+        }
+        if let Some(v) = &self.trigger {
+            w.key(2384)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.refund {
+            w.key(1833)?;
+            w.enumeration(121, v.literal())?;
+        }
+        if let Some(v) = &self.label_for_display {
+            w.key(1027)?;
+            w.multilingual(v)?;
+        }
+        if let Some(v) = &self.surcharge_extension {
+            w.key(189)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:TimesOfDay`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TimesOfDay {
@@ -6875,10 +12466,10 @@ pub struct TimesOfDay {
 }
 
 impl TimesOfDay {
-    const FIELDS: &'static [u32] = &[0x20423, 0x207b5, 0x208bd, 0x207b3, 0x208bb, 0x205f7];
+    const FIELDS: &'static [u32] = &[0x2043e, 0x207e7, 0x208fb, 0x207e5, 0x208f9, 0x20620];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20219);
+        r.expect_type(0x20228);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6889,12 +12480,12 @@ impl TimesOfDay {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20423 => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1059); }
-                    0x207b5 => { let v = r.value::<Time>()?; r.set(&mut e1, v, 1973); }
-                    0x208bd => { let v = r.value::<Time>()?; r.set(&mut e2, v, 2237); }
-                    0x207b3 => { let v = r.value::<Time>()?; r.set(&mut e3, v, 1971); }
-                    0x208bb => { let v = r.value::<Time>()?; r.set(&mut e4, v, 2235); }
-                    0x205f7 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1527); }
+                    0x2043e => { let v = r.raw()?; r.set(&mut e0, v.map(Box::new), 1086); }
+                    0x207e7 => { let v = r.value::<Time>()?; r.set(&mut e1, v, 2023); }
+                    0x208fb => { let v = r.value::<Time>()?; r.set(&mut e2, v, 2299); }
+                    0x207e5 => { let v = r.value::<Time>()?; r.set(&mut e3, v, 2021); }
+                    0x208f9 => { let v = r.value::<Time>()?; r.set(&mut e4, v, 2297); }
+                    0x20620 => { let v = r.raw()?; r.set(&mut e5, v.map(Box::new), 1568); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6931,6 +12522,85 @@ impl TimesOfDay {
     }
 }
 
+impl TimesOfDay {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 6];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        let mut f5 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                114 => if r.first(&mut seen[0])? { f0 = r.raw_object()?.map(Box::new); },
+                608 => if r.first(&mut seen[1])? { f1 = r.text::<Time>()?; },
+                1046 => if r.first(&mut seen[2])? { f2 = r.text::<Time>()?; },
+                606 => if r.first(&mut seen[3])? { f3 = r.text::<Time>()?; },
+                1044 => if r.first(&mut seen[4])? { f4 = r.text::<Time>()?; },
+                191 => if r.first(&mut seen[5])? { f5 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            assigned_right_time_relative_extension: f0,
+            earliest_start: f1,
+            latest_start: f2,
+            earliest_end: f3,
+            latest_end: f4,
+            times_of_day_extension: f5,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(134)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.assigned_right_time_relative_extension {
+            w.key(114)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.earliest_start {
+            w.key(608)?;
+            w.time(v)?;
+        }
+        if let Some(v) = &self.latest_start {
+            w.key(1046)?;
+            w.time(v)?;
+        }
+        if let Some(v) = &self.earliest_end {
+            w.key(606)?;
+            w.time(v)?;
+        }
+        if let Some(v) = &self.latest_end {
+            w.key(1044)?;
+            w.time(v)?;
+        }
+        if let Some(v) = &self.times_of_day_extension {
+            w.key(191)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:UndefinedOperatingHours`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct UndefinedOperatingHours {
@@ -6943,10 +12613,10 @@ pub struct UndefinedOperatingHours {
 }
 
 impl UndefinedOperatingHours {
-    const FIELDS: &'static [u32] = &[0x2071f, 0x2052a, 0x2062a];
+    const FIELDS: &'static [u32] = &[0x2074a, 0x2054d, 0x20653];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2024c);
+        r.expect_type(0x2025b);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -6954,9 +12624,9 @@ impl UndefinedOperatingHours {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2071f => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1823); }
-                    0x2052a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1322); }
-                    0x2062a => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1578); }
+                    0x2074a => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1866); }
+                    0x2054d => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1357); }
+                    0x20653 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1619); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -6987,6 +12657,64 @@ impl UndefinedOperatingHours {
     }
 }
 
+impl UndefinedOperatingHours {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                344 => if r.first(&mut seen[0])? { f0 = ClosureInformation::read_json(r)?.map(Box::new); },
+                145 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                193 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            closure_information: f0,
+            operating_hours_extension: f1,
+            undefined_operating_hours_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(136)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.closure_information {
+            w.key(344)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.operating_hours_extension {
+            w.key(145)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.undefined_operating_hours_extension {
+            w.key(193)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:UndefinedOrganisation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct UndefinedOrganisation {
@@ -6999,10 +12727,10 @@ pub struct UndefinedOrganisation {
 }
 
 impl UndefinedOrganisation {
-    const FIELDS: &'static [u32] = &[0x2083f, 0x20537, 0x2062b];
+    const FIELDS: &'static [u32] = &[0x2087b, 0x2055a, 0x20654];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2024d);
+        r.expect_type(0x2025c);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7010,9 +12738,9 @@ impl UndefinedOrganisation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2083f => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2111); }
-                    0x20537 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1335); }
-                    0x2062b => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1579); }
+                    0x2087b => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2171); }
+                    0x2055a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1370); }
+                    0x20654 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1620); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7043,6 +12771,64 @@ impl UndefinedOrganisation {
     }
 }
 
+impl UndefinedOrganisation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                916 => if r.first(&mut seen[0])? { f0 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                153 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                195 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            general_time_validity: f0,
+            organisation_extension: f1,
+            undefined_organisation_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(137)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.general_time_validity {
+            w.key(916)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.organisation_extension {
+            w.key(153)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.undefined_organisation_extension {
+            w.key(195)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:UnknownOperatingHours`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct UnknownOperatingHours {
@@ -7055,10 +12841,10 @@ pub struct UnknownOperatingHours {
 }
 
 impl UnknownOperatingHours {
-    const FIELDS: &'static [u32] = &[0x2071f, 0x2052a, 0x2062c];
+    const FIELDS: &'static [u32] = &[0x2074a, 0x2054d, 0x20655];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2024e);
+        r.expect_type(0x2025d);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7066,9 +12852,9 @@ impl UnknownOperatingHours {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2071f => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1823); }
-                    0x2052a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1322); }
-                    0x2062c => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1580); }
+                    0x2074a => { let v = Some(ClosureInformation::read(r)?); r.set(&mut e0, v.map(Box::new), 1866); }
+                    0x2054d => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1357); }
+                    0x20655 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1621); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7099,6 +12885,64 @@ impl UnknownOperatingHours {
     }
 }
 
+impl UnknownOperatingHours {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                344 => if r.first(&mut seen[0])? { f0 = ClosureInformation::read_json(r)?.map(Box::new); },
+                145 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                197 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            closure_information: f0,
+            operating_hours_extension: f1,
+            unknown_operating_hours_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(139)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.closure_information {
+            w.key(344)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.operating_hours_extension {
+            w.key(145)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.unknown_operating_hours_extension {
+            w.key(197)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:UnknownOrganisation`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct UnknownOrganisation {
@@ -7111,10 +12955,10 @@ pub struct UnknownOrganisation {
 }
 
 impl UnknownOrganisation {
-    const FIELDS: &'static [u32] = &[0x2083f, 0x20537, 0x2062d];
+    const FIELDS: &'static [u32] = &[0x2087b, 0x2055a, 0x20656];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x2024f);
+        r.expect_type(0x2025e);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
@@ -7122,9 +12966,9 @@ impl UnknownOrganisation {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x2083f => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2111); }
-                    0x20537 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1335); }
-                    0x2062d => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1581); }
+                    0x2087b => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e0, v.map(Box::new), 2171); }
+                    0x2055a => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1370); }
+                    0x20656 => { let v = r.raw()?; r.set(&mut e2, v.map(Box::new), 1622); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7155,6 +12999,64 @@ impl UnknownOrganisation {
     }
 }
 
+impl UnknownOrganisation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 3];
+        let mut f0 = None;
+        let mut f1 = None;
+        let mut f2 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                916 => if r.first(&mut seen[0])? { f0 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                153 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                199 => if r.first(&mut seen[2])? { f2 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            general_time_validity: f0,
+            organisation_extension: f1,
+            unknown_organisation_extension: f2,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(140)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if let Some(v) = &self.general_time_validity {
+            w.key(916)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.organisation_extension {
+            w.key(153)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.unknown_organisation_extension {
+            w.key(199)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:UnknownRates`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct UnknownRates {
@@ -7171,10 +13073,10 @@ pub struct UnknownRates {
 }
 
 impl UnknownRates {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20a10, 0x209f1, 0x2058d, 0x2062e];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20a56, 0x20a36, 0x205b0, 0x20657];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20250);
+        r.expect_type(0x2025f);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -7184,11 +13086,11 @@ impl UnknownRates {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; e0.extend(v); }
-                    0x20a10 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2576); }
-                    0x209f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2545); }
-                    0x2058d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1421); }
-                    0x2062e => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1582); }
+                    0x206e8 => { let v = r.string()?; e0.extend(v); }
+                    0x20a56 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2646); }
+                    0x20a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2614); }
+                    0x205b0 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1456); }
+                    0x20657 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1623); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7223,6 +13125,83 @@ impl UnknownRates {
     }
 }
 
+impl UnknownRates {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                243 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f0.push(v); } } },
+                1545 => if r.first(&mut seen[1])? { f1 = Payment::read_json(r)?.map(Box::new); },
+                1513 => if r.first(&mut seen[2])? { f2 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                173 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                201 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            applicable_currency: f0,
+            payment: f1,
+            overall_period: f2,
+            rates_extension: f3,
+            unknown_rates_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(141)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.applicable_currency.is_empty() {
+            w.key(243)?;
+            w.begin_array()?;
+            for v in &self.applicable_currency {
+                w.item()?;
+                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.payment {
+            w.key(1545)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rates_extension {
+            w.key(173)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.unknown_rates_extension {
+            w.key(201)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:UnspecifiedRates`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct UnspecifiedRates {
@@ -7239,10 +13218,10 @@ pub struct UnspecifiedRates {
 }
 
 impl UnspecifiedRates {
-    const FIELDS: &'static [u32] = &[0x206bf, 0x20a10, 0x209f1, 0x2058d, 0x2062f];
+    const FIELDS: &'static [u32] = &[0x206e8, 0x20a56, 0x20a36, 0x205b0, 0x20658];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20251);
+        r.expect_type(0x20260);
         r.attrs_done();
         let mut e0 = Vec::new();
         let mut e1 = None;
@@ -7252,11 +13231,11 @@ impl UnspecifiedRates {
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x206bf => { let v = r.string()?; e0.extend(v); }
-                    0x20a10 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2576); }
-                    0x209f1 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2545); }
-                    0x2058d => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1421); }
-                    0x2062f => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1583); }
+                    0x206e8 => { let v = r.string()?; e0.extend(v); }
+                    0x20a56 => { let v = Some(Payment::read(r)?); r.set(&mut e1, v.map(Box::new), 2646); }
+                    0x20a36 => { let v = Some(com::OverallPeriod::read(r)?); r.set(&mut e2, v.map(Box::new), 2614); }
+                    0x205b0 => { let v = r.raw()?; r.set(&mut e3, v.map(Box::new), 1456); }
+                    0x20658 => { let v = r.raw()?; r.set(&mut e4, v.map(Box::new), 1624); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7291,6 +13270,83 @@ impl UnspecifiedRates {
     }
 }
 
+impl UnspecifiedRates {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 5];
+        let mut f0 = Vec::new();
+        let mut f1 = None;
+        let mut f2 = None;
+        let mut f3 = None;
+        let mut f4 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                243 => if r.first(&mut seen[0])? { let mut l = r.list()?; while r.item(&mut l)? { if let Some(v) = r.string()? { f0.push(v); } } },
+                1545 => if r.first(&mut seen[1])? { f1 = Payment::read_json(r)?.map(Box::new); },
+                1513 => if r.first(&mut seen[2])? { f2 = com::OverallPeriod::read_json(r)?.map(Box::new); },
+                173 => if r.first(&mut seen[3])? { f3 = r.raw_object()?.map(Box::new); },
+                203 => if r.first(&mut seen[4])? { f4 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        Ok(Self {
+            applicable_currency: f0,
+            payment: f1,
+            overall_period: f2,
+            rates_extension: f3,
+            unspecified_rates_extension: f4,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(142)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        if !self.applicable_currency.is_empty() {
+            w.key(243)?;
+            w.begin_array()?;
+            for v in &self.applicable_currency {
+                w.item()?;
+                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            }
+            w.end_array()?;
+        }
+        if let Some(v) = &self.payment {
+            w.key(1545)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.overall_period {
+            w.key(1513)?;
+            v.write_json(w, None)?;
+        }
+        if let Some(v) = &self.rates_extension {
+            w.key(173)?;
+            w.extension(v)?;
+        }
+        if let Some(v) = &self.unspecified_rates_extension {
+            w.key(203)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// XML type `afac:UserQualification`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct UserQualification {
@@ -7301,18 +13357,18 @@ pub struct UserQualification {
 }
 
 impl UserQualification {
-    const FIELDS: &'static [u32] = &[0x20c1b, 0x20633];
+    const FIELDS: &'static [u32] = &[0x20c7b, 0x2065c];
 
     pub(crate) fn read(r: &mut Xml<'_>) -> Result<Self, Error> {
-        r.expect_type(0x20255);
+        r.expect_type(0x20264);
         r.attrs_done();
         let mut e0 = None;
         let mut e1 = None;
         while let Some(mut key) = r.next_child()? {
             loop {
                 match key {
-                    0x20c1b => { let v = r.enumeration::<UserTypeEnum>()?; r.set(&mut e0, v, 3099); }
-                    0x20633 => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1587); }
+                    0x20c7b => { let v = r.enumeration::<UserTypeEnum>()?; r.set(&mut e0, v, 3195); }
+                    0x2065c => { let v = r.raw()?; r.set(&mut e1, v.map(Box::new), 1628); }
                     _ => match r.fallback(key, Self::FIELDS) {
                         Some(k) => { key = k; continue; }
                         None => r.skip_unknown(key)?,
@@ -7321,7 +13377,7 @@ impl UserQualification {
                 break;
             }
         }
-        r.required(&e0, 3099);
+        r.required(&e0, 3195);
         let v = Self {
             user_group: e0,
             user_qualification_extension: e1,
@@ -7345,6 +13401,61 @@ impl UserQualification {
     }
 }
 
+impl UserQualification {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        Self::read_json_members(r, None).map(Some)
+    }
+
+    /// Reads the members of an object that is already open; `pending` is a member key read
+    /// already.
+    pub(crate) fn read_json_members(r: &mut JsonReader<'_>, mut pending: Option<u32>) -> Result<Self, Error> {
+        let mut seen = [false; 2];
+        let mut f0 = None;
+        let mut f1 = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                2528 => if r.first(&mut seen[0])? { f0 = r.enumeration::<UserTypeEnum>()?; },
+                204 => if r.first(&mut seen[1])? { f1 = r.raw_object()?.map(Box::new); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        r.required(&f0, 2528);
+        Ok(Self {
+            user_group: f0,
+            user_qualification_extension: f1,
+        })
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>, target_class: Option<&'static str>) -> Result<(), Error> {
+        w.begin_object(143)?;
+        if let Some(class) = target_class {
+            w.target_class(class)?;
+        }
+        match &self.user_group {
+            Some(v) => {
+                w.key(2528)?;
+                w.enumeration(144, v.literal())?;
+            }
+            None => w.absent(2528, w.missing("userGroup"))?,
+        }
+        if let Some(v) = &self.user_qualification_extension {
+            w.key(204)?;
+            w.extension(v)?;
+        }
+        w.end_object()
+    }
+}
+
 /// Any concrete kind of XML type `afac:AnOrganisation`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyAnOrganisation {
@@ -7361,8 +13472,8 @@ impl AnyAnOrganisation {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x20031) => Self::AnOrganisation(Box::new(AnOrganisation::read(r)?)),
-            Some(0x201ae) => Self::ReferenceableOrganisation(Box::new(ReferenceableOrganisation::read(r)?)),
+            Some(0x20032) => Self::AnOrganisation(Box::new(AnOrganisation::read(r)?)),
+            Some(0x201b7) => Self::ReferenceableOrganisation(Box::new(ReferenceableOrganisation::read(r)?)),
             None => Self::AnOrganisation(Box::new(AnOrganisation::read(r)?)),
             _ => {
                 r.unknown_type_as("AnOrganisation");
@@ -7541,6 +13652,66 @@ impl AnyAnOrganisation {
     }
 }
 
+impl AnyAnOrganisation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 112 | 176) {
+                return AnOrganisation::read_json_members(r, Some(key)).map(|v| Some(Self::AnOrganisation(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                112 => if r.first(&mut seen)? { value = AnOrganisation::read_json(r)?.map(|v| Self::AnOrganisation(Box::new(v))); },
+                176 => if r.first(&mut seen)? { value = ReferenceableOrganisation::read_json(r)?.map(|v| Self::ReferenceableOrganisation(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of AnOrganisation in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::AnOrganisation(v) => {
+                if w.wrapper(112)? {
+                    w.begin_object(58)?;
+                    w.key(112)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ReferenceableOrganisation(v) => {
+                if w.wrapper(176)? {
+                    w.begin_object(58)?;
+                    w.key(176)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `afac:AssignedRightTimeRelative`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AssignedRightTimeRelative {
@@ -7557,8 +13728,8 @@ impl AssignedRightTimeRelative {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x201b5) => Self::RelativeOffsets(Box::new(RelativeOffsets::read(r)?)),
-            Some(0x20219) => Self::TimesOfDay(Box::new(TimesOfDay::read(r)?)),
+            Some(0x201be) => Self::RelativeOffsets(Box::new(RelativeOffsets::read(r)?)),
+            Some(0x20228) => Self::TimesOfDay(Box::new(TimesOfDay::read(r)?)),
             _ => {
                 r.unknown_type("AssignedRightTimeRelative")?;
                 return Ok(None);
@@ -7584,6 +13755,60 @@ impl AssignedRightTimeRelative {
     }
 }
 
+impl AssignedRightTimeRelative {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                178 => if r.first(&mut seen)? { value = RelativeOffsets::read_json(r)?.map(|v| Self::RelativeOffsets(Box::new(v))); },
+                190 => if r.first(&mut seen)? { value = TimesOfDay::read_json(r)?.map(|v| Self::TimesOfDay(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of AssignedRightTimeRelative in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::RelativeOffsets(v) => {
+                if w.wrapper(178)? {
+                    w.begin_object(59)?;
+                    w.key(178)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::TimesOfDay(v) => {
+                if w.wrapper(190)? {
+                    w.begin_object(59)?;
+                    w.key(190)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `afac:AssociatedFacility`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyAssociatedFacility {
@@ -7600,8 +13825,8 @@ impl AnyAssociatedFacility {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x20038) => Self::AssociatedFacility(Box::new(AssociatedFacility::read(r)?)),
-            Some(0x10039) => Self::AssociatedParking(Box::new(aegi::AssociatedParking::read(r)?)),
+            Some(0x20039) => Self::AssociatedFacility(Box::new(AssociatedFacility::read(r)?)),
+            Some(0x1003a) => Self::AssociatedParking(Box::new(aegi::AssociatedParking::read(r)?)),
             None => Self::AssociatedFacility(Box::new(AssociatedFacility::read(r)?)),
             _ => {
                 r.unknown_type_as("AssociatedFacility");
@@ -7652,6 +13877,66 @@ impl AnyAssociatedFacility {
     }
 }
 
+impl AnyAssociatedFacility {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 115 | 71) {
+                return AssociatedFacility::read_json_members(r, Some(key)).map(|v| Some(Self::AssociatedFacility(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                115 => if r.first(&mut seen)? { value = AssociatedFacility::read_json(r)?.map(|v| Self::AssociatedFacility(Box::new(v))); },
+                71 => if r.first(&mut seen)? { value = aegi::AssociatedParking::read_json(r)?.map(|v| Self::AssociatedParking(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of AssociatedFacility in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::AssociatedFacility(v) => {
+                if w.wrapper(115)? {
+                    w.begin_object(61)?;
+                    w.key(115)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::AssociatedParking(v) => {
+                if w.wrapper(71)? {
+                    w.begin_object(61)?;
+                    w.key(71)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `afac:ContactInformation`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyContactInformation {
@@ -7668,8 +13953,8 @@ impl AnyContactInformation {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x2005c) => Self::ContactInformation(Box::new(ContactInformation::read(r)?)),
-            Some(0x2005d) => Self::ContactPerson(Box::new(ContactPerson::read(r)?)),
+            Some(0x2005e) => Self::ContactInformation(Box::new(ContactInformation::read(r)?)),
+            Some(0x2005f) => Self::ContactPerson(Box::new(ContactPerson::read(r)?)),
             None => Self::ContactInformation(Box::new(ContactInformation::read(r)?)),
             _ => {
                 r.unknown_type_as("ContactInformation");
@@ -7728,6 +14013,66 @@ impl AnyContactInformation {
     }
 }
 
+impl AnyContactInformation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 118 | 120) {
+                return ContactInformation::read_json_members(r, Some(key)).map(|v| Some(Self::ContactInformation(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                118 => if r.first(&mut seen)? { value = ContactInformation::read_json(r)?.map(|v| Self::ContactInformation(Box::new(v))); },
+                120 => if r.first(&mut seen)? { value = ContactPerson::read_json(r)?.map(|v| Self::ContactPerson(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of ContactInformation in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::ContactInformation(v) => {
+                if w.wrapper(118)? {
+                    w.begin_object(65)?;
+                    w.key(118)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ContactPerson(v) => {
+                if w.wrapper(120)? {
+                    w.begin_object(65)?;
+                    w.key(120)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `afac:Credential`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyCredential {
@@ -7744,8 +14089,8 @@ impl AnyCredential {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x20064) => Self::Credential(Box::new(Credential::read(r)?)),
-            Some(0x20065) => Self::CredentialAssigned(Box::new(CredentialAssigned::read(r)?)),
+            Some(0x20066) => Self::Credential(Box::new(Credential::read(r)?)),
+            Some(0x20067) => Self::CredentialAssigned(Box::new(CredentialAssigned::read(r)?)),
             None => Self::Credential(Box::new(Credential::read(r)?)),
             _ => {
                 r.unknown_type_as("Credential");
@@ -7788,6 +14133,66 @@ impl AnyCredential {
     }
 }
 
+impl AnyCredential {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 122 | 123) {
+                return Credential::read_json_members(r, Some(key)).map(|v| Some(Self::Credential(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                122 => if r.first(&mut seen)? { value = Credential::read_json(r)?.map(|v| Self::Credential(Box::new(v))); },
+                123 => if r.first(&mut seen)? { value = CredentialAssigned::read_json(r)?.map(|v| Self::CredentialAssigned(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Credential in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::Credential(v) => {
+                if w.wrapper(122)? {
+                    w.begin_object(69)?;
+                    w.key(122)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::CredentialAssigned(v) => {
+                if w.wrapper(123)? {
+                    w.begin_object(69)?;
+                    w.key(123)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `afac:OperatingHours`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum OperatingHours {
@@ -7810,11 +14215,11 @@ impl OperatingHours {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x2012e) => Self::OpenAllHours(Box::new(OpenAllHours::read(r)?)),
-            Some(0x20145) => Self::OperatingHoursByReference(Box::new(OperatingHoursByReference::read(r)?)),
-            Some(0x20147) => Self::OperatingHoursSpecification(Box::new(OperatingHoursSpecification::read(r)?)),
-            Some(0x2024c) => Self::UndefinedOperatingHours(Box::new(UndefinedOperatingHours::read(r)?)),
-            Some(0x2024e) => Self::UnknownOperatingHours(Box::new(UnknownOperatingHours::read(r)?)),
+            Some(0x20137) => Self::OpenAllHours(Box::new(OpenAllHours::read(r)?)),
+            Some(0x2014e) => Self::OperatingHoursByReference(Box::new(OperatingHoursByReference::read(r)?)),
+            Some(0x20150) => Self::OperatingHoursSpecification(Box::new(OperatingHoursSpecification::read(r)?)),
+            Some(0x2025b) => Self::UndefinedOperatingHours(Box::new(UndefinedOperatingHours::read(r)?)),
+            Some(0x2025d) => Self::UnknownOperatingHours(Box::new(UnknownOperatingHours::read(r)?)),
             _ => {
                 r.unknown_type("OperatingHours")?;
                 return Ok(None);
@@ -7857,6 +14262,93 @@ impl OperatingHours {
     }
 }
 
+impl OperatingHours {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                141 => if r.first(&mut seen)? { value = OpenAllHours::read_json(r)?.map(|v| Self::OpenAllHours(Box::new(v))); },
+                143 => if r.first(&mut seen)? { value = OperatingHoursByReference::read_json(r)?.map(|v| Self::OperatingHoursByReference(Box::new(v))); },
+                148 => if r.first(&mut seen)? { value = OperatingHoursSpecification::read_json(r)?.map(|v| Self::OperatingHoursSpecification(Box::new(v))); },
+                192 => if r.first(&mut seen)? { value = UndefinedOperatingHours::read_json(r)?.map(|v| Self::UndefinedOperatingHours(Box::new(v))); },
+                196 => if r.first(&mut seen)? { value = UnknownOperatingHours::read_json(r)?.map(|v| Self::UnknownOperatingHours(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of OperatingHours in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::OpenAllHours(v) => {
+                if w.wrapper(141)? {
+                    w.begin_object(90)?;
+                    w.key(141)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::OperatingHoursByReference(v) => {
+                if w.wrapper(143)? {
+                    w.begin_object(90)?;
+                    w.key(143)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::OperatingHoursSpecification(v) => {
+                if w.wrapper(148)? {
+                    w.begin_object(90)?;
+                    w.key(148)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::UndefinedOperatingHours(v) => {
+                if w.wrapper(192)? {
+                    w.begin_object(90)?;
+                    w.key(192)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::UnknownOperatingHours(v) => {
+                if w.wrapper(196)? {
+                    w.begin_object(90)?;
+                    w.key(196)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `afac:Organisation`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Organisation {
@@ -7879,11 +14371,11 @@ impl Organisation {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x20031) => Self::AnOrganisation(Box::new(AnOrganisation::read(r)?)),
-            Some(0x201ae) => Self::ReferenceableOrganisation(Box::new(ReferenceableOrganisation::read(r)?)),
-            Some(0x20153) => Self::OrganisationByReference(Box::new(OrganisationByReference::read(r)?)),
-            Some(0x2024d) => Self::UndefinedOrganisation(Box::new(UndefinedOrganisation::read(r)?)),
-            Some(0x2024f) => Self::UnknownOrganisation(Box::new(UnknownOrganisation::read(r)?)),
+            Some(0x20032) => Self::AnOrganisation(Box::new(AnOrganisation::read(r)?)),
+            Some(0x201b7) => Self::ReferenceableOrganisation(Box::new(ReferenceableOrganisation::read(r)?)),
+            Some(0x2015c) => Self::OrganisationByReference(Box::new(OrganisationByReference::read(r)?)),
+            Some(0x2025c) => Self::UndefinedOrganisation(Box::new(UndefinedOrganisation::read(r)?)),
+            Some(0x2025e) => Self::UnknownOrganisation(Box::new(UnknownOrganisation::read(r)?)),
             _ => {
                 r.unknown_type("Organisation")?;
                 return Ok(None);
@@ -7926,6 +14418,93 @@ impl Organisation {
     }
 }
 
+impl Organisation {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                112 => if r.first(&mut seen)? { value = AnOrganisation::read_json(r)?.map(|v| Self::AnOrganisation(Box::new(v))); },
+                176 => if r.first(&mut seen)? { value = ReferenceableOrganisation::read_json(r)?.map(|v| Self::ReferenceableOrganisation(Box::new(v))); },
+                151 => if r.first(&mut seen)? { value = OrganisationByReference::read_json(r)?.map(|v| Self::OrganisationByReference(Box::new(v))); },
+                194 => if r.first(&mut seen)? { value = UndefinedOrganisation::read_json(r)?.map(|v| Self::UndefinedOrganisation(Box::new(v))); },
+                198 => if r.first(&mut seen)? { value = UnknownOrganisation::read_json(r)?.map(|v| Self::UnknownOrganisation(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Organisation in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::AnOrganisation(v) => {
+                if w.wrapper(112)? {
+                    w.begin_object(96)?;
+                    w.key(112)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::ReferenceableOrganisation(v) => {
+                if w.wrapper(176)? {
+                    w.begin_object(96)?;
+                    w.key(176)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::OrganisationByReference(v) => {
+                if w.wrapper(151)? {
+                    w.begin_object(96)?;
+                    w.key(151)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::UndefinedOrganisation(v) => {
+                if w.wrapper(194)? {
+                    w.begin_object(96)?;
+                    w.key(194)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::UnknownOrganisation(v) => {
+                if w.wrapper(198)? {
+                    w.begin_object(96)?;
+                    w.key(198)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `afac:RateLineCollection`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnyRateLineCollection {
@@ -7942,8 +14521,8 @@ impl AnyRateLineCollection {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x201a3) => Self::RateLineCollection(Box::new(RateLineCollection::read(r)?)),
-            Some(0x201b6) => Self::RelativeTimeRates(Box::new(RelativeTimeRates::read(r)?)),
+            Some(0x201ac) => Self::RateLineCollection(Box::new(RateLineCollection::read(r)?)),
+            Some(0x201bf) => Self::RelativeTimeRates(Box::new(RelativeTimeRates::read(r)?)),
             None => Self::RateLineCollection(Box::new(RateLineCollection::read(r)?)),
             _ => {
                 r.unknown_type_as("RateLineCollection");
@@ -8082,6 +14661,66 @@ impl AnyRateLineCollection {
     }
 }
 
+impl AnyRateLineCollection {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        // The concrete base may come without its wrapper.
+        if let Some(key) = pending {
+            if !matches!(key, 161 | 180) {
+                return RateLineCollection::read_json_members(r, Some(key)).map(|v| Some(Self::RateLineCollection(Box::new(v))));
+            }
+        }
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                161 => if r.first(&mut seen)? { value = RateLineCollection::read_json(r)?.map(|v| Self::RateLineCollection(Box::new(v))); },
+                180 => if r.first(&mut seen)? { value = RelativeTimeRates::read_json(r)?.map(|v| Self::RelativeTimeRates(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of RateLineCollection in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::RateLineCollection(v) => {
+                if w.wrapper(161)? {
+                    w.begin_object(109)?;
+                    w.key(161)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::RelativeTimeRates(v) => {
+                if w.wrapper(180)? {
+                    w.begin_object(109)?;
+                    w.key(180)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `afac:Rates`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Rates {
@@ -8110,14 +14749,14 @@ impl Rates {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x200b4) => Self::FreeOfCharge(Box::new(FreeOfCharge::read(r)?)),
-            Some(0x200c1) => Self::GeneralRateInformation(Box::new(GeneralRateInformation::read(r)?)),
-            Some(0x201a5) => Self::RateMatrix(Box::new(RateMatrix::read(r)?)),
-            Some(0x201a6) => Self::RateMatrixByReference(Box::new(RateMatrixByReference::read(r)?)),
-            Some(0x201a7) => Self::RateTable(Box::new(RateTable::read(r)?)),
-            Some(0x201a8) => Self::RateTableByReference(Box::new(RateTableByReference::read(r)?)),
-            Some(0x20250) => Self::UnknownRates(Box::new(UnknownRates::read(r)?)),
-            Some(0x20251) => Self::UnspecifiedRates(Box::new(UnspecifiedRates::read(r)?)),
+            Some(0x200ba) => Self::FreeOfCharge(Box::new(FreeOfCharge::read(r)?)),
+            Some(0x200c7) => Self::GeneralRateInformation(Box::new(GeneralRateInformation::read(r)?)),
+            Some(0x201ae) => Self::RateMatrix(Box::new(RateMatrix::read(r)?)),
+            Some(0x201af) => Self::RateMatrixByReference(Box::new(RateMatrixByReference::read(r)?)),
+            Some(0x201b0) => Self::RateTable(Box::new(RateTable::read(r)?)),
+            Some(0x201b1) => Self::RateTableByReference(Box::new(RateTableByReference::read(r)?)),
+            Some(0x2025f) => Self::UnknownRates(Box::new(UnknownRates::read(r)?)),
+            Some(0x20260) => Self::UnspecifiedRates(Box::new(UnspecifiedRates::read(r)?)),
             _ => {
                 r.unknown_type("Rates")?;
                 return Ok(None);
@@ -8197,6 +14836,126 @@ impl Rates {
     }
 }
 
+impl Rates {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                134 => if r.first(&mut seen)? { value = FreeOfCharge::read_json(r)?.map(|v| Self::FreeOfCharge(Box::new(v))); },
+                136 => if r.first(&mut seen)? { value = GeneralRateInformation::read_json(r)?.map(|v| Self::GeneralRateInformation(Box::new(v))); },
+                165 => if r.first(&mut seen)? { value = RateMatrix::read_json(r)?.map(|v| Self::RateMatrix(Box::new(v))); },
+                166 => if r.first(&mut seen)? { value = RateMatrixByReference::read_json(r)?.map(|v| Self::RateMatrixByReference(Box::new(v))); },
+                169 => if r.first(&mut seen)? { value = RateTable::read_json(r)?.map(|v| Self::RateTable(Box::new(v))); },
+                170 => if r.first(&mut seen)? { value = RateTableByReference::read_json(r)?.map(|v| Self::RateTableByReference(Box::new(v))); },
+                200 => if r.first(&mut seen)? { value = UnknownRates::read_json(r)?.map(|v| Self::UnknownRates(Box::new(v))); },
+                202 => if r.first(&mut seen)? { value = UnspecifiedRates::read_json(r)?.map(|v| Self::UnspecifiedRates(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of Rates in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::FreeOfCharge(v) => {
+                if w.wrapper(134)? {
+                    w.begin_object(118)?;
+                    w.key(134)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::GeneralRateInformation(v) => {
+                if w.wrapper(136)? {
+                    w.begin_object(118)?;
+                    w.key(136)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::RateMatrix(v) => {
+                if w.wrapper(165)? {
+                    w.begin_object(118)?;
+                    w.key(165)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::RateMatrixByReference(v) => {
+                if w.wrapper(166)? {
+                    w.begin_object(118)?;
+                    w.key(166)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::RateTable(v) => {
+                if w.wrapper(169)? {
+                    w.begin_object(118)?;
+                    w.key(169)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::RateTableByReference(v) => {
+                if w.wrapper(170)? {
+                    w.begin_object(118)?;
+                    w.key(170)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::UnknownRates(v) => {
+                if w.wrapper(200)? {
+                    w.begin_object(118)?;
+                    w.key(200)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::UnspecifiedRates(v) => {
+                if w.wrapper(202)? {
+                    w.begin_object(118)?;
+                    w.key(202)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+        }
+    }
+}
+
 /// Any concrete kind of XML type `afac:SupplementalFacility`, chosen by `xsi:type`.
 #[derive(Debug, Clone, PartialEq)]
 pub enum SupplementalFacility {
@@ -8215,9 +14974,9 @@ impl SupplementalFacility {
 
     pub(crate) fn read_as(r: &mut Xml<'_>, kind: Option<u32>) -> Result<Option<Self>, Error> {
         Ok(Some(match kind {
-            Some(0x10090) => Self::ElectricChargingEquipment(Box::new(aegi::ElectricChargingEquipment::read(r)?)),
-            Some(0x201fc) => Self::SupplementalEquipment(Box::new(SupplementalEquipment::read(r)?)),
-            Some(0x201ff) => Self::SupplementalServiceFacility(Box::new(SupplementalServiceFacility::read(r)?)),
+            Some(0x10093) => Self::ElectricChargingEquipment(Box::new(aegi::ElectricChargingEquipment::read(r)?)),
+            Some(0x2020b) => Self::SupplementalEquipment(Box::new(SupplementalEquipment::read(r)?)),
+            Some(0x2020e) => Self::SupplementalServiceFacility(Box::new(SupplementalServiceFacility::read(r)?)),
             _ => {
                 r.unknown_type("SupplementalFacility")?;
                 return Ok(None);
@@ -8493,6 +15252,71 @@ impl SupplementalFacility {
             Self::ElectricChargingEquipment(v) => v.write(w, tag, " xsi:type=\"aegi:ElectricChargingEquipment\"", ""),
             Self::SupplementalEquipment(v) => v.write(w, tag, " xsi:type=\"afac:SupplementalEquipment\"", ""),
             Self::SupplementalServiceFacility(v) => v.write(w, tag, " xsi:type=\"afac:SupplementalServiceFacility\"", ""),
+        }
+    }
+}
+
+impl SupplementalFacility {
+    pub(crate) fn read_json(r: &mut JsonReader<'_>) -> Result<Option<Self>, Error> {
+        if !r.begin_object()? {
+            return Ok(None);
+        }
+        let mut pending = r.next_key()?;
+        let mut seen = false;
+        let mut value = None;
+        loop {
+            let key = match pending.take() {
+                Some(key) => key,
+                None => match r.next_key()? {
+                    Some(key) => key,
+                    None => break,
+                },
+            };
+            match key {
+                77 => if r.first(&mut seen)? { value = aegi::ElectricChargingEquipment::read_json(r)?.map(|v| Self::ElectricChargingEquipment(Box::new(v))); },
+                183 => if r.first(&mut seen)? { value = SupplementalEquipment::read_json(r)?.map(|v| Self::SupplementalEquipment(Box::new(v))); },
+                187 => if r.first(&mut seen)? { value = SupplementalServiceFacility::read_json(r)?.map(|v| Self::SupplementalServiceFacility(Box::new(v))); },
+                _ => r.skip_unknown()?,
+            }
+        }
+        if !seen {
+            r.warn(WarningKind::UnknownType, "no known kind of SupplementalFacility in its wrapper".to_owned());
+        }
+        Ok(value)
+    }
+
+    pub(crate) fn write_json(&self, w: &mut JsonWriter<'_>) -> Result<(), Error> {
+        match self {
+            Self::ElectricChargingEquipment(v) => {
+                if w.wrapper(77)? {
+                    w.begin_object(129)?;
+                    w.key(77)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SupplementalEquipment(v) => {
+                if w.wrapper(183)? {
+                    w.begin_object(129)?;
+                    w.key(183)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
+            Self::SupplementalServiceFacility(v) => {
+                if w.wrapper(187)? {
+                    w.begin_object(129)?;
+                    w.key(187)?;
+                    v.write_json(w, None)?;
+                    w.end_object()
+                } else {
+                    v.write_json(w, None)
+                }
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 +++
 title = "datex2"
-description = "DATEX II for Rust: read, stream and write European road traffic and travel information (DATEX II v3 XML) as typed data. Tolerant reader, strict writer, tested on national feeds."
+description = "DATEX II for Rust: read, stream and write European road traffic and travel information (DATEX II v3, XML and JSON) as typed data, including AFIR charging data for the Mobilithek. Tolerant reader, strict writer, tested on national feeds."
 template = "index.html"
 +++
 

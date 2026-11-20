@@ -1,6 +1,6 @@
 +++
 title = "Tested feeds and limits"
-description = "The national DATEX II v3 feeds datex2 was tested on (Netherlands, Finland, Spain, France, Belgium), what was not verified, and the known limits of this release."
+description = "The national DATEX II v3 feeds datex2 was tested on (Netherlands, Finland, Spain, France, Belgium, and AFIR charging data from Germany's Mobilithek), what was not verified, and the known limits of this release."
 weight = 100
 
 [extra]
@@ -23,6 +23,16 @@ sources read without error, and streaming them gives the same records as reading
 | France, DiaLog | Traffic regulations | Unprefixed type names |
 | Belgium, Vlaams Verkeerscentrum | Situations | No `xsi:type` on the payload; `situation` in the payload's namespace |
 
+### JSON from the Mobilithek
+
+Twelve AFIR recharging feeds from the [Mobilithek](https://mobilithek.info/), Germany's National
+Access Point, static and dynamic, in the AFIR Recharging profile's JSON. All read without error.
+Files cut off at 2 MB report the cut as a syntax error.
+
+What the reader reports on them: a member only the profile has (`refillPointByReference`, 123
+times in one feed), two location kinds in one wrapper where the model holds one (333 times in
+one feed), and one feed's own schema faults.
+
 ## Written back
 
 Of the 32 publications in those samples, the strict [writer](@/docs/writing.md) accepts 19.
@@ -30,6 +40,19 @@ Each of them reads back as an equal value, and `xmllint` accepts the 14 that are
 validate in a test run. The other 13 are refused because they are not valid against the 3.7
 schema: required content is missing (7), a value has a form the schema forbids (4), or a
 required list is empty (2).
+
+## Written as JSON
+
+Of the same 32 publications, the 3.7 JSON writer accepts 15. The official 3.7 JSON schemas accept
+the 11 small enough to validate in a test run, and each reads back as an equal value. Besides the
+faults the XML writer refuses, JSON refuses language codes that are not two lowercase letters
+(5) and extension content read from XML (6), which [stays in its
+encoding](@/docs/json.md#extension-content-stays-in-its-encoding).
+
+Of the twelve Mobilithek feeds, nine are written back for the profile; the profile's schemas
+accept each, and each reads back as an equal value. Three are refused: two give a time zone as
+a name (`Europe/Berlin`) where the profile describes an offset, one has a price with ten decimal
+places.
 
 ## Not verified
 
@@ -44,9 +67,10 @@ If a feed you use fails or loses data, please
 
 ## Known limits {#known-limits}
 
-- **Version 3 XML only.** DATEX II version 2, which France (Bison Futé), Luxembourg,
-  Switzerland and most German sources still publish, is not read. Version 1 neither. The JSON
-  encoding of 3.7, used for much German charging-point data, is not read or written.
+- **Version 3 only.** DATEX II version 2, which France (Bison Futé), Luxembourg, Switzerland and
+  most German sources still publish, is not read. Version 1 neither. Of JSON, the 3.7 mapping
+  and the Mobilithek's AFIR profile are supported; the JSON of earlier 3.x releases differs and
+  is read only as far as it agrees with 3.7.
 - **Older shapes of draft namespaces.** The types come from the 3.7 schemas. The parking,
   controlled-zone and traffic-regulation parts of the model were drafts before 3.6 and changed.
   Documents written against the older drafts use element names 3.7 no longer has; the reader
@@ -56,8 +80,8 @@ If a feed you use fails or loses data, please
 - **A whole read holds the document in memory**, about 1.7 times the XML size. Use
   [streaming](@/docs/streaming.md) for large files.
 - **A stream delivers records, not the publication header.**
-- **Exchange metadata is skipped.** A `messageContainer` is unwrapped; the Exchange 2020
-  information in it is not interpreted and not written.
+- **Message containers are written only as JSON.** The exchange information of a container is
+  read from XML and JSON; the XML writer writes single publications.
 - **No field descriptions in the API reference.** Names are the standard's, so the official
   [data dictionary](https://docs.datex2.eu/) applies; each item names the XML element it stands
   for.
