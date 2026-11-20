@@ -4006,7 +4006,7 @@ impl DirectionBearingValue {
         if let Some(v) = &self.reason_for_data_error { w.multilingual("com:reasonForDataError", v)?; }
         if let Some(v) = &self.data_value_extension { w.extension("com:_dataValueExtension", v)?; }
         match &self.direction_bearing {
-            Some(v) => { w.range("directionBearing", *v, 0, 359)?; w.leaf("com:directionBearing", v)?; }
+            Some(v) => { w.range("directionBearing", "AngleInDegrees", *v, 0, 359)?; w.leaf("com:directionBearing", v)?; }
             None => return Err(w.missing("com:directionBearing")),
         }
         if let Some(v) = &self.direction_bearing_value_extension { w.extension("com:_directionBearingValueExtension", v)?; }
@@ -4127,7 +4127,7 @@ impl DirectionBearingValue {
         match &self.direction_bearing {
             Some(v) => {
                 w.key(563)?;
-                w.range("directionBearing", *v, 0, 359)?; w.integer(*v)?;
+                w.range("directionBearing", "AngleInDegrees", *v, 0, 359)?; w.integer(*v)?;
             }
             None => w.absent(563, w.missing("directionBearing"))?,
         }
@@ -4426,7 +4426,7 @@ impl Emissions {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.emission_classification_euro { w.enumeration("com:emissionClassificationEuro", v.literal())?; }
-        for v in &self.emission_classification_other { w.max_len("emissionClassificationOther", v, 1024)?; w.leaf("com:emissionClassificationOther", v)?; }
+        for v in &self.emission_classification_other { w.max_len("emissionClassificationOther", "String", v, 1024)?; w.leaf("com:emissionClassificationOther", v)?; }
         if let Some(v) = &self.emission_level { w.enumeration("com:emissionLevel", v.literal())?; }
         if let Some(v) = &self.emissions_extension { v.write(w, "com:_emissionsExtension", "", "")?; }
         w.end(tag)
@@ -4487,7 +4487,7 @@ impl Emissions {
             w.begin_array()?;
             for v in &self.emission_classification_other {
                 w.item()?;
-                w.max_len("emissionClassificationOther", v, 1024)?; w.string(v)?;
+                w.max_len("emissionClassificationOther", "String", v, 1024)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -4578,7 +4578,7 @@ impl Fault {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
+        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", "String", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
         if let Some(v) = &self.fault_description { w.multilingual("com:faultDescription", v)?; }
         if let Some(v) = &self.fault_creation_time { w.leaf("com:faultCreationTime", v)?; }
         match &self.fault_last_update_time {
@@ -4587,7 +4587,7 @@ impl Fault {
         }
         if let Some(v) = &self.fault_impact_severity { w.enumeration("com:faultImpactSeverity", v.literal())?; }
         if let Some(v) = &self.fault_urgency_to_rectify { w.enumeration("com:faultUrgencyToRectify", v.literal())?; }
-        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
+        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
         if let Some(v) = &self.fault_extension { w.extension("com:_faultExtension", v)?; }
         w.end(tag)
     }
@@ -4653,7 +4653,7 @@ impl Fault {
         }
         if let Some(v) = &self.fault_identifier {
             w.key(836)?;
-            w.max_len("faultIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("faultIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_description {
             w.key(835)?;
@@ -4680,7 +4680,7 @@ impl Fault {
         }
         if let Some(v) = &self.manufacturer_fault_code {
             w.key(1258)?;
-            w.max_len("manufacturerFaultCode", v, 1024)?; w.string(v)?;
+            w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_extension {
             w.key(363)?;
@@ -5249,7 +5249,7 @@ impl GenericPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -5257,7 +5257,7 @@ impl GenericPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -5268,7 +5268,7 @@ impl GenericPublication {
         }
         if let Some(v) = &self.payload_publication_extension { w.extension("com:_payloadPublicationExtension", v)?; }
         match &self.generic_publication_name {
-            Some(v) => { w.max_len("genericPublicationName", v, 1024)?; w.leaf("com:genericPublicationName", v)?; }
+            Some(v) => { w.max_len("genericPublicationName", "String", v, 1024)?; w.leaf("com:genericPublicationName", v)?; }
             None => return Err(w.missing("com:genericPublicationName")),
         }
         if let Some(v) = &self.generic_publication_extension { w.extension("com:_genericPublicationExtension", v)?; }
@@ -5348,7 +5348,7 @@ impl GenericPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -5358,7 +5358,7 @@ impl GenericPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -5381,7 +5381,7 @@ impl GenericPublication {
         match &self.generic_publication_name {
             Some(v) => {
                 w.key(917)?;
-                w.max_len("genericPublicationName", v, 1024)?; w.string(v)?;
+                w.max_len("genericPublicationName", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(917, w.missing("genericPublicationName"))?,
         }
@@ -5767,11 +5767,11 @@ impl HazardousMaterials {
         }
         if let Some(v) = &self.dangerous_goods_flash_point { w.leaf("com:dangerousGoodsFlashPoint", v)?; }
         if let Some(v) = &self.dangerous_goods_regulations { w.enumeration("com:dangerousGoodsRegulations", v.literal())?; }
-        if let Some(v) = &self.hazard_code_identification { w.max_len("hazardCodeIdentification", v, 1024)?; w.leaf("com:hazardCodeIdentification", v)?; }
+        if let Some(v) = &self.hazard_code_identification { w.max_len("hazardCodeIdentification", "String", v, 1024)?; w.leaf("com:hazardCodeIdentification", v)?; }
         if let Some(v) = &self.hazard_code_version_number { w.leaf("com:hazardCodeVersionNumber", v)?; }
-        if let Some(v) = &self.hazard_substance_item_page_number { w.max_len("hazardSubstanceItemPageNumber", v, 1024)?; w.leaf("com:hazardSubstanceItemPageNumber", v)?; }
-        if let Some(v) = &self.trem_card_number { w.max_len("tremCardNumber", v, 1024)?; w.leaf("com:tremCardNumber", v)?; }
-        if let Some(v) = &self.undg_number { w.max_len("undgNumber", v, 1024)?; w.leaf("com:undgNumber", v)?; }
+        if let Some(v) = &self.hazard_substance_item_page_number { w.max_len("hazardSubstanceItemPageNumber", "String", v, 1024)?; w.leaf("com:hazardSubstanceItemPageNumber", v)?; }
+        if let Some(v) = &self.trem_card_number { w.max_len("tremCardNumber", "String", v, 1024)?; w.leaf("com:tremCardNumber", v)?; }
+        if let Some(v) = &self.undg_number { w.max_len("undgNumber", "String", v, 1024)?; w.leaf("com:undgNumber", v)?; }
         if let Some(v) = &self.volume_of_dangerous_goods { w.leaf("com:volumeOfDangerousGoods", v)?; }
         if let Some(v) = &self.weight_of_dangerous_goods { w.leaf("com:weightOfDangerousGoods", v)?; }
         if let Some(v) = &self.hazardous_materials_extension { w.extension("com:_hazardousMaterialsExtension", v)?; }
@@ -5863,7 +5863,7 @@ impl HazardousMaterials {
         }
         if let Some(v) = &self.hazard_code_identification {
             w.key(935)?;
-            w.max_len("hazardCodeIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("hazardCodeIdentification", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.hazard_code_version_number {
             w.key(936)?;
@@ -5871,15 +5871,15 @@ impl HazardousMaterials {
         }
         if let Some(v) = &self.hazard_substance_item_page_number {
             w.key(937)?;
-            w.max_len("hazardSubstanceItemPageNumber", v, 1024)?; w.string(v)?;
+            w.max_len("hazardSubstanceItemPageNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.trem_card_number {
             w.key(2383)?;
-            w.max_len("tremCardNumber", v, 1024)?; w.string(v)?;
+            w.max_len("tremCardNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.undg_number {
             w.key(2508)?;
-            w.max_len("undgNumber", v, 1024)?; w.string(v)?;
+            w.max_len("undgNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.volume_of_dangerous_goods {
             w.key(2657)?;
@@ -6851,11 +6851,11 @@ impl InternationalIdentifier {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.country {
-            Some(v) => { w.max_len("country", v, 2)?; w.leaf("com:country", v)?; }
+            Some(v) => { w.max_len("country", "CountryCode", v, 2)?; w.leaf("com:country", v)?; }
             None => return Err(w.missing("com:country")),
         }
         match &self.national_identifier {
-            Some(v) => { w.max_len("nationalIdentifier", v, 1024)?; w.leaf("com:nationalIdentifier", v)?; }
+            Some(v) => { w.max_len("nationalIdentifier", "String", v, 1024)?; w.leaf("com:nationalIdentifier", v)?; }
             None => return Err(w.missing("com:nationalIdentifier")),
         }
         if let Some(v) = &self.international_identifier_extension { w.extension("com:_internationalIdentifierExtension", v)?; }
@@ -6910,14 +6910,14 @@ impl InternationalIdentifier {
         match &self.country {
             Some(v) => {
                 w.key(468)?;
-                w.max_len("country", v, 2)?; w.string(v)?;
+                w.max_len("country", "CountryCode", v, 2)?; w.string(v)?;
             }
             None => w.absent(468, w.missing("country"))?,
         }
         match &self.national_identifier {
             Some(v) => {
                 w.key(1350)?;
-                w.max_len("nationalIdentifier", v, 1024)?; w.string(v)?;
+                w.max_len("nationalIdentifier", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(1350, w.missing("nationalIdentifier"))?,
         }
@@ -9636,8 +9636,8 @@ impl Source {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.source_country { w.max_len("sourceCountry", v, 2)?; w.leaf("com:sourceCountry", v)?; }
-        if let Some(v) = &self.source_identification { w.max_len("sourceIdentification", v, 1024)?; w.leaf("com:sourceIdentification", v)?; }
+        if let Some(v) = &self.source_country { w.max_len("sourceCountry", "CountryCode", v, 2)?; w.leaf("com:sourceCountry", v)?; }
+        if let Some(v) = &self.source_identification { w.max_len("sourceIdentification", "String", v, 1024)?; w.leaf("com:sourceIdentification", v)?; }
         if let Some(v) = &self.source_name { w.multilingual("com:sourceName", v)?; }
         if let Some(v) = &self.source_type { w.enumeration("com:sourceType", v.literal())?; }
         if let Some(v) = &self.reliable { w.leaf("com:reliable", v)?; }
@@ -9699,11 +9699,11 @@ impl Source {
         }
         if let Some(v) = &self.source_country {
             w.key(2150)?;
-            w.max_len("sourceCountry", v, 2)?; w.string(v)?;
+            w.max_len("sourceCountry", "CountryCode", v, 2)?; w.string(v)?;
         }
         if let Some(v) = &self.source_identification {
             w.key(2151)?;
-            w.max_len("sourceIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("sourceIdentification", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.source_name {
             w.key(2152)?;
@@ -11127,13 +11127,13 @@ impl Vehicle {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.anonymized_vehicle_reference { w.max_len("anonymizedVehicleReference", v, 1024)?; w.leaf("com:anonymizedVehicleReference", v)?; }
+        if let Some(v) = &self.anonymized_vehicle_reference { w.max_len("anonymizedVehicleReference", "String", v, 1024)?; w.leaf("com:anonymizedVehicleReference", v)?; }
         if let Some(v) = &self.vehicle_colour { w.multilingual("com:vehicleColour", v)?; }
-        if let Some(v) = &self.vehicle_country_of_origin { w.max_len("vehicleCountryOfOrigin", v, 2)?; w.leaf("com:vehicleCountryOfOrigin", v)?; }
-        if let Some(v) = &self.vehicle_identifier { w.max_len("vehicleIdentifier", v, 1024)?; w.leaf("com:vehicleIdentifier", v)?; }
-        if let Some(v) = &self.vehicle_manufacturer { w.max_len("vehicleManufacturer", v, 1024)?; w.leaf("com:vehicleManufacturer", v)?; }
-        if let Some(v) = &self.vehicle_model { w.max_len("vehicleModel", v, 1024)?; w.leaf("com:vehicleModel", v)?; }
-        if let Some(v) = &self.vehicle_registration_plate_identifier { w.max_len("vehicleRegistrationPlateIdentifier", v, 1024)?; w.leaf("com:vehicleRegistrationPlateIdentifier", v)?; }
+        if let Some(v) = &self.vehicle_country_of_origin { w.max_len("vehicleCountryOfOrigin", "CountryCode", v, 2)?; w.leaf("com:vehicleCountryOfOrigin", v)?; }
+        if let Some(v) = &self.vehicle_identifier { w.max_len("vehicleIdentifier", "String", v, 1024)?; w.leaf("com:vehicleIdentifier", v)?; }
+        if let Some(v) = &self.vehicle_manufacturer { w.max_len("vehicleManufacturer", "String", v, 1024)?; w.leaf("com:vehicleManufacturer", v)?; }
+        if let Some(v) = &self.vehicle_model { w.max_len("vehicleModel", "String", v, 1024)?; w.leaf("com:vehicleModel", v)?; }
+        if let Some(v) = &self.vehicle_registration_plate_identifier { w.max_len("vehicleRegistrationPlateIdentifier", "String", v, 1024)?; w.leaf("com:vehicleRegistrationPlateIdentifier", v)?; }
         if let Some(v) = &self.vehicle_status { w.enumeration("com:vehicleStatus", v.literal())?; }
         if let Some(v) = &self.vehicle_characteristics { v.write(w, "com:vehicleCharacteristics", "", "")?; }
         for v in &self.axle_spacing_on_vehicle { v.write(w, "com:axleSpacingOnVehicle", "", "")?; }
@@ -11218,7 +11218,7 @@ impl Vehicle {
         }
         if let Some(v) = &self.anonymized_vehicle_reference {
             w.key(241)?;
-            w.max_len("anonymizedVehicleReference", v, 1024)?; w.string(v)?;
+            w.max_len("anonymizedVehicleReference", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.vehicle_colour {
             w.key(2550)?;
@@ -11226,23 +11226,23 @@ impl Vehicle {
         }
         if let Some(v) = &self.vehicle_country_of_origin {
             w.key(2554)?;
-            w.max_len("vehicleCountryOfOrigin", v, 2)?; w.string(v)?;
+            w.max_len("vehicleCountryOfOrigin", "CountryCode", v, 2)?; w.string(v)?;
         }
         if let Some(v) = &self.vehicle_identifier {
             w.key(2559)?;
-            w.max_len("vehicleIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("vehicleIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.vehicle_manufacturer {
             w.key(2562)?;
-            w.max_len("vehicleManufacturer", v, 1024)?; w.string(v)?;
+            w.max_len("vehicleManufacturer", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.vehicle_model {
             w.key(2563)?;
-            w.max_len("vehicleModel", v, 1024)?; w.string(v)?;
+            w.max_len("vehicleModel", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.vehicle_registration_plate_identifier {
             w.key(2569)?;
-            w.max_len("vehicleRegistrationPlateIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("vehicleRegistrationPlateIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.vehicle_status {
             w.key(2571)?;

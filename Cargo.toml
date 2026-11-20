@@ -3,7 +3,7 @@ members = [".", "xtask"]
 
 [package]
 name = "datex2"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["hupe1980"]
 edition = "2024"
 rust-version = "1.86"

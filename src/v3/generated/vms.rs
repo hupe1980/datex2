@@ -1689,7 +1689,7 @@ impl CompositePictogram {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.custom_pictogram_code { w.max_len("customPictogramCode", v, 1024)?; w.leaf("vms:customPictogramCode", v)?; }
+        if let Some(v) = &self.custom_pictogram_code { w.max_len("customPictogramCode", "String", v, 1024)?; w.leaf("vms:customPictogramCode", v)?; }
         if let Some(v) = &self.additional_description { w.multilingual("vms:additionalDescription", v)?; }
         if let Some(v) = &self.pictogram_flashing { w.leaf("vms:pictogramFlashing", v)?; }
         if let Some(v) = &self.pictogram_in_inverse_colour { w.leaf("vms:pictogramInInverseColour", v)?; }
@@ -1780,7 +1780,7 @@ impl CompositePictogram {
         }
         if let Some(v) = &self.custom_pictogram_code {
             w.key(482)?;
-            w.max_len("customPictogramCode", v, 1024)?; w.string(v)?;
+            w.max_len("customPictogramCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.additional_description {
             w.key(59)?;
@@ -2513,7 +2513,7 @@ impl GddPictogramIdentification {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.country {
-            Some(v) => { w.max_len("country", v, 2)?; w.leaf("vms:country", v)?; }
+            Some(v) => { w.max_len("country", "CountryCode", v, 2)?; w.leaf("vms:country", v)?; }
             None => return Err(w.missing("vms:country")),
         }
         match &self.service_category {
@@ -2580,7 +2580,7 @@ impl GddPictogramIdentification {
         match &self.country {
             Some(v) => {
                 w.key(468)?;
-                w.max_len("country", v, 2)?; w.string(v)?;
+                w.max_len("country", "CountryCode", v, 2)?; w.string(v)?;
             }
             None => w.absent(468, w.missing("country"))?,
         }
@@ -3472,7 +3472,7 @@ impl PictogramDisplayArea {
         if let Some(v) = &self.display_geometry { v.write(w, "vms:displayGeometry", "", "")?; }
         for v in &self.overridden_lane_association { v.write(w, "vms:overriddenLaneAssociation", "", "")?; }
         if let Some(v) = &self.display_area_extension { w.extension("vms:_displayAreaExtension", v)?; }
-        if let Some(v) = &self.pictogram_code_list_identifier { w.max_len("pictogramCodeListIdentifier", v, 1024)?; w.leaf("vms:pictogramCodeListIdentifier", v)?; }
+        if let Some(v) = &self.pictogram_code_list_identifier { w.max_len("pictogramCodeListIdentifier", "String", v, 1024)?; w.leaf("vms:pictogramCodeListIdentifier", v)?; }
         if let Some(v) = &self.pictogram_number_of_colours { w.leaf("vms:pictogramNumberOfColours", v)?; }
         if let Some(v) = &self.pictogram_display_area_extension { w.extension("vms:_pictogramDisplayAreaExtension", v)?; }
         w.end(tag)
@@ -3591,7 +3591,7 @@ impl PictogramDisplayArea {
         }
         if let Some(v) = &self.pictogram_code_list_identifier {
             w.key(1582)?;
-            w.max_len("pictogramCodeListIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("pictogramCodeListIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.pictogram_number_of_colours {
             w.key(1588)?;
@@ -3699,7 +3699,7 @@ impl RegularPictogram {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.custom_pictogram_code { w.max_len("customPictogramCode", v, 1024)?; w.leaf("vms:customPictogramCode", v)?; }
+        if let Some(v) = &self.custom_pictogram_code { w.max_len("customPictogramCode", "String", v, 1024)?; w.leaf("vms:customPictogramCode", v)?; }
         if let Some(v) = &self.additional_description { w.multilingual("vms:additionalDescription", v)?; }
         if let Some(v) = &self.pictogram_flashing { w.leaf("vms:pictogramFlashing", v)?; }
         if let Some(v) = &self.pictogram_in_inverse_colour { w.leaf("vms:pictogramInInverseColour", v)?; }
@@ -3787,7 +3787,7 @@ impl RegularPictogram {
         }
         if let Some(v) = &self.custom_pictogram_code {
             w.key(482)?;
-            w.max_len("customPictogramCode", v, 1024)?; w.string(v)?;
+            w.max_len("customPictogramCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.additional_description {
             w.key(59)?;
@@ -3951,7 +3951,7 @@ impl SupplementaryPanelArea {
         if let Some(v) = &self.display_geometry { v.write(w, "vms:displayGeometry", "", "")?; }
         for v in &self.overridden_lane_association { v.write(w, "vms:overriddenLaneAssociation", "", "")?; }
         if let Some(v) = &self.display_area_extension { w.extension("vms:_displayAreaExtension", v)?; }
-        if let Some(v) = &self.supplementary_pictogram_code_list_identifier { w.max_len("supplementaryPictogramCodeListIdentifier", v, 1024)?; w.leaf("vms:supplementaryPictogramCodeListIdentifier", v)?; }
+        if let Some(v) = &self.supplementary_pictogram_code_list_identifier { w.max_len("supplementaryPictogramCodeListIdentifier", "String", v, 1024)?; w.leaf("vms:supplementaryPictogramCodeListIdentifier", v)?; }
         if let Some(v) = &self.related_pictogram_area { w.leaf("vms:relatedPictogramArea", v)?; }
         if let Some(v) = &self.supplementary_panel_area_extension { w.extension("vms:_supplementaryPanelAreaExtension", v)?; }
         w.end(tag)
@@ -4070,7 +4070,7 @@ impl SupplementaryPanelArea {
         }
         if let Some(v) = &self.supplementary_pictogram_code_list_identifier {
             w.key(2221)?;
-            w.max_len("supplementaryPictogramCodeListIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("supplementaryPictogramCodeListIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.related_pictogram_area {
             w.key(1843)?;
@@ -4184,7 +4184,7 @@ impl SupplementaryPictogram {
         if let Some(v) = &self.display_area_settings_extension { w.extension("vms:_displayAreaSettingsExtension", v)?; }
         if let Some(v) = &self.supplementary_information_display_extension { w.extension("vms:_supplementaryInformationDisplayExtension", v)?; }
         if let Some(v) = &self.pictogram_description { w.enumeration("vms:pictogramDescription", v.literal())?; }
-        if let Some(v) = &self.pictogram_code { w.max_len("pictogramCode", v, 1024)?; w.leaf("vms:pictogramCode", v)?; }
+        if let Some(v) = &self.pictogram_code { w.max_len("pictogramCode", "String", v, 1024)?; w.leaf("vms:pictogramCode", v)?; }
         if let Some(v) = &self.pictogram_url { w.leaf("vms:pictogramUrl", v)?; }
         if let Some(v) = &self.additional_description { w.multilingual("vms:additionalDescription", v)?; }
         if let Some(v) = &self.pictogram_flashing { w.leaf("vms:pictogramFlashing", v)?; }
@@ -4289,7 +4289,7 @@ impl SupplementaryPictogram {
         }
         if let Some(v) = &self.pictogram_code {
             w.key(1581)?;
-            w.max_len("pictogramCode", v, 1024)?; w.string(v)?;
+            w.max_len("pictogramCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.pictogram_url {
             w.key(1589)?;
@@ -4567,7 +4567,7 @@ impl TextDisplay {
         if let Some(v) = &self.legally_binding { w.leaf("vms:legallyBinding", v)?; }
         if let Some(v) = &self.legal_basis { w.multilingual("vms:legalBasis", v)?; }
         if let Some(v) = &self.display_area_settings_extension { w.extension("vms:_displayAreaSettingsExtension", v)?; }
-        if let Some(v) = &self.text_code { w.max_len("textCode", v, 1024)?; w.leaf("vms:textCode", v)?; }
+        if let Some(v) = &self.text_code { w.max_len("textCode", "String", v, 1024)?; w.leaf("vms:textCode", v)?; }
         if let Some(v) = &self.text_image_url { w.leaf("vms:textImageUrl", v)?; }
         for v in &self.text_line { v.write(w, "vms:textLine", "", "")?; }
         if let Some(v) = &self.text_display_extension { w.extension("vms:_textDisplayExtension", v)?; }
@@ -4650,7 +4650,7 @@ impl TextDisplay {
         }
         if let Some(v) = &self.text_code {
             w.key(2247)?;
-            w.max_len("textCode", v, 1024)?; w.string(v)?;
+            w.max_len("textCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.text_image_url {
             w.key(2249)?;
@@ -4819,7 +4819,7 @@ impl TextDisplayArea {
         if let Some(v) = &self.proportional_font { w.leaf("vms:proportionalFont", v)?; }
         if let Some(v) = &self.max_number_of_characters { w.leaf("vms:maxNumberOfCharacters", v)?; }
         if let Some(v) = &self.max_number_of_rows { w.leaf("vms:maxNumberOfRows", v)?; }
-        if let Some(v) = &self.text_code_list_identifier { w.max_len("textCodeListIdentifier", v, 1024)?; w.leaf("vms:textCodeListIdentifier", v)?; }
+        if let Some(v) = &self.text_code_list_identifier { w.max_len("textCodeListIdentifier", "String", v, 1024)?; w.leaf("vms:textCodeListIdentifier", v)?; }
         if let Some(v) = &self.max_font_height { w.leaf("vms:maxFontHeight", v)?; }
         if let Some(v) = &self.min_font_height { w.leaf("vms:minFontHeight", v)?; }
         if let Some(v) = &self.max_font_width { w.leaf("vms:maxFontWidth", v)?; }
@@ -4979,7 +4979,7 @@ impl TextDisplayArea {
         }
         if let Some(v) = &self.text_code_list_identifier {
             w.key(2248)?;
-            w.max_len("textCodeListIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("textCodeListIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.max_font_height {
             w.key(1263)?;
@@ -5087,14 +5087,14 @@ impl TextLine {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.line_language { w.pattern("lineLanguage", v, Pattern::Language)?; w.attr("lineLanguage", v)?; }
+        if let Some(v) = &self.line_language { w.pattern("lineLanguage", "Language", v, Pattern::Language)?; w.attr("lineLanguage", v)?; }
         match &self.text_line {
-            Some(v) => { w.max_len("textLine", v, 1024)?; w.leaf("vms:textLine", v)?; }
+            Some(v) => { w.max_len("textLine", "String", v, 1024)?; w.leaf("vms:textLine", v)?; }
             None => return Err(w.missing("vms:textLine")),
         }
         if let Some(v) = &self.line_colour { w.enumeration("vms:lineColour", v.literal())?; }
         if let Some(v) = &self.line_flashing { w.leaf("vms:lineFlashing", v)?; }
-        if let Some(v) = &self.line_html { w.max_len("lineHtml", v, 1024)?; w.leaf("vms:lineHtml", v)?; }
+        if let Some(v) = &self.line_html { w.max_len("lineHtml", "String", v, 1024)?; w.leaf("vms:lineHtml", v)?; }
         if let Some(v) = &self.is_exact_text_on_sign { w.leaf("vms:isExactTextOnSign", v)?; }
         for v in &self.text_information_type { w.enumeration("vms:textInformationType", v.literal())?; }
         if let Some(v) = &self.text_line_extension { w.extension("vms:_textLineExtension", v)?; }
@@ -5162,12 +5162,12 @@ impl TextLine {
         }
         if let Some(v) = &self.line_language {
             w.key(1064)?;
-            w.pattern("lineLanguage", v, Pattern::Language)?; w.string(v)?;
+            w.pattern("lineLanguage", "Language", v, Pattern::Language)?; w.string(v)?;
         }
         match &self.text_line {
             Some(v) => {
                 w.key(2251)?;
-                w.max_len("textLine", v, 1024)?; w.string(v)?;
+                w.max_len("textLine", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(2251, w.missing("textLine"))?,
         }
@@ -5181,7 +5181,7 @@ impl TextLine {
         }
         if let Some(v) = &self.line_html {
             w.key(1062)?;
-            w.max_len("lineHtml", v, 1024)?; w.string(v)?;
+            w.max_len("lineHtml", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.is_exact_text_on_sign {
             w.key(1011)?;
@@ -5324,7 +5324,7 @@ impl Vms {
         if let Some(v) = &self.owner { w.multilingual("vms:owner", v)?; }
         if let Some(v) = &self.physical_support { w.enumeration("vms:physicalSupport", v.literal())?; }
         if let Some(v) = &self.vms_type { w.enumeration("vms:vmsType", v.literal())?; }
-        if let Some(v) = &self.vms_type_code { w.max_len("vmsTypeCode", v, 1024)?; w.leaf("vms:vmsTypeCode", v)?; }
+        if let Some(v) = &self.vms_type_code { w.max_len("vmsTypeCode", "String", v, 1024)?; w.leaf("vms:vmsTypeCode", v)?; }
         if let Some(v) = &self.dynamically_configurable { w.leaf("vms:dynamicallyConfigurable", v)?; }
         if let Some(v) = &self.display_height { w.leaf("vms:displayHeight", v)?; }
         if let Some(v) = &self.display_width { w.leaf("vms:displayWidth", v)?; }
@@ -5446,7 +5446,7 @@ impl Vms {
         }
         if let Some(v) = &self.vms_type_code {
             w.key(2637)?;
-            w.max_len("vmsTypeCode", v, 1024)?; w.string(v)?;
+            w.max_len("vmsTypeCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.dynamically_configurable {
             w.key(604)?;
@@ -5695,9 +5695,9 @@ impl VmsController {
             None => return Err(w.missing_attr("version")),
         }
         if let Some(v) = &self.number_of_vms { w.leaf("vms:numberOfVms", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("vms:externalIdentifier", v)?; }
-        if let Some(v) = &self.ip_address { w.max_len("ipAddress", v, 1024)?; w.leaf("vms:ipAddress", v)?; }
-        if let Some(v) = &self.electronic_address { w.max_len("electronicAddress", v, 1024)?; w.leaf("vms:electronicAddress", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("vms:externalIdentifier", v)?; }
+        if let Some(v) = &self.ip_address { w.max_len("ipAddress", "String", v, 1024)?; w.leaf("vms:ipAddress", v)?; }
+        if let Some(v) = &self.electronic_address { w.max_len("electronicAddress", "String", v, 1024)?; w.leaf("vms:electronicAddress", v)?; }
         for v in &self.vms { v.write(w, "vms:vms", "", "")?; }
         if let Some(v) = &self.vms_controller_extension { w.extension("vms:_vmsControllerExtension", v)?; }
         w.end(tag)
@@ -5783,15 +5783,15 @@ impl VmsController {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.ip_address {
             w.key(1008)?;
-            w.max_len("ipAddress", v, 1024)?; w.string(v)?;
+            w.max_len("ipAddress", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.electronic_address {
             w.key(650)?;
-            w.max_len("electronicAddress", v, 1024)?; w.string(v)?;
+            w.max_len("electronicAddress", "String", v, 1024)?; w.string(v)?;
         }
         if !self.vms.is_empty() {
             w.key(2586)?;
@@ -5896,7 +5896,7 @@ impl VmsControllerFault {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
+        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", "String", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
         if let Some(v) = &self.fault_description { w.multilingual("com:faultDescription", v)?; }
         if let Some(v) = &self.fault_creation_time { w.leaf("com:faultCreationTime", v)?; }
         match &self.fault_last_update_time {
@@ -5905,7 +5905,7 @@ impl VmsControllerFault {
         }
         if let Some(v) = &self.fault_impact_severity { w.enumeration("com:faultImpactSeverity", v.literal())?; }
         if let Some(v) = &self.fault_urgency_to_rectify { w.enumeration("com:faultUrgencyToRectify", v.literal())?; }
-        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
+        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
         if let Some(v) = &self.fault_extension { w.extension("com:_faultExtension", v)?; }
         match &self.vms_controller_fault {
             Some(v) => { w.enumeration("vms:vmsControllerFault", v.literal())?; }
@@ -5983,7 +5983,7 @@ impl VmsControllerFault {
         }
         if let Some(v) = &self.fault_identifier {
             w.key(836)?;
-            w.max_len("faultIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("faultIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_description {
             w.key(835)?;
@@ -6010,7 +6010,7 @@ impl VmsControllerFault {
         }
         if let Some(v) = &self.manufacturer_fault_code {
             w.key(1258)?;
-            w.max_len("manufacturerFaultCode", v, 1024)?; w.string(v)?;
+            w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_extension {
             w.key(363)?;
@@ -6293,7 +6293,7 @@ impl VmsControllerTable {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.vms_controller_table_identification { w.max_len("vmsControllerTableIdentification", v, 1024)?; w.leaf("vms:vmsControllerTableIdentification", v)?; }
+        if let Some(v) = &self.vms_controller_table_identification { w.max_len("vmsControllerTableIdentification", "String", v, 1024)?; w.leaf("vms:vmsControllerTableIdentification", v)?; }
         if let Some(v) = &self.information_manager { v.write(w, "vms:informationManager", "", "")?; }
         w.count("vms:vmsController", self.vms_controller.len(), 1, usize::MAX)?;
         for v in &self.vms_controller { v.write(w, "vms:vmsController", "", "")?; }
@@ -6371,7 +6371,7 @@ impl VmsControllerTable {
         }
         if let Some(v) = &self.vms_controller_table_identification {
             w.key(2595)?;
-            w.max_len("vmsControllerTableIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("vmsControllerTableIdentification", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.information_manager {
             w.key(989)?;
@@ -6481,7 +6481,7 @@ impl VmsFault {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
+        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", "String", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
         if let Some(v) = &self.fault_description { w.multilingual("com:faultDescription", v)?; }
         if let Some(v) = &self.fault_creation_time { w.leaf("com:faultCreationTime", v)?; }
         match &self.fault_last_update_time {
@@ -6490,7 +6490,7 @@ impl VmsFault {
         }
         if let Some(v) = &self.fault_impact_severity { w.enumeration("com:faultImpactSeverity", v.literal())?; }
         if let Some(v) = &self.fault_urgency_to_rectify { w.enumeration("com:faultUrgencyToRectify", v.literal())?; }
-        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
+        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
         if let Some(v) = &self.fault_extension { w.extension("com:_faultExtension", v)?; }
         match &self.vms_fault {
             Some(v) => { w.enumeration("vms:vmsFault", v.literal())?; }
@@ -6568,7 +6568,7 @@ impl VmsFault {
         }
         if let Some(v) = &self.fault_identifier {
             w.key(836)?;
-            w.max_len("faultIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("faultIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_description {
             w.key(835)?;
@@ -6595,7 +6595,7 @@ impl VmsFault {
         }
         if let Some(v) = &self.manufacturer_fault_code {
             w.key(1258)?;
-            w.max_len("manufacturerFaultCode", v, 1024)?; w.string(v)?;
+            w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_extension {
             w.key(363)?;
@@ -6736,7 +6736,7 @@ impl VmsMessage {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.associated_traffic_management_plan { w.max_len("associatedTrafficManagementPlan", v, 1024)?; w.leaf("vms:associatedTrafficManagementPlan", v)?; }
+        if let Some(v) = &self.associated_traffic_management_plan { w.max_len("associatedTrafficManagementPlan", "String", v, 1024)?; w.leaf("vms:associatedTrafficManagementPlan", v)?; }
         if let Some(v) = &self.message_set_by { w.multilingual("vms:messageSetBy", v)?; }
         if let Some(v) = &self.set_by_system { w.leaf("vms:setBySystem", v)?; }
         if let Some(v) = &self.reason_for_setting { w.multilingual("vms:reasonForSetting", v)?; }
@@ -6847,7 +6847,7 @@ impl VmsMessage {
         }
         if let Some(v) = &self.associated_traffic_management_plan {
             w.key(264)?;
-            w.max_len("associatedTrafficManagementPlan", v, 1024)?; w.string(v)?;
+            w.max_len("associatedTrafficManagementPlan", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.message_set_by {
             w.key(1315)?;
@@ -7040,7 +7040,7 @@ impl VmsPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -7048,7 +7048,7 @@ impl VmsPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -7144,7 +7144,7 @@ impl VmsPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -7154,7 +7154,7 @@ impl VmsPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -7527,7 +7527,7 @@ impl VmsTablePublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -7535,7 +7535,7 @@ impl VmsTablePublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -7631,7 +7631,7 @@ impl VmsTablePublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -7641,7 +7641,7 @@ impl VmsTablePublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {

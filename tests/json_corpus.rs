@@ -49,7 +49,7 @@ fn write_back(doc: &v3::Document) -> Result<(String, JsonSchema), datex2::Error>
             ..Default::default()
         };
         let mut bytes = Vec::new();
-        json::mobilithek::write_container(&mut bytes, &container)?;
+        json::mobilithek::write(&mut bytes, &container)?;
         Ok((
             String::from_utf8(bytes).unwrap(),
             JsonSchema::MobilithekStatus,

@@ -6,10 +6,8 @@
 
 use datex2::v3::afir_energy_infrastructure as aegi;
 use datex2::v3::afir_facilities as afac;
-use datex2::v3::exchange_information as ex;
-use datex2::v3::message_container::MessageContainer;
 use datex2::v3::{Publication, common as com, json, location_referencing as loc};
-use datex2::{DateTime, LangString, MultilingualString};
+use datex2::{DateTime, MultilingualString};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -58,25 +56,9 @@ fn main() -> Result<()> {
             ..Default::default()
         },
     ));
-    let snapshot = MessageContainer {
-        payload: vec![status],
-        exchange_information: Some(Box::new(ex::ExchangeInformation {
-            exchange_context: Some(Box::new(ex::ExchangeContext {
-                coded_exchange_protocol: Some(ex::ProtocolTypeEnum::SnapshotPush), // or DeltaPush
-                exchange_specification_version: Some("3.0".into()),
-                supplier_or_cis_requester: Some(Box::default()),
-                ..Default::default()
-            })),
-            dynamic_information: Some(Box::new(ex::DynamicInformation {
-                exchange_status: Some(ex::ExchangeStatusEnum::Online),
-                message_generation_timestamp: Some(now),
-                ..Default::default()
-            })),
-            ..Default::default()
-        })),
-        ..Default::default()
-    };
-    json::mobilithek::write_container(std::fs::File::create("status.json")?, &snapshot)?;
+    // A complete snapshot; `json::mobilithek::delta` sends only the points that changed.
+    let snapshot = json::mobilithek::snapshot(status, now);
+    json::mobilithek::write(std::fs::File::create("status.json")?, &snapshot)?;
     println!("wrote table.json and status.json");
     Ok(())
 }
@@ -125,7 +107,7 @@ fn site(now: DateTime) -> Result<aegi::EnergyInfrastructureSite> {
         location_reference: Some(location(52.520008, 13.404954)),
         operator: Some(afac::Organisation::AnOrganisation(Box::new(
             afac::AnOrganisation {
-                name: Some(german("Beispiel Laden GmbH")),
+                name: Some(MultilingualString::new("de", "Beispiel Laden GmbH")),
                 ..Default::default()
             },
         ))),
@@ -233,13 +215,4 @@ fn header() -> Box<com::HeaderInformation> {
         information_status: Some(com::InformationStatusEnum::Real),
         ..Default::default()
     })
-}
-
-fn german(text: &str) -> MultilingualString {
-    MultilingualString {
-        values: vec![LangString {
-            lang: "de".into(),
-            text: text.into(),
-        }],
-    }
 }

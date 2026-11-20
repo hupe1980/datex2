@@ -145,6 +145,23 @@ pub struct MultilingualString {
 }
 
 impl MultilingualString {
+    /// A text in one language.
+    ///
+    /// ```
+    /// let name = datex2::MultilingualString::new("de", "Ladepark Mitte");
+    /// assert_eq!(name.get("de"), Some("Ladepark Mitte"));
+    /// ```
+    ///
+    /// For more languages, push to [`values`](Self::values).
+    pub fn new(lang: impl Into<String>, text: impl Into<String>) -> Self {
+        Self {
+            values: vec![LangString {
+                lang: lang.into(),
+                text: text.into(),
+            }],
+        }
+    }
+
     /// The text in the given language, compared without regard to case.
     pub fn get(&self, lang: &str) -> Option<&str> {
         self.values

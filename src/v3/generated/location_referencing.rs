@@ -2608,15 +2608,15 @@ impl AlertCArea {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.alert_c_location_country_code {
-            Some(v) => { w.max_len("alertCLocationCountryCode", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
+            Some(v) => { w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
             None => return Err(w.missing("loc:alertCLocationCountryCode")),
         }
         match &self.alert_c_location_table_number {
-            Some(v) => { w.max_len("alertCLocationTableNumber", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableNumber")),
         }
         match &self.alert_c_location_table_version {
-            Some(v) => { w.max_len("alertCLocationTableVersion", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableVersion")),
         }
         match &self.area_location {
@@ -2683,21 +2683,21 @@ impl AlertCArea {
         match &self.alert_c_location_country_code {
             Some(v) => {
                 w.key(216)?;
-                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
         }
         match &self.alert_c_location_table_number {
             Some(v) => {
                 w.key(218)?;
-                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
         }
         match &self.alert_c_location_table_version {
             Some(v) => {
                 w.key(219)?;
-                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
         }
@@ -2934,15 +2934,15 @@ impl AlertCLinearByCode {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.alert_c_location_country_code {
-            Some(v) => { w.max_len("alertCLocationCountryCode", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
+            Some(v) => { w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
             None => return Err(w.missing("loc:alertCLocationCountryCode")),
         }
         match &self.alert_c_location_table_number {
-            Some(v) => { w.max_len("alertCLocationTableNumber", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableNumber")),
         }
         match &self.alert_c_location_table_version {
-            Some(v) => { w.max_len("alertCLocationTableVersion", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableVersion")),
         }
         if let Some(v) = &self.alert_c_linear_extension { w.extension("loc:_alertCLinearExtension", v)?; }
@@ -3021,21 +3021,21 @@ impl AlertCLinearByCode {
         match &self.alert_c_location_country_code {
             Some(v) => {
                 w.key(216)?;
-                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
         }
         match &self.alert_c_location_table_number {
             Some(v) => {
                 w.key(218)?;
-                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
         }
         match &self.alert_c_location_table_version {
             Some(v) => {
                 w.key(219)?;
-                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
         }
@@ -3117,7 +3117,7 @@ impl AlertCLocation {
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.alert_c_location_name { w.multilingual("loc:alertCLocationName", v)?; }
         match &self.specific_location {
-            Some(v) => { w.range("specificLocation", *v, 1, 63487)?; w.leaf("loc:specificLocation", v)?; }
+            Some(v) => { w.range("specificLocation", "AlertCLocationCode", *v, 1, 63487)?; w.leaf("loc:specificLocation", v)?; }
             None => return Err(w.missing("loc:specificLocation")),
         }
         if let Some(v) = &self.alert_c_location_extension { w.extension("loc:_alertCLocationExtension", v)?; }
@@ -3175,7 +3175,7 @@ impl AlertCLocation {
         match &self.specific_location {
             Some(v) => {
                 w.key(2166)?;
-                w.range("specificLocation", *v, 1, 63487)?; w.integer(*v)?;
+                w.range("specificLocation", "AlertCLocationCode", *v, 1, 63487)?; w.integer(*v)?;
             }
             None => w.absent(2166, w.missing("specificLocation"))?,
         }
@@ -3268,15 +3268,15 @@ impl AlertCMethod2Linear {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.alert_c_location_country_code {
-            Some(v) => { w.max_len("alertCLocationCountryCode", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
+            Some(v) => { w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
             None => return Err(w.missing("loc:alertCLocationCountryCode")),
         }
         match &self.alert_c_location_table_number {
-            Some(v) => { w.max_len("alertCLocationTableNumber", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableNumber")),
         }
         match &self.alert_c_location_table_version {
-            Some(v) => { w.max_len("alertCLocationTableVersion", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableVersion")),
         }
         if let Some(v) = &self.alert_c_linear_extension { w.extension("loc:_alertCLinearExtension", v)?; }
@@ -3363,21 +3363,21 @@ impl AlertCMethod2Linear {
         match &self.alert_c_location_country_code {
             Some(v) => {
                 w.key(216)?;
-                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
         }
         match &self.alert_c_location_table_number {
             Some(v) => {
                 w.key(218)?;
-                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
         }
         match &self.alert_c_location_table_version {
             Some(v) => {
                 w.key(219)?;
-                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
         }
@@ -3489,15 +3489,15 @@ impl AlertCMethod2Point {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.alert_c_location_country_code {
-            Some(v) => { w.max_len("alertCLocationCountryCode", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
+            Some(v) => { w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
             None => return Err(w.missing("loc:alertCLocationCountryCode")),
         }
         match &self.alert_c_location_table_number {
-            Some(v) => { w.max_len("alertCLocationTableNumber", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableNumber")),
         }
         match &self.alert_c_location_table_version {
-            Some(v) => { w.max_len("alertCLocationTableVersion", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableVersion")),
         }
         if let Some(v) = &self.alert_c_point_extension { w.extension("loc:_alertCPointExtension", v)?; }
@@ -3576,21 +3576,21 @@ impl AlertCMethod2Point {
         match &self.alert_c_location_country_code {
             Some(v) => {
                 w.key(216)?;
-                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
         }
         match &self.alert_c_location_table_number {
             Some(v) => {
                 w.key(218)?;
-                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
         }
         match &self.alert_c_location_table_version {
             Some(v) => {
                 w.key(219)?;
-                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
         }
@@ -3919,15 +3919,15 @@ impl AlertCMethod4Linear {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.alert_c_location_country_code {
-            Some(v) => { w.max_len("alertCLocationCountryCode", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
+            Some(v) => { w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
             None => return Err(w.missing("loc:alertCLocationCountryCode")),
         }
         match &self.alert_c_location_table_number {
-            Some(v) => { w.max_len("alertCLocationTableNumber", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableNumber")),
         }
         match &self.alert_c_location_table_version {
-            Some(v) => { w.max_len("alertCLocationTableVersion", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableVersion")),
         }
         if let Some(v) = &self.alert_c_linear_extension { w.extension("loc:_alertCLinearExtension", v)?; }
@@ -4014,21 +4014,21 @@ impl AlertCMethod4Linear {
         match &self.alert_c_location_country_code {
             Some(v) => {
                 w.key(216)?;
-                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
         }
         match &self.alert_c_location_table_number {
             Some(v) => {
                 w.key(218)?;
-                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
         }
         match &self.alert_c_location_table_version {
             Some(v) => {
                 w.key(219)?;
-                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
         }
@@ -4140,15 +4140,15 @@ impl AlertCMethod4Point {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.alert_c_location_country_code {
-            Some(v) => { w.max_len("alertCLocationCountryCode", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
+            Some(v) => { w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.leaf("loc:alertCLocationCountryCode", v)?; }
             None => return Err(w.missing("loc:alertCLocationCountryCode")),
         }
         match &self.alert_c_location_table_number {
-            Some(v) => { w.max_len("alertCLocationTableNumber", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.leaf("loc:alertCLocationTableNumber", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableNumber")),
         }
         match &self.alert_c_location_table_version {
-            Some(v) => { w.max_len("alertCLocationTableVersion", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
+            Some(v) => { w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.leaf("loc:alertCLocationTableVersion", v)?; }
             None => return Err(w.missing("loc:alertCLocationTableVersion")),
         }
         if let Some(v) = &self.alert_c_point_extension { w.extension("loc:_alertCPointExtension", v)?; }
@@ -4227,21 +4227,21 @@ impl AlertCMethod4Point {
         match &self.alert_c_location_country_code {
             Some(v) => {
                 w.key(216)?;
-                w.max_len("alertCLocationCountryCode", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationCountryCode", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(216, w.missing("alertCLocationCountryCode"))?,
         }
         match &self.alert_c_location_table_number {
             Some(v) => {
                 w.key(218)?;
-                w.max_len("alertCLocationTableNumber", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableNumber", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(218, w.missing("alertCLocationTableNumber"))?,
         }
         match &self.alert_c_location_table_version {
             Some(v) => {
                 w.key(219)?;
-                w.max_len("alertCLocationTableVersion", v, 1024)?; w.string(v)?;
+                w.max_len("alertCLocationTableVersion", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(219, w.missing("alertCLocationTableVersion"))?,
         }
@@ -5465,11 +5465,11 @@ impl ExternalReferencing {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.external_location_code {
-            Some(v) => { w.max_len("externalLocationCode", v, 1024)?; w.leaf("loc:externalLocationCode", v)?; }
+            Some(v) => { w.max_len("externalLocationCode", "String", v, 1024)?; w.leaf("loc:externalLocationCode", v)?; }
             None => return Err(w.missing("loc:externalLocationCode")),
         }
         match &self.external_referencing_system {
-            Some(v) => { w.max_len("externalReferencingSystem", v, 1024)?; w.leaf("loc:externalReferencingSystem", v)?; }
+            Some(v) => { w.max_len("externalReferencingSystem", "String", v, 1024)?; w.leaf("loc:externalReferencingSystem", v)?; }
             None => return Err(w.missing("loc:externalReferencingSystem")),
         }
         if let Some(v) = &self.external_referencing_extension { w.extension("loc:_externalReferencingExtension", v)?; }
@@ -5524,14 +5524,14 @@ impl ExternalReferencing {
         match &self.external_location_code {
             Some(v) => {
                 w.key(740)?;
-                w.max_len("externalLocationCode", v, 1024)?; w.string(v)?;
+                w.max_len("externalLocationCode", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(740, w.missing("externalLocationCode"))?,
         }
         match &self.external_referencing_system {
             Some(v) => {
                 w.key(745)?;
-                w.max_len("externalReferencingSystem", v, 1024)?; w.string(v)?;
+                w.max_len("externalReferencingSystem", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(745, w.missing("externalReferencingSystem"))?,
         }
@@ -5597,9 +5597,9 @@ impl GmlLineString {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.srs_dimension { w.attr_value("srsDimension", v)?; }
-        if let Some(v) = &self.srs_name { w.max_len("srsName", v, 1024)?; w.attr("srsName", v)?; }
+        if let Some(v) = &self.srs_name { w.max_len("srsName", "String", v, 1024)?; w.attr("srsName", v)?; }
         match &self.pos_list {
-            Some(v) => { w.pattern("posList", v, Pattern::GmlPosList)?; w.leaf("loc:posList", v)?; }
+            Some(v) => { w.pattern("posList", "GmlPosList", v, Pattern::GmlPosList)?; w.leaf("loc:posList", v)?; }
             None => return Err(w.missing("loc:posList")),
         }
         if let Some(v) = &self.gml_line_string_extension { w.extension("loc:_gmlLineStringExtension", v)?; }
@@ -5659,12 +5659,12 @@ impl GmlLineString {
         }
         if let Some(v) = &self.srs_name {
             w.key(2174)?;
-            w.max_len("srsName", v, 1024)?; w.string(v)?;
+            w.max_len("srsName", "String", v, 1024)?; w.string(v)?;
         }
         match &self.pos_list {
             Some(v) => {
                 w.key(1605)?;
-                w.pattern("posList", v, Pattern::GmlPosList)?; w.string(v)?;
+                w.pattern("posList", "GmlPosList", v, Pattern::GmlPosList)?; w.string(v)?;
             }
             None => w.absent(1605, w.missing("posList"))?,
         }
@@ -5735,9 +5735,9 @@ impl GmlLinearRing {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.srs_dimension { w.attr_value("srsDimension", v)?; }
-        if let Some(v) = &self.srs_name { w.max_len("srsName", v, 1024)?; w.attr("srsName", v)?; }
+        if let Some(v) = &self.srs_name { w.max_len("srsName", "String", v, 1024)?; w.attr("srsName", v)?; }
         match &self.pos_list {
-            Some(v) => { w.pattern("posList", v, Pattern::GmlPosList)?; w.leaf("loc:posList", v)?; }
+            Some(v) => { w.pattern("posList", "GmlPosList", v, Pattern::GmlPosList)?; w.leaf("loc:posList", v)?; }
             None => return Err(w.missing("loc:posList")),
         }
         if let Some(v) = &self.gml_line_string_extension { w.extension("loc:_gmlLineStringExtension", v)?; }
@@ -5801,12 +5801,12 @@ impl GmlLinearRing {
         }
         if let Some(v) = &self.srs_name {
             w.key(2174)?;
-            w.max_len("srsName", v, 1024)?; w.string(v)?;
+            w.max_len("srsName", "String", v, 1024)?; w.string(v)?;
         }
         match &self.pos_list {
             Some(v) => {
                 w.key(1605)?;
-                w.pattern("posList", v, Pattern::GmlPosList)?; w.string(v)?;
+                w.pattern("posList", "GmlPosList", v, Pattern::GmlPosList)?; w.string(v)?;
             }
             None => w.absent(1605, w.missing("posList"))?,
         }
@@ -6301,14 +6301,14 @@ impl IsoNamedArea {
             None => return Err(w.missing("loc:areaName")),
         }
         if let Some(v) = &self.named_area_type { w.enumeration("loc:namedAreaType", v.literal())?; }
-        if let Some(v) = &self.country { w.max_len("country", v, 2)?; w.leaf("loc:country", v)?; }
+        if let Some(v) = &self.country { w.max_len("country", "CountryCode", v, 2)?; w.leaf("loc:country", v)?; }
         if let Some(v) = &self.loc_named_area_extension { v.write(w, "loc:_namedAreaExtension", "", "")?; }
         match &self.subdivision_type {
             Some(v) => { w.enumeration("loc:subdivisionType", v.literal())?; }
             None => return Err(w.missing("loc:subdivisionType")),
         }
         match &self.subdivision_code {
-            Some(v) => { w.max_len("subdivisionCode", v, 3)?; w.leaf("loc:subdivisionCode", v)?; }
+            Some(v) => { w.max_len("subdivisionCode", "SubdivisionCode", v, 3)?; w.leaf("loc:subdivisionCode", v)?; }
             None => return Err(w.missing("loc:subdivisionCode")),
         }
         if let Some(v) = &self.iso_named_area_extension { w.extension("loc:_isoNamedAreaExtension", v)?; }
@@ -6393,7 +6393,7 @@ impl IsoNamedArea {
         }
         if let Some(v) = &self.country {
             w.key(468)?;
-            w.max_len("country", v, 2)?; w.string(v)?;
+            w.max_len("country", "CountryCode", v, 2)?; w.string(v)?;
         }
         if let Some(v) = &self.loc_named_area_extension {
             w.key(1144)?;
@@ -6409,7 +6409,7 @@ impl IsoNamedArea {
         match &self.subdivision_code {
             Some(v) => {
                 w.key(2209)?;
-                w.max_len("subdivisionCode", v, 3)?; w.string(v)?;
+                w.max_len("subdivisionCode", "SubdivisionCode", v, 3)?; w.string(v)?;
             }
             None => w.absent(2209, w.missing("subdivisionCode"))?,
         }
@@ -6903,9 +6903,9 @@ impl LinearElement {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.road_name { w.multilingual("loc:roadName", v)?; }
-        if let Some(v) = &self.road_number { w.max_len("roadNumber", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
-        if let Some(v) = &self.linear_element_reference_model { w.max_len("linearElementReferenceModel", v, 1024)?; w.leaf("loc:linearElementReferenceModel", v)?; }
-        if let Some(v) = &self.linear_element_reference_model_version { w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.leaf("loc:linearElementReferenceModelVersion", v)?; }
+        if let Some(v) = &self.road_number { w.max_len("roadNumber", "String", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
+        if let Some(v) = &self.linear_element_reference_model { w.max_len("linearElementReferenceModel", "String", v, 1024)?; w.leaf("loc:linearElementReferenceModel", v)?; }
+        if let Some(v) = &self.linear_element_reference_model_version { w.max_len("linearElementReferenceModelVersion", "String", v, 1024)?; w.leaf("loc:linearElementReferenceModelVersion", v)?; }
         if let Some(v) = &self.linear_element_nature { w.enumeration("loc:linearElementNature", v.literal())?; }
         if let Some(v) = &self.linear_element_extension { w.extension("loc:_linearElementExtension", v)?; }
         w.end(tag)
@@ -6969,15 +6969,15 @@ impl LinearElement {
         }
         if let Some(v) = &self.road_number {
             w.key(1971)?;
-            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+            w.max_len("roadNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_reference_model {
             w.key(1068)?;
-            w.max_len("linearElementReferenceModel", v, 1024)?; w.string(v)?;
+            w.max_len("linearElementReferenceModel", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_reference_model_version {
             w.key(1069)?;
-            w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.string(v)?;
+            w.max_len("linearElementReferenceModelVersion", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_nature {
             w.key(1067)?;
@@ -7067,13 +7067,13 @@ impl LinearElementByCode {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.road_name { w.multilingual("loc:roadName", v)?; }
-        if let Some(v) = &self.road_number { w.max_len("roadNumber", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
-        if let Some(v) = &self.linear_element_reference_model { w.max_len("linearElementReferenceModel", v, 1024)?; w.leaf("loc:linearElementReferenceModel", v)?; }
-        if let Some(v) = &self.linear_element_reference_model_version { w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.leaf("loc:linearElementReferenceModelVersion", v)?; }
+        if let Some(v) = &self.road_number { w.max_len("roadNumber", "String", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
+        if let Some(v) = &self.linear_element_reference_model { w.max_len("linearElementReferenceModel", "String", v, 1024)?; w.leaf("loc:linearElementReferenceModel", v)?; }
+        if let Some(v) = &self.linear_element_reference_model_version { w.max_len("linearElementReferenceModelVersion", "String", v, 1024)?; w.leaf("loc:linearElementReferenceModelVersion", v)?; }
         if let Some(v) = &self.linear_element_nature { w.enumeration("loc:linearElementNature", v.literal())?; }
         if let Some(v) = &self.linear_element_extension { w.extension("loc:_linearElementExtension", v)?; }
         match &self.linear_element_identifier {
-            Some(v) => { w.max_len("linearElementIdentifier", v, 1024)?; w.leaf("loc:linearElementIdentifier", v)?; }
+            Some(v) => { w.max_len("linearElementIdentifier", "String", v, 1024)?; w.leaf("loc:linearElementIdentifier", v)?; }
             None => return Err(w.missing("loc:linearElementIdentifier")),
         }
         if let Some(v) = &self.linear_element_by_code_extension { w.extension("loc:_linearElementByCodeExtension", v)?; }
@@ -7145,15 +7145,15 @@ impl LinearElementByCode {
         }
         if let Some(v) = &self.road_number {
             w.key(1971)?;
-            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+            w.max_len("roadNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_reference_model {
             w.key(1068)?;
-            w.max_len("linearElementReferenceModel", v, 1024)?; w.string(v)?;
+            w.max_len("linearElementReferenceModel", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_reference_model_version {
             w.key(1069)?;
-            w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.string(v)?;
+            w.max_len("linearElementReferenceModelVersion", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_nature {
             w.key(1067)?;
@@ -7166,7 +7166,7 @@ impl LinearElementByCode {
         match &self.linear_element_identifier {
             Some(v) => {
                 w.key(1066)?;
-                w.max_len("linearElementIdentifier", v, 1024)?; w.string(v)?;
+                w.max_len("linearElementIdentifier", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(1066, w.missing("linearElementIdentifier"))?,
         }
@@ -7254,9 +7254,9 @@ impl LinearElementByLineString {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.road_name { w.multilingual("loc:roadName", v)?; }
-        if let Some(v) = &self.road_number { w.max_len("roadNumber", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
-        if let Some(v) = &self.linear_element_reference_model { w.max_len("linearElementReferenceModel", v, 1024)?; w.leaf("loc:linearElementReferenceModel", v)?; }
-        if let Some(v) = &self.linear_element_reference_model_version { w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.leaf("loc:linearElementReferenceModelVersion", v)?; }
+        if let Some(v) = &self.road_number { w.max_len("roadNumber", "String", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
+        if let Some(v) = &self.linear_element_reference_model { w.max_len("linearElementReferenceModel", "String", v, 1024)?; w.leaf("loc:linearElementReferenceModel", v)?; }
+        if let Some(v) = &self.linear_element_reference_model_version { w.max_len("linearElementReferenceModelVersion", "String", v, 1024)?; w.leaf("loc:linearElementReferenceModelVersion", v)?; }
         if let Some(v) = &self.linear_element_nature { w.enumeration("loc:linearElementNature", v.literal())?; }
         if let Some(v) = &self.linear_element_extension { w.extension("loc:_linearElementExtension", v)?; }
         match &self.gml_line_string {
@@ -7332,15 +7332,15 @@ impl LinearElementByLineString {
         }
         if let Some(v) = &self.road_number {
             w.key(1971)?;
-            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+            w.max_len("roadNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_reference_model {
             w.key(1068)?;
-            w.max_len("linearElementReferenceModel", v, 1024)?; w.string(v)?;
+            w.max_len("linearElementReferenceModel", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_reference_model_version {
             w.key(1069)?;
-            w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.string(v)?;
+            w.max_len("linearElementReferenceModelVersion", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_nature {
             w.key(1067)?;
@@ -7452,9 +7452,9 @@ impl LinearElementByPoints {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.road_name { w.multilingual("loc:roadName", v)?; }
-        if let Some(v) = &self.road_number { w.max_len("roadNumber", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
-        if let Some(v) = &self.linear_element_reference_model { w.max_len("linearElementReferenceModel", v, 1024)?; w.leaf("loc:linearElementReferenceModel", v)?; }
-        if let Some(v) = &self.linear_element_reference_model_version { w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.leaf("loc:linearElementReferenceModelVersion", v)?; }
+        if let Some(v) = &self.road_number { w.max_len("roadNumber", "String", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
+        if let Some(v) = &self.linear_element_reference_model { w.max_len("linearElementReferenceModel", "String", v, 1024)?; w.leaf("loc:linearElementReferenceModel", v)?; }
+        if let Some(v) = &self.linear_element_reference_model_version { w.max_len("linearElementReferenceModelVersion", "String", v, 1024)?; w.leaf("loc:linearElementReferenceModelVersion", v)?; }
         if let Some(v) = &self.linear_element_nature { w.enumeration("loc:linearElementNature", v.literal())?; }
         if let Some(v) = &self.linear_element_extension { w.extension("loc:_linearElementExtension", v)?; }
         match &self.start_point_of_linear_element {
@@ -7542,15 +7542,15 @@ impl LinearElementByPoints {
         }
         if let Some(v) = &self.road_number {
             w.key(1971)?;
-            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+            w.max_len("roadNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_reference_model {
             w.key(1068)?;
-            w.max_len("linearElementReferenceModel", v, 1024)?; w.string(v)?;
+            w.max_len("linearElementReferenceModel", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_reference_model_version {
             w.key(1069)?;
-            w.max_len("linearElementReferenceModelVersion", v, 1024)?; w.string(v)?;
+            w.max_len("linearElementReferenceModelVersion", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.linear_element_nature {
             w.key(1067)?;
@@ -8518,7 +8518,7 @@ impl NamedArea {
             None => return Err(w.missing("loc:areaName")),
         }
         if let Some(v) = &self.named_area_type { w.enumeration("loc:namedAreaType", v.literal())?; }
-        if let Some(v) = &self.country { w.max_len("country", v, 2)?; w.leaf("loc:country", v)?; }
+        if let Some(v) = &self.country { w.max_len("country", "CountryCode", v, 2)?; w.leaf("loc:country", v)?; }
         if let Some(v) = &self.loc_named_area_extension { v.write(w, "loc:_namedAreaExtension", "", "")?; }
         w.end(tag)
     }
@@ -8590,7 +8590,7 @@ impl NamedArea {
         }
         if let Some(v) = &self.country {
             w.key(468)?;
-            w.max_len("country", v, 2)?; w.string(v)?;
+            w.max_len("country", "CountryCode", v, 2)?; w.string(v)?;
         }
         if let Some(v) = &self.loc_named_area_extension {
             w.key(1144)?;
@@ -8683,14 +8683,14 @@ impl NutsNamedArea {
             None => return Err(w.missing("loc:areaName")),
         }
         if let Some(v) = &self.named_area_type { w.enumeration("loc:namedAreaType", v.literal())?; }
-        if let Some(v) = &self.country { w.max_len("country", v, 2)?; w.leaf("loc:country", v)?; }
+        if let Some(v) = &self.country { w.max_len("country", "CountryCode", v, 2)?; w.leaf("loc:country", v)?; }
         if let Some(v) = &self.loc_named_area_extension { v.write(w, "loc:_namedAreaExtension", "", "")?; }
         match &self.nuts_code_type {
             Some(v) => { w.enumeration("loc:nutsCodeType", v.literal())?; }
             None => return Err(w.missing("loc:nutsCodeType")),
         }
         match &self.nuts_code {
-            Some(v) => { w.max_len("nutsCode", v, 5)?; w.leaf("loc:nutsCode", v)?; }
+            Some(v) => { w.max_len("nutsCode", "NutsCode", v, 5)?; w.leaf("loc:nutsCode", v)?; }
             None => return Err(w.missing("loc:nutsCode")),
         }
         if let Some(v) = &self.nuts_named_area_extension { w.extension("loc:_nutsNamedAreaExtension", v)?; }
@@ -8775,7 +8775,7 @@ impl NutsNamedArea {
         }
         if let Some(v) = &self.country {
             w.key(468)?;
-            w.max_len("country", v, 2)?; w.string(v)?;
+            w.max_len("country", "CountryCode", v, 2)?; w.string(v)?;
         }
         if let Some(v) = &self.loc_named_area_extension {
             w.key(1144)?;
@@ -8791,7 +8791,7 @@ impl NutsNamedArea {
         match &self.nuts_code {
             Some(v) => {
                 w.key(1420)?;
-                w.max_len("nutsCode", v, 5)?; w.string(v)?;
+                w.max_len("nutsCode", "NutsCode", v, 5)?; w.string(v)?;
             }
             None => w.absent(1420, w.missing("nutsCode"))?,
         }
@@ -9692,7 +9692,7 @@ impl OpenlrLineAttributes {
             None => return Err(w.missing("loc:openlrFormOfWay")),
         }
         match &self.openlr_bearing {
-            Some(v) => { w.range("openlrBearing", *v, 0, 359)?; w.leaf("loc:openlrBearing", v)?; }
+            Some(v) => { w.range("openlrBearing", "AngleInDegrees", *v, 0, 359)?; w.leaf("loc:openlrBearing", v)?; }
             None => return Err(w.missing("loc:openlrBearing")),
         }
         if let Some(v) = &self.openlr_line_attributes_extension { w.extension("loc:_openlrLineAttributesExtension", v)?; }
@@ -9765,7 +9765,7 @@ impl OpenlrLineAttributes {
         match &self.openlr_bearing {
             Some(v) => {
                 w.key(1442)?;
-                w.range("openlrBearing", *v, 0, 359)?; w.integer(*v)?;
+                w.range("openlrBearing", "AngleInDegrees", *v, 0, 359)?; w.integer(*v)?;
             }
             None => w.absent(1442, w.missing("openlrBearing"))?,
         }
@@ -11728,7 +11728,7 @@ impl PointByCoordinates {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.bearing { w.range("bearing", *v, 0, 359)?; w.leaf("loc:bearing", v)?; }
+        if let Some(v) = &self.bearing { w.range("bearing", "AngleInDegrees", *v, 0, 359)?; w.leaf("loc:bearing", v)?; }
         match &self.point_coordinates {
             Some(v) => { v.write(w, "loc:pointCoordinates", "", "")?; }
             None => return Err(w.missing("loc:pointCoordinates")),
@@ -11783,7 +11783,7 @@ impl PointByCoordinates {
         }
         if let Some(v) = &self.bearing {
             w.key(294)?;
-            w.range("bearing", *v, 0, 359)?; w.integer(*v)?;
+            w.range("bearing", "AngleInDegrees", *v, 0, 359)?; w.integer(*v)?;
         }
         match &self.point_coordinates {
             Some(v) => {
@@ -12557,7 +12557,7 @@ impl PositionConfidenceEllipse {
         if let Some(v) = &self.semi_major_axis_length_coded_error { w.enumeration("loc:semiMajorAxisLengthCodedError", v.literal())?; }
         if let Some(v) = &self.semi_minor_axis_length { w.leaf("loc:semiMinorAxisLength", v)?; }
         if let Some(v) = &self.semi_minor_axis_length_coded_error { w.enumeration("loc:semiMinorAxisLengthCodedError", v.literal())?; }
-        if let Some(v) = &self.semi_major_axis_orientation { w.range("semiMajorAxisOrientation", *v, 0, 359)?; w.leaf("loc:semiMajorAxisOrientation", v)?; }
+        if let Some(v) = &self.semi_major_axis_orientation { w.range("semiMajorAxisOrientation", "AngleInDegrees", *v, 0, 359)?; w.leaf("loc:semiMajorAxisOrientation", v)?; }
         if let Some(v) = &self.semi_major_axis_orientation_error { w.leaf("loc:semiMajorAxisOrientationError", v)?; }
         if let Some(v) = &self.position_confidence_ellipse_extension { w.extension("loc:_positionConfidenceEllipseExtension", v)?; }
         w.end(tag)
@@ -12636,7 +12636,7 @@ impl PositionConfidenceEllipse {
         }
         if let Some(v) = &self.semi_major_axis_orientation {
             w.key(2018)?;
-            w.range("semiMajorAxisOrientation", *v, 0, 359)?; w.integer(*v)?;
+            w.range("semiMajorAxisOrientation", "AngleInDegrees", *v, 0, 359)?; w.integer(*v)?;
         }
         if let Some(v) = &self.semi_major_axis_orientation_error {
             w.key(2019)?;
@@ -13289,7 +13289,7 @@ impl PredefinedLocationsPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -13297,7 +13297,7 @@ impl PredefinedLocationsPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -13393,7 +13393,7 @@ impl PredefinedLocationsPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -13403,7 +13403,7 @@ impl PredefinedLocationsPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -13515,10 +13515,10 @@ impl Referent {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.referent_identifier {
-            Some(v) => { w.max_len("referentIdentifier", v, 1024)?; w.leaf("loc:referentIdentifier", v)?; }
+            Some(v) => { w.max_len("referentIdentifier", "String", v, 1024)?; w.leaf("loc:referentIdentifier", v)?; }
             None => return Err(w.missing("loc:referentIdentifier")),
         }
-        if let Some(v) = &self.referent_name { w.max_len("referentName", v, 1024)?; w.leaf("loc:referentName", v)?; }
+        if let Some(v) = &self.referent_name { w.max_len("referentName", "String", v, 1024)?; w.leaf("loc:referentName", v)?; }
         match &self.referent_type {
             Some(v) => { w.enumeration("loc:referentType", v.literal())?; }
             None => return Err(w.missing("loc:referentType")),
@@ -13586,13 +13586,13 @@ impl Referent {
         match &self.referent_identifier {
             Some(v) => {
                 w.key(1825)?;
-                w.max_len("referentIdentifier", v, 1024)?; w.string(v)?;
+                w.max_len("referentIdentifier", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(1825, w.missing("referentIdentifier"))?,
         }
         if let Some(v) = &self.referent_name {
             w.key(1826)?;
-            w.max_len("referentName", v, 1024)?; w.string(v)?;
+            w.max_len("referentName", "String", v, 1024)?; w.string(v)?;
         }
         match &self.referent_type {
             Some(v) => {
@@ -13671,9 +13671,9 @@ impl RoadInformation {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.road_destination { w.max_len("roadDestination", v, 1024)?; w.leaf("loc:roadDestination", v)?; }
-        if let Some(v) = &self.road_name { w.max_len("roadName", v, 1024)?; w.leaf("loc:roadName", v)?; }
-        if let Some(v) = &self.road_number { w.max_len("roadNumber", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
+        if let Some(v) = &self.road_destination { w.max_len("roadDestination", "String", v, 1024)?; w.leaf("loc:roadDestination", v)?; }
+        if let Some(v) = &self.road_name { w.max_len("roadName", "String", v, 1024)?; w.leaf("loc:roadName", v)?; }
+        if let Some(v) = &self.road_number { w.max_len("roadNumber", "String", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
         if let Some(v) = &self.road_information_extension { w.extension("loc:_roadInformationExtension", v)?; }
         w.end(tag)
     }
@@ -13726,15 +13726,15 @@ impl RoadInformation {
         }
         if let Some(v) = &self.road_destination {
             w.key(1966)?;
-            w.max_len("roadDestination", v, 1024)?; w.string(v)?;
+            w.max_len("roadDestination", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.road_name {
             w.key(1970)?;
-            w.max_len("roadName", v, 1024)?; w.string(v)?;
+            w.max_len("roadName", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.road_number {
             w.key(1971)?;
-            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+            w.max_len("roadNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.road_information_extension {
             w.key(1200)?;

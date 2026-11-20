@@ -6,9 +6,9 @@ text is published in the repository and in the crate documentation.
 
 ## Release status
 
-This describes `datex2` 0.2: reading, streaming and writing DATEX II version 3 XML, and reading
-and writing DATEX II version 3 JSON, including the German AFIR Recharging profile for the
-Mobilithek.
+This describes `datex2` 0.3: reading, streaming and writing DATEX II version 3 XML and JSON,
+publications and Exchange 2020 message containers, including the German AFIR Recharging profile
+for the Mobilithek.
 
 The crate is a library. It reads bytes its caller gives it and writes bytes to a sink its caller
 gives it. It opens no files and no sockets, starts no processes, holds no credentials and keeps no
@@ -92,6 +92,10 @@ suite fails when one of them does not exist.
 | T-16 | A price or a measurement changes its value on the way through JSON, so a driver is charged or told something else | mitigated | Decimals keep their digits and never pass through binary floating point; single precision values are written as the shortest text that reads back to the same value; no process-wide JSON setting is involved, because there is no JSON dependency | `tests/json.rs::json_sr004_money_and_measurements_keep_their_exact_value` `tests/json.rs::json_sr004_json_support_adds_no_dependency` |
 | T-17 | A publication written for the Mobilithek is rejected there, or carries content the profile does not allow | mitigated | The profile writer checks every member, enumeration value and required member against a table generated from the profile's schemas; an independent validator checks what the tests write against those schemas | `tests/json.rs::json_sr005_profile_refusals_name_the_place_the_rule_and_the_choices` `tests/json.rs::json_sr005_regulated_characteristics_the_profile_cannot_express_are_refused` `tests/json.rs::json_sr005_table_built_in_code_is_accepted_by_the_mobilithek_profile` |
 | T-18 | An altered or changed profile makes the generator emit a profile table that lets invalid output through, or blocks valid output | mitigated | Every profile and JSON schema file is checked against a committed SHA-256 before it is read; the generator stops on any difference from 3.7 that its lists of known differences do not explain | `xtask/src/main.rs::sr008_schema_that_fails_its_pin_is_refused` `xtask/src/main.rs::sr006_unexplained_profile_difference_stops_the_generator` |
+| T-19 | Text in a message container's exchange information (a supplier name, an address, a status description) adds elements to a written XML container, or a container missing required exchange information is written as if valid | mitigated | Containers are written by the same generated writers and the one escaping routine as publications, which refuse missing required members in every encoding; `xmllint` checks every container the tests write against the official Exchange 2020 schema | `tests/containers.rs::sr001_markup_in_exchange_text_reads_back_unchanged` `tests/containers.rs::sr002_missing_exchange_member_is_named_in_every_encoding` `tests/containers.rs::xml_container_is_valid_and_reads_back` |
+| T-20 | A Mobilithek status delivery says it is complete when it is not, or states a time the producer never set, so consumers drop charging points or order messages wrongly | mitigated | `snapshot` and `delta` are two named functions, not a flag; both take the generation time from the caller and read no clock; the profile's container schema checks what they produce | `tests/json.rs::sr003_snapshot_and_delta_are_the_profile_sample_with_the_callers_time` `tests/json.rs::a_wrapped_container_can_be_changed` |
+| T-21 | A price with a fraction of a cent or more than eight digits is rounded, cut or passed to JSON unchecked, because the JSON schemas do not carry the money rule, so a driver sees a price the operator did not set | mitigated | The writer applies the XML schema's `AmountOfMoney` rule in every encoding, never rounds, and names the type, its limits and the value in the error | `tests/json.rs::sr004_money_breaking_amount_of_money_is_refused_naming_the_type` |
+| T-22 | A test run without the schemas or a validator passes as if every written document had been checked, so the claim that the schemas accept the output goes out without evidence | mitigated | A skipped validation is printed in the normal output of the run; `DATEX2_REQUIRE_VALIDATORS=1`, set in CI and in the release job, turns it into a failure | `tests/containers.rs::xml_container_is_valid_and_reads_back` `tests/json.rs::sr003_snapshot_and_delta_are_the_profile_sample_with_the_callers_time` |
 
 Beyond the tests, four fuzz targets (`read`, `stream`, `roundtrip`, `json`) assert that no input
 makes the crate crash, hang or return unsafe text, and that whatever a writer accepts reads back
@@ -107,6 +111,9 @@ as the same value.
 - **T-12 does not cover identity constraints.** Two objects with the same identifier are written.
 - **T-17 covers the profile's revision 2.** A later revision is a new pinned file set; until the
   generator is run on it, its differences are unknown to the writer.
+- **T-20 cannot see the table.** Whether a snapshot really holds every point, and whether a
+  status refers to objects and versions the table publication contains, is the producer's to
+  check; the writer sees one document at a time.
 - **Warnings are advice.** The controls of T-04 report; acting on the report is the caller's.
 
 ## Non-goals

@@ -308,8 +308,7 @@ fn container(protocol: ex::ProtocolTypeEnum) -> MessageContainer {
 
 fn mobilithek_container(protocol: ex::ProtocolTypeEnum) -> String {
     let mut bytes = Vec::new();
-    json::mobilithek::write_container(&mut bytes, &container(protocol))
-        .unwrap_or_else(|e| panic!("{e}"));
+    json::mobilithek::write(&mut bytes, &container(protocol)).unwrap_or_else(|e| panic!("{e}"));
     String::from_utf8(bytes).unwrap()
 }
 
@@ -501,9 +500,8 @@ fn profile_examples_read_without_warning_and_write_back_as_they_were() {
     for (name, schema) in cases {
         let path = root.join(name).join(format!("{name}_rev2.json"));
         let Ok(text) = std::fs::read_to_string(&path) else {
-            eprintln!(
-                "skipped: {} not found (run `cargo xtask fetch`)",
-                path.display()
+            common::skipped(
+                "the Mobilithek profile samples are not fetched (run `cargo xtask fetch`)",
             );
             return;
         };
@@ -516,7 +514,7 @@ fn profile_examples_read_without_warning_and_write_back_as_they_were() {
                 ..Default::default()
             };
             let mut bytes = Vec::new();
-            json::mobilithek::write_container(&mut bytes, &container).unwrap();
+            json::mobilithek::write(&mut bytes, &container).unwrap();
             String::from_utf8(bytes).unwrap()
         } else {
             json::mobilithek::to_string(&doc.publications[0]).unwrap()
@@ -609,7 +607,7 @@ fn time_of_day_is_written_with_z_for_the_profile_and_read_back() {
             .join("afir-mobilithek-01-00-00/EnergyInfrastructureTablePublication/EnergyInfrastructureTablePublication_rev2.json"),
     );
     let Ok(text) = table_text else {
-        eprintln!("skipped: the profile examples are not fetched");
+        common::skipped("the Mobilithek profile samples are not fetched (run `cargo xtask fetch`)");
         return;
     };
     let doc = read(&text);
@@ -1114,7 +1112,7 @@ fn json_sr005_each_kind_of_profile_refusal_is_named() {
         payload: vec![status],
         ..container(ex::ProtocolTypeEnum::SnapshotPush)
     };
-    let error = json::mobilithek::write_container(&mut bytes, &container)
+    let error = json::mobilithek::write(&mut bytes, &container)
         .unwrap_err()
         .to_string();
     assert!(error.contains("fault"), "{error}");
@@ -1138,7 +1136,7 @@ fn plain_fault_is_written_without_its_wrapper_for_the_profile() {
         ..container(ex::ProtocolTypeEnum::SnapshotPush)
     };
     let mut bytes = Vec::new();
-    json::mobilithek::write_container(&mut bytes, &container).unwrap_or_else(|e| panic!("{e}"));
+    json::mobilithek::write(&mut bytes, &container).unwrap_or_else(|e| panic!("{e}"));
     let text = String::from_utf8(bytes).unwrap();
     assert!(
         text.contains(r#""fault":{"faultIdentifier":"F1""#),
@@ -1189,4 +1187,127 @@ fn json_sr001_huge_numbers_and_hostile_member_names_are_bounded() {
     let doc = read(&hostile);
     let warning = doc.warnings[0].to_string();
     assert!(!warning.chars().any(char::is_control), "{warning:?}");
+}
+
+// ---- 009: the Mobilithek wrappers and the money rule ------------------------------------
+
+fn profile_sample(name: &str) -> Option<String> {
+    let path = common::schema_dir()
+        .parent()?
+        .join("afir-mobilithek-01-00-00")
+        .join(name)
+        .join(format!("{name}_rev2.json"));
+    std::fs::read_to_string(path).ok()
+}
+
+/// write-roots/SR-003, US2: snapshot and delta are valid for the profile, carry the given time, and say
+/// what the profile's own sample says apart from protocol and time.
+#[test]
+fn sr003_snapshot_and_delta_are_the_profile_sample_with_the_callers_time() {
+    let generated: DateTime = "2026-04-14T14:00:00+02:00".parse().unwrap();
+    for (container, protocol) in [
+        (
+            json::mobilithek::snapshot(status(), generated),
+            ex::ProtocolTypeEnum::SnapshotPush,
+        ),
+        (
+            json::mobilithek::delta(status(), generated),
+            ex::ProtocolTypeEnum::DeltaPush,
+        ),
+    ] {
+        assert_eq!(container.payload, vec![status()]);
+        let exchange = container.exchange_information.as_deref().unwrap();
+        let context = exchange.exchange_context.as_deref().unwrap();
+        assert_eq!(context.coded_exchange_protocol, Some(protocol.clone()));
+        let dynamic = exchange.dynamic_information.as_deref().unwrap();
+        assert_eq!(dynamic.message_generation_timestamp, Some(generated));
+
+        let text = json::mobilithek::to_string(&container).unwrap();
+        assert_json_valid(&text, JsonSchema::MobilithekStatus);
+
+        let Some(sample) = profile_sample("EnergyInfrastructureStatusPublication") else {
+            common::skipped(
+                "the Mobilithek profile samples are not fetched (run `cargo xtask fetch`)",
+            );
+            continue;
+        };
+        let mut expected = *read(&sample).exchange_information.unwrap();
+        let ctx = expected.exchange_context.as_mut().unwrap();
+        ctx.coded_exchange_protocol = Some(protocol);
+        let dynamic = expected.dynamic_information.as_mut().unwrap();
+        dynamic.message_generation_timestamp = Some(generated);
+        assert_eq!(*exchange, expected);
+    }
+}
+
+/// write-roots US2-3: the wrapped container is plain data; what the caller adds is written.
+#[test]
+fn a_wrapped_container_can_be_changed() {
+    let mut container =
+        json::mobilithek::delta(status(), "2026-04-14T14:00:00+02:00".parse().unwrap());
+    let exchange = container.exchange_information.as_mut().unwrap();
+    exchange
+        .exchange_context
+        .as_mut()
+        .unwrap()
+        .supplier_or_cis_requester
+        .as_mut()
+        .unwrap()
+        .name = Some("Beispiel Laden GmbH".into());
+    let text = json::mobilithek::to_string(&container).unwrap();
+    assert_json_valid(&text, JsonSchema::MobilithekStatus);
+    let again = read(&text);
+    assert_eq!(again.exchange_information, container.exchange_information);
+
+    // What the profile leaves out of the exchange information is refused like anything else.
+    let exchange = container.exchange_information.as_mut().unwrap();
+    exchange
+        .dynamic_information
+        .as_mut()
+        .unwrap()
+        .message_sequencing_number = Some(42);
+    let e = json::mobilithek::to_string(&container).unwrap_err();
+    assert!(
+        e.path
+            .ends_with("dynamicInformation/messageSequencingNumber"),
+        "{e}"
+    );
+}
+
+/// write-roots/SR-004: an amount with a fraction of a cent or nine digits is refused in every encoding,
+/// and the error names AmountOfMoney, its limits, the member and the value. Nothing is rounded.
+#[test]
+fn sr004_money_breaking_amount_of_money_is_refused_naming_the_type() {
+    for bad in ["0.589", "123456789"] {
+        let mut official = table_for_3_7();
+        for_each_price(&mut official, |price| price.value = money(bad));
+        let mut profile = table();
+        for_each_price(&mut profile, |price| price.value = money(bad));
+        for (encoding, e) in [
+            ("XML", v3::to_string(&official).unwrap_err()),
+            ("JSON", json::to_string(&official).unwrap_err()),
+            (
+                "Mobilithek",
+                json::mobilithek::to_string(&profile).unwrap_err(),
+            ),
+        ] {
+            assert_eq!(e.kind, ErrorKind::InvalidValue, "{encoding}: {e}");
+            assert_eq!(
+                e.expected,
+                "at most 8 digits, 2 of them after the point, in \"value\" of type AmountOfMoney",
+                "{encoding}"
+            );
+            assert_eq!(e.found, format!("\"{bad}\""), "{encoding}");
+        }
+    }
+    // Trailing zeros are not digits of the value, and the type has no minimum.
+    for good in ["0.590", "-0.59", "12345678"] {
+        let mut publication = table();
+        for_each_price(&mut publication, |price| price.value = money(good));
+        let text = json::mobilithek::to_string(&publication).unwrap();
+        assert!(
+            text.contains(&format!(r#""value":{good}"#)),
+            "{good} in {text}"
+        );
+    }
 }

@@ -804,11 +804,11 @@ impl CatalogueInformation {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.catalogue_reference_by_oid {
-            Some(v) => { w.max_len("catalogueReferenceByOID", v, 1024)?; w.leaf("fst:catalogueReferenceByOID", v)?; }
+            Some(v) => { w.max_len("catalogueReferenceByOID", "ObjectIdentifier", v, 1024)?; w.leaf("fst:catalogueReferenceByOID", v)?; }
             None => return Err(w.missing("fst:catalogueReferenceByOID")),
         }
         match &self.catalogue_element {
-            Some(v) => { w.max_len("catalogueElement", v, 1024)?; w.leaf("fst:catalogueElement", v)?; }
+            Some(v) => { w.max_len("catalogueElement", "String", v, 1024)?; w.leaf("fst:catalogueElement", v)?; }
             None => return Err(w.missing("fst:catalogueElement")),
         }
         if let Some(v) = &self.catalogue_information_extension { w.extension("fst:_catalogueInformationExtension", v)?; }
@@ -863,14 +863,14 @@ impl CatalogueInformation {
         match &self.catalogue_reference_by_oid {
             Some(v) => {
                 w.key(319)?;
-                w.max_len("catalogueReferenceByOID", v, 1024)?; w.string(v)?;
+                w.max_len("catalogueReferenceByOID", "ObjectIdentifier", v, 1024)?; w.string(v)?;
             }
             None => w.absent(319, w.missing("catalogueReferenceByOID"))?,
         }
         match &self.catalogue_element {
             Some(v) => {
                 w.key(318)?;
-                w.max_len("catalogueElement", v, 1024)?; w.string(v)?;
+                w.max_len("catalogueElement", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(318, w.missing("catalogueElement"))?,
         }
@@ -1029,13 +1029,13 @@ impl Component {
             Some(v) => { w.leaf("fst:lastUpdateOfDeviceInformation", v)?; }
             None => return Err(w.missing("fst:lastUpdateOfDeviceInformation")),
         }
-        if let Some(v) = &self.external_device_id { w.max_len("externalDeviceId", v, 1024)?; w.leaf("fst:externalDeviceId", v)?; }
+        if let Some(v) = &self.external_device_id { w.max_len("externalDeviceId", "String", v, 1024)?; w.leaf("fst:externalDeviceId", v)?; }
         if let Some(v) = &self.last_device_check { w.leaf("fst:lastDeviceCheck", v)?; }
-        if let Some(v) = &self.software_version { w.max_len("softwareVersion", v, 1024)?; w.leaf("fst:softwareVersion", v)?; }
+        if let Some(v) = &self.software_version { w.max_len("softwareVersion", "String", v, 1024)?; w.leaf("fst:softwareVersion", v)?; }
         if let Some(v) = &self.software_version_date { w.leaf("fst:softwareVersionDate", v)?; }
         if let Some(v) = &self.additional_device_information { w.multilingual("fst:additionalDeviceInformation", v)?; }
-        if let Some(v) = &self.ip_address { w.max_len("ipAddress", v, 1024)?; w.pattern("ipAddress", v, Pattern::IpAddress)?; w.leaf("fst:ipAddress", v)?; }
-        if let Some(v) = &self.port_number { w.range("portNumber", *v, 0, 65535)?; w.leaf("fst:portNumber", v)?; }
+        if let Some(v) = &self.ip_address { w.max_len("ipAddress", "IpAddress", v, 1024)?; w.pattern("ipAddress", "IpAddress", v, Pattern::IpAddress)?; w.leaf("fst:ipAddress", v)?; }
+        if let Some(v) = &self.port_number { w.range("portNumber", "PortNumber", *v, 0, 65535)?; w.leaf("fst:portNumber", v)?; }
         if let Some(v) = &self.accountable_authority { v.write(w, "fst:accountableAuthority", "", "")?; }
         match &self.point_location {
             Some(v) => { v.write(w, "fst:pointLocation")?; }
@@ -1180,7 +1180,7 @@ impl Component {
         }
         if let Some(v) = &self.external_device_id {
             w.key(735)?;
-            w.max_len("externalDeviceId", v, 1024)?; w.string(v)?;
+            w.max_len("externalDeviceId", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_device_check {
             w.key(1036)?;
@@ -1188,7 +1188,7 @@ impl Component {
         }
         if let Some(v) = &self.software_version {
             w.key(2147)?;
-            w.max_len("softwareVersion", v, 1024)?; w.string(v)?;
+            w.max_len("softwareVersion", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.software_version_date {
             w.key(2148)?;
@@ -1200,11 +1200,11 @@ impl Component {
         }
         if let Some(v) = &self.ip_address {
             w.key(1008)?;
-            w.max_len("ipAddress", v, 1024)?; w.pattern("ipAddress", v, Pattern::IpAddress)?; w.string(v)?;
+            w.max_len("ipAddress", "IpAddress", v, 1024)?; w.pattern("ipAddress", "IpAddress", v, Pattern::IpAddress)?; w.string(v)?;
         }
         if let Some(v) = &self.port_number {
             w.key(1604)?;
-            w.range("portNumber", *v, 0, 65535)?; w.integer(*v)?;
+            w.range("portNumber", "PortNumber", *v, 0, 65535)?; w.integer(*v)?;
         }
         if let Some(v) = &self.accountable_authority {
             w.key(28)?;
@@ -1394,13 +1394,13 @@ impl Device {
             Some(v) => { w.leaf("fst:lastUpdateOfDeviceInformation", v)?; }
             None => return Err(w.missing("fst:lastUpdateOfDeviceInformation")),
         }
-        if let Some(v) = &self.external_device_id { w.max_len("externalDeviceId", v, 1024)?; w.leaf("fst:externalDeviceId", v)?; }
+        if let Some(v) = &self.external_device_id { w.max_len("externalDeviceId", "String", v, 1024)?; w.leaf("fst:externalDeviceId", v)?; }
         if let Some(v) = &self.last_device_check { w.leaf("fst:lastDeviceCheck", v)?; }
-        if let Some(v) = &self.software_version { w.max_len("softwareVersion", v, 1024)?; w.leaf("fst:softwareVersion", v)?; }
+        if let Some(v) = &self.software_version { w.max_len("softwareVersion", "String", v, 1024)?; w.leaf("fst:softwareVersion", v)?; }
         if let Some(v) = &self.software_version_date { w.leaf("fst:softwareVersionDate", v)?; }
         if let Some(v) = &self.additional_device_information { w.multilingual("fst:additionalDeviceInformation", v)?; }
-        if let Some(v) = &self.ip_address { w.max_len("ipAddress", v, 1024)?; w.pattern("ipAddress", v, Pattern::IpAddress)?; w.leaf("fst:ipAddress", v)?; }
-        if let Some(v) = &self.port_number { w.range("portNumber", *v, 0, 65535)?; w.leaf("fst:portNumber", v)?; }
+        if let Some(v) = &self.ip_address { w.max_len("ipAddress", "IpAddress", v, 1024)?; w.pattern("ipAddress", "IpAddress", v, Pattern::IpAddress)?; w.leaf("fst:ipAddress", v)?; }
+        if let Some(v) = &self.port_number { w.range("portNumber", "PortNumber", *v, 0, 65535)?; w.leaf("fst:portNumber", v)?; }
         if let Some(v) = &self.accountable_authority { v.write(w, "fst:accountableAuthority", "", "")?; }
         match &self.point_location {
             Some(v) => { v.write(w, "fst:pointLocation")?; }
@@ -1533,7 +1533,7 @@ impl Device {
         }
         if let Some(v) = &self.external_device_id {
             w.key(735)?;
-            w.max_len("externalDeviceId", v, 1024)?; w.string(v)?;
+            w.max_len("externalDeviceId", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_device_check {
             w.key(1036)?;
@@ -1541,7 +1541,7 @@ impl Device {
         }
         if let Some(v) = &self.software_version {
             w.key(2147)?;
-            w.max_len("softwareVersion", v, 1024)?; w.string(v)?;
+            w.max_len("softwareVersion", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.software_version_date {
             w.key(2148)?;
@@ -1553,11 +1553,11 @@ impl Device {
         }
         if let Some(v) = &self.ip_address {
             w.key(1008)?;
-            w.max_len("ipAddress", v, 1024)?; w.pattern("ipAddress", v, Pattern::IpAddress)?; w.string(v)?;
+            w.max_len("ipAddress", "IpAddress", v, 1024)?; w.pattern("ipAddress", "IpAddress", v, Pattern::IpAddress)?; w.string(v)?;
         }
         if let Some(v) = &self.port_number {
             w.key(1604)?;
-            w.range("portNumber", *v, 0, 65535)?; w.integer(*v)?;
+            w.range("portNumber", "PortNumber", *v, 0, 65535)?; w.integer(*v)?;
         }
         if let Some(v) = &self.accountable_authority {
             w.key(28)?;
@@ -1719,7 +1719,7 @@ impl DeviceFault {
             Some(v) => { w.attr("id", v)?; }
             None => return Err(w.missing_attr("id")),
         }
-        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
+        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", "String", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
         if let Some(v) = &self.fault_description { w.multilingual("com:faultDescription", v)?; }
         if let Some(v) = &self.fault_creation_time { w.leaf("com:faultCreationTime", v)?; }
         match &self.fault_last_update_time {
@@ -1728,7 +1728,7 @@ impl DeviceFault {
         }
         if let Some(v) = &self.fault_impact_severity { w.enumeration("com:faultImpactSeverity", v.literal())?; }
         if let Some(v) = &self.fault_urgency_to_rectify { w.enumeration("com:faultUrgencyToRectify", v.literal())?; }
-        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
+        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
         if let Some(v) = &self.fault_extension { w.extension("com:_faultExtension", v)?; }
         match &self.fault_type {
             Some(v) => { w.enumeration("fst:faultType", v.literal())?; }
@@ -1736,7 +1736,7 @@ impl DeviceFault {
         }
         if let Some(v) = &self.fault_instructions { w.multilingual("fst:faultInstructions", v)?; }
         for v in &self.fault_impact_on_data { w.enumeration("fst:faultImpactOnData", v.literal())?; }
-        if let Some(v) = &self.fault_component { w.max_len("faultComponent", v, 1024)?; w.leaf("fst:faultComponent", v)?; }
+        if let Some(v) = &self.fault_component { w.max_len("faultComponent", "String", v, 1024)?; w.leaf("fst:faultComponent", v)?; }
         if let Some(v) = &self.fault_component_type { w.enumeration("fst:faultComponentType", v.literal())?; }
         if let Some(v) = &self.fault_object_information { v.write(w, "fst:faultObjectInformation", "", "")?; }
         if let Some(v) = &self.device_fault_extension { w.extension("fst:_deviceFaultExtension", v)?; }
@@ -1837,7 +1837,7 @@ impl DeviceFault {
         }
         if let Some(v) = &self.fault_identifier {
             w.key(836)?;
-            w.max_len("faultIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("faultIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_description {
             w.key(835)?;
@@ -1864,7 +1864,7 @@ impl DeviceFault {
         }
         if let Some(v) = &self.manufacturer_fault_code {
             w.key(1258)?;
-            w.max_len("manufacturerFaultCode", v, 1024)?; w.string(v)?;
+            w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_extension {
             w.key(363)?;
@@ -1892,7 +1892,7 @@ impl DeviceFault {
         }
         if let Some(v) = &self.fault_component {
             w.key(832)?;
-            w.max_len("faultComponent", v, 1024)?; w.string(v)?;
+            w.max_len("faultComponent", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_component_type {
             w.key(833)?;
@@ -2145,7 +2145,7 @@ impl DevicePublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -2153,7 +2153,7 @@ impl DevicePublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -2252,7 +2252,7 @@ impl DevicePublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -2262,7 +2262,7 @@ impl DevicePublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -2385,7 +2385,7 @@ impl DeviceTable {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.device_table_name { w.max_len("deviceTableName", v, 1024)?; w.leaf("fst:deviceTableName", v)?; }
+        if let Some(v) = &self.device_table_name { w.max_len("deviceTableName", "String", v, 1024)?; w.leaf("fst:deviceTableName", v)?; }
         if let Some(v) = &self.accountable_authority { v.write(w, "fst:accountableAuthority", "", "")?; }
         w.count("fst:device", self.device.len(), 1, usize::MAX)?;
         for v in &self.device { v.write(w, "fst:device")?; }
@@ -2463,7 +2463,7 @@ impl DeviceTable {
         }
         if let Some(v) = &self.device_table_name {
             w.key(555)?;
-            w.max_len("deviceTableName", v, 1024)?; w.string(v)?;
+            w.max_len("deviceTableName", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.accountable_authority {
             w.key(28)?;
@@ -2592,7 +2592,7 @@ impl FaultPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -2600,7 +2600,7 @@ impl FaultPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -2699,7 +2699,7 @@ impl FaultPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -2709,7 +2709,7 @@ impl FaultPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -2956,7 +2956,7 @@ impl GeneralDeviceReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
+        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
         if let Some(v) = &self.external_publisher { v.write(w, "com:externalPublisher", "", "")?; }
         if let Some(v) = &self.global_reference_extension { w.extension("com:_globalReferenceExtension", v)?; }
         if let Some(v) = &self.device_reference_extension { w.extension("fst:_deviceReferenceExtension", v)?; }
@@ -3023,7 +3023,7 @@ impl GeneralDeviceReference {
         }
         if let Some(v) = &self.external_publication_identifier {
             w.key(741)?;
-            w.max_len("externalPublicationIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.external_publisher {
             w.key(742)?;
@@ -3117,7 +3117,7 @@ impl GeneralDeviceTableReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
+        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
         if let Some(v) = &self.external_publisher { v.write(w, "com:externalPublisher", "", "")?; }
         if let Some(v) = &self.global_reference_extension { w.extension("com:_globalReferenceExtension", v)?; }
         if let Some(v) = &self.device_table_reference_extension { w.extension("fst:_deviceTableReferenceExtension", v)?; }
@@ -3184,7 +3184,7 @@ impl GeneralDeviceTableReference {
         }
         if let Some(v) = &self.external_publication_identifier {
             w.key(741)?;
-            w.max_len("externalPublicationIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.external_publisher {
             w.key(742)?;
@@ -3278,7 +3278,7 @@ impl MeasurementSiteReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
+        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
         if let Some(v) = &self.external_publisher { v.write(w, "com:externalPublisher", "", "")?; }
         if let Some(v) = &self.global_reference_extension { w.extension("com:_globalReferenceExtension", v)?; }
         if let Some(v) = &self.device_reference_extension { w.extension("fst:_deviceReferenceExtension", v)?; }
@@ -3345,7 +3345,7 @@ impl MeasurementSiteReference {
         }
         if let Some(v) = &self.external_publication_identifier {
             w.key(741)?;
-            w.max_len("externalPublicationIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.external_publisher {
             w.key(742)?;
@@ -3439,7 +3439,7 @@ impl MeasurementSiteTableReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
+        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
         if let Some(v) = &self.external_publisher { v.write(w, "com:externalPublisher", "", "")?; }
         if let Some(v) = &self.global_reference_extension { w.extension("com:_globalReferenceExtension", v)?; }
         if let Some(v) = &self.device_table_reference_extension { w.extension("fst:_deviceTableReferenceExtension", v)?; }
@@ -3506,7 +3506,7 @@ impl MeasurementSiteTableReference {
         }
         if let Some(v) = &self.external_publication_identifier {
             w.key(741)?;
-            w.max_len("externalPublicationIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.external_publisher {
             w.key(742)?;
@@ -3780,14 +3780,14 @@ impl PhysicalDeviceDetails {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.barcode { w.max_len("barcode", v, 1024)?; w.leaf("fst:barcode", v)?; }
+        if let Some(v) = &self.barcode { w.max_len("barcode", "String", v, 1024)?; w.leaf("fst:barcode", v)?; }
         if let Some(v) = &self.installation_date { w.leaf("fst:installationDate", v)?; }
         if let Some(v) = &self.manufacture_date { w.leaf("fst:manufactureDate", v)?; }
-        if let Some(v) = &self.manufacturer { w.max_len("manufacturer", v, 1024)?; w.leaf("fst:manufacturer", v)?; }
-        if let Some(v) = &self.model { w.max_len("model", v, 1024)?; w.leaf("fst:model", v)?; }
-        if let Some(v) = &self.name { w.max_len("name", v, 1024)?; w.leaf("fst:name", v)?; }
-        if let Some(v) = &self.serial_number { w.max_len("serialNumber", v, 1024)?; w.leaf("fst:serialNumber", v)?; }
-        if let Some(v) = &self.stock_code { w.max_len("stockCode", v, 1024)?; w.leaf("fst:stockCode", v)?; }
+        if let Some(v) = &self.manufacturer { w.max_len("manufacturer", "String", v, 1024)?; w.leaf("fst:manufacturer", v)?; }
+        if let Some(v) = &self.model { w.max_len("model", "String", v, 1024)?; w.leaf("fst:model", v)?; }
+        if let Some(v) = &self.name { w.max_len("name", "String", v, 1024)?; w.leaf("fst:name", v)?; }
+        if let Some(v) = &self.serial_number { w.max_len("serialNumber", "String", v, 1024)?; w.leaf("fst:serialNumber", v)?; }
+        if let Some(v) = &self.stock_code { w.max_len("stockCode", "String", v, 1024)?; w.leaf("fst:stockCode", v)?; }
         if let Some(v) = &self.physical_device_details_extension { w.extension("fst:_physicalDeviceDetailsExtension", v)?; }
         w.end(tag)
     }
@@ -3855,7 +3855,7 @@ impl PhysicalDeviceDetails {
         }
         if let Some(v) = &self.barcode {
             w.key(292)?;
-            w.max_len("barcode", v, 1024)?; w.string(v)?;
+            w.max_len("barcode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.installation_date {
             w.key(996)?;
@@ -3867,23 +3867,23 @@ impl PhysicalDeviceDetails {
         }
         if let Some(v) = &self.manufacturer {
             w.key(1257)?;
-            w.max_len("manufacturer", v, 1024)?; w.string(v)?;
+            w.max_len("manufacturer", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.model {
             w.key(1340)?;
-            w.max_len("model", v, 1024)?; w.string(v)?;
+            w.max_len("model", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.name {
             w.key(1345)?;
-            w.max_len("name", v, 1024)?; w.string(v)?;
+            w.max_len("name", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.serial_number {
             w.key(2028)?;
-            w.max_len("serialNumber", v, 1024)?; w.string(v)?;
+            w.max_len("serialNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.stock_code {
             w.key(2199)?;
-            w.max_len("stockCode", v, 1024)?; w.string(v)?;
+            w.max_len("stockCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.physical_device_details_extension {
             w.key(897)?;
@@ -4371,7 +4371,7 @@ impl StatusPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -4379,7 +4379,7 @@ impl StatusPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -4478,7 +4478,7 @@ impl StatusPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -4488,7 +4488,7 @@ impl StatusPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -4606,7 +4606,7 @@ impl VmsUnitReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
+        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
         if let Some(v) = &self.external_publisher { v.write(w, "com:externalPublisher", "", "")?; }
         if let Some(v) = &self.global_reference_extension { w.extension("com:_globalReferenceExtension", v)?; }
         if let Some(v) = &self.device_reference_extension { w.extension("fst:_deviceReferenceExtension", v)?; }
@@ -4673,7 +4673,7 @@ impl VmsUnitReference {
         }
         if let Some(v) = &self.external_publication_identifier {
             w.key(741)?;
-            w.max_len("externalPublicationIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.external_publisher {
             w.key(742)?;
@@ -4767,7 +4767,7 @@ impl VmsUnitTableReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
+        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
         if let Some(v) = &self.external_publisher { v.write(w, "com:externalPublisher", "", "")?; }
         if let Some(v) = &self.global_reference_extension { w.extension("com:_globalReferenceExtension", v)?; }
         if let Some(v) = &self.device_table_reference_extension { w.extension("fst:_deviceTableReferenceExtension", v)?; }
@@ -4834,7 +4834,7 @@ impl VmsUnitTableReference {
         }
         if let Some(v) = &self.external_publication_identifier {
             w.key(741)?;
-            w.max_len("externalPublicationIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.external_publisher {
             w.key(742)?;

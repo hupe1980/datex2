@@ -101,9 +101,44 @@ pub fn corpus_dir() -> Option<std::path::PathBuf> {
 /// Validates a document with `xmllint` against the official 3.7 schema: a validator this project
 /// did not write. `None` when `xmllint` or the fetched schemas are not available.
 pub fn xmllint(xml: &str) -> Option<Result<(), String>> {
+    xmllint_against(&schema_dir().join("DATEXII_3_D2Payload.xsd"), xml)
+}
+
+/// One folder with the 3.7 schemas and the Exchange 2020 schemas, as the message container schema
+/// imports both by relative path. Built once per test binary; `None` when either set is missing.
+fn container_schema() -> Option<std::path::PathBuf> {
+    static DIR: std::sync::OnceLock<Option<std::path::PathBuf>> = std::sync::OnceLock::new();
+    DIR.get_or_init(|| {
+        let exchange = schema_dir().parent()?.join("exchange-2020.1");
+        let dir = std::env::temp_dir().join(format!("datex2-container-xsd-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).ok()?;
+        for set in [schema_dir(), exchange] {
+            for entry in std::fs::read_dir(set).ok()? {
+                let path = entry.ok()?.path();
+                if path.extension().is_some_and(|e| e == "xsd") {
+                    std::fs::copy(&path, dir.join(path.file_name()?)).ok()?;
+                }
+            }
+        }
+        let schema = dir.join("DATEXII_3_MessageContainer.xsd");
+        schema.is_file().then_some(schema)
+    })
+    .clone()
+}
+
+/// Asserts that the official message container schema (Exchange 2020 with the 3.7 payloads)
+/// accepts the document; says so when it could not be checked.
+pub fn assert_container_valid(xml: &str) {
+    match container_schema().and_then(|schema| xmllint_against(&schema, xml)) {
+        Some(Ok(())) => {}
+        Some(Err(e)) => panic!("the message container schema rejects the document: {e}\n{xml}"),
+        None => skipped("xmllint or the schemas are not available (run `cargo xtask fetch`)"),
+    }
+}
+
+fn xmllint_against(schema: &std::path::Path, xml: &str) -> Option<Result<(), String>> {
     use std::io::Write;
     use std::process::{Command, Stdio};
-    let schema = schema_dir().join("DATEXII_3_D2Payload.xsd");
     if !schema.is_file() {
         return None;
     }
@@ -260,7 +295,24 @@ pub fn skipped(why: &str) {
         std::env::var_os("DATEX2_REQUIRE_VALIDATORS").is_none(),
         "validation required, but {why}"
     );
-    eprintln!("skipped: {why}");
+    notice(&format!(
+        "validation skipped: {why}; set DATEX2_REQUIRE_VALIDATORS=1 to require it"
+    ));
+}
+
+/// Says once per test binary that something was not checked, in the default output of
+/// `cargo test`: the note goes to the process's stderr directly, because the test harness captures
+/// `eprintln!` of passing tests and would hide it.
+pub fn notice(what: &str) {
+    use std::io::Write;
+    static SAID: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+    let mut said = SAID
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if !said.iter().any(|s| s == what) {
+        said.push(what.to_owned());
+        let _ = writeln!(std::io::stderr(), "note: {what}");
+    }
 }
 
 /// Asserts that `written` is the JSON document at `original` as the writer writes it back: equal

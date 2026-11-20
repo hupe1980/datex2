@@ -62,7 +62,7 @@ fn samples(dir: &Path) -> Vec<PathBuf> {
 #[test]
 fn every_v3_sample_of_the_five_feeds_reads() {
     let Some(corpus) = common::corpus_dir() else {
-        eprintln!("skipped: DATEX2_CORPUS_DIR is not set");
+        common::notice("corpus tests skipped: DATEX2_CORPUS_DIR is not set");
         return;
     };
     let mut read = 0;
@@ -132,7 +132,7 @@ fn streamed<T: v3::Record>(bytes: &[u8]) -> Option<Vec<T>> {
 fn streamed_records_equal_the_whole_read() {
     use v3::Publication as P;
     let Some(corpus) = common::corpus_dir() else {
-        eprintln!("skipped: DATEX2_CORPUS_DIR is not set");
+        common::notice("corpus tests skipped: DATEX2_CORPUS_DIR is not set");
         return;
     };
     let (mut files, mut records) = (0, 0);

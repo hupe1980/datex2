@@ -1879,7 +1879,7 @@ impl AlternativeFuelsRefillPoint {
         for v in &self.energy_product { v.write(w, "aegi:energyProduct")?; }
         if let Some(v) = &self.refill_point_extension { w.extension("aegi:_refillPointExtension", v)?; }
         for v in &self.connector { w.enumeration("aegi:connector", v.literal())?; }
-        for v in &self.other_connector { w.max_len("otherConnector", v, 1024)?; w.leaf("aegi:otherConnector", v)?; }
+        for v in &self.other_connector { w.max_len("otherConnector", "String", v, 1024)?; w.leaf("aegi:otherConnector", v)?; }
         if let Some(v) = &self.hydrogen_process_protocol { w.enumeration("aegi:hydrogenProcessProtocol", v.literal())?; }
         if let Some(v) = &self.renewable_sources_ratio { w.leaf("aegi:renewableSourcesRatio", v)?; }
         if let Some(v) = &self.pressure { w.leaf("aegi:pressure", v)?; }
@@ -2256,7 +2256,7 @@ impl AlternativeFuelsRefillPoint {
             w.begin_array()?;
             for v in &self.other_connector {
                 w.item()?;
-                w.max_len("otherConnector", v, 1024)?; w.string(v)?;
+                w.max_len("otherConnector", "String", v, 1024)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -2552,8 +2552,8 @@ impl Connector {
             Some(v) => { w.enumeration("aegi:connectorType", v.literal())?; }
             None => return Err(w.missing("aegi:connectorType")),
         }
-        if let Some(v) = &self.other_connector { w.max_len("otherConnector", v, 1024)?; w.leaf("aegi:otherConnector", v)?; }
-        for v in &self.country_of_domestic_socket { w.max_len("countryOfDomesticSocket", v, 2)?; w.leaf("aegi:countryOfDomesticSocket", v)?; }
+        if let Some(v) = &self.other_connector { w.max_len("otherConnector", "String", v, 1024)?; w.leaf("aegi:otherConnector", v)?; }
+        for v in &self.country_of_domestic_socket { w.max_len("countryOfDomesticSocket", "CountryCode", v, 2)?; w.leaf("aegi:countryOfDomesticSocket", v)?; }
         if let Some(v) = &self.connector_format { w.enumeration("aegi:connectorFormat", v.literal())?; }
         match &self.max_power_at_socket {
             Some(v) => { w.leaf("aegi:maxPowerAtSocket", v)?; }
@@ -2638,14 +2638,14 @@ impl Connector {
         }
         if let Some(v) = &self.other_connector {
             w.key(1502)?;
-            w.max_len("otherConnector", v, 1024)?; w.string(v)?;
+            w.max_len("otherConnector", "String", v, 1024)?; w.string(v)?;
         }
         if !self.country_of_domestic_socket.is_empty() {
             w.key(470)?;
             w.begin_array()?;
             for v in &self.country_of_domestic_socket {
                 w.item()?;
-                w.max_len("countryOfDomesticSocket", v, 2)?; w.string(v)?;
+                w.max_len("countryOfDomesticSocket", "CountryCode", v, 2)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -5844,7 +5844,7 @@ impl ElectricEnergySourceRatio {
             Some(v) => { w.enumeration("aegi:energySource", v.literal())?; }
             None => return Err(w.missing("aegi:energySource")),
         }
-        if let Some(v) = &self.other_energy_source { w.max_len("otherEnergySource", v, 1024)?; w.leaf("aegi:otherEnergySource", v)?; }
+        if let Some(v) = &self.other_energy_source { w.max_len("otherEnergySource", "String", v, 1024)?; w.leaf("aegi:otherEnergySource", v)?; }
         match &self.source_ratio_value {
             Some(v) => { v.write(w, "aegi:sourceRatioValue", "", "")?; }
             None => return Err(w.missing("aegi:sourceRatioValue")),
@@ -5910,7 +5910,7 @@ impl ElectricEnergySourceRatio {
         }
         if let Some(v) = &self.other_energy_source {
             w.key(1503)?;
-            w.max_len("otherEnergySource", v, 1024)?; w.string(v)?;
+            w.max_len("otherEnergySource", "String", v, 1024)?; w.string(v)?;
         }
         match &self.source_ratio_value {
             Some(v) => {
@@ -7299,7 +7299,7 @@ impl EnergyInfrastructureStation {
         if let Some(v) = &self.total_maximum_power { w.leaf("aegi:totalMaximumPower", v)?; }
         for v in &self.authentication_and_identification_methods { w.enumeration("aegi:authenticationAndIdentificationMethods", v.literal())?; }
         if let Some(v) = &self.number_of_refill_points { w.leaf("aegi:numberOfRefillPoints", v)?; }
-        for v in &self.user_interface_language { w.pattern("userInterfaceLanguage", v, Pattern::Language)?; w.leaf("aegi:userInterfaceLanguage", v)?; }
+        for v in &self.user_interface_language { w.pattern("userInterfaceLanguage", "Language", v, Pattern::Language)?; w.leaf("aegi:userInterfaceLanguage", v)?; }
         if let Some(v) = &self.renewable_sources { w.leaf("aegi:renewableSources", v)?; }
         if let Some(v) = &self.energy_distributor { v.write(w, "aegi:energyDistributor")?; }
         for v in &self.mobility_service_provider { v.write(w, "aegi:mobilityServiceProvider")?; }
@@ -7653,7 +7653,7 @@ impl EnergyInfrastructureStation {
             w.begin_array()?;
             for v in &self.user_interface_language {
                 w.item()?;
-                w.pattern("userInterfaceLanguage", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("userInterfaceLanguage", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -8163,7 +8163,7 @@ impl EnergyInfrastructureStatusPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -8171,7 +8171,7 @@ impl EnergyInfrastructureStatusPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -8266,7 +8266,7 @@ impl EnergyInfrastructureStatusPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -8276,7 +8276,7 @@ impl EnergyInfrastructureStatusPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -8391,7 +8391,7 @@ impl EnergyInfrastructureTable {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.table_name { w.max_len("tableName", v, 1024)?; w.leaf("aegi:tableName", v)?; }
+        if let Some(v) = &self.table_name { w.max_len("tableName", "String", v, 1024)?; w.leaf("aegi:tableName", v)?; }
         w.count("aegi:energyInfrastructureSite", self.energy_infrastructure_site.len(), 1, usize::MAX)?;
         for v in &self.energy_infrastructure_site { v.write(w, "aegi:energyInfrastructureSite", "", "")?; }
         if let Some(v) = &self.energy_infrastructure_table_extension { w.extension("aegi:_energyInfrastructureTableExtension", v)?; }
@@ -8465,7 +8465,7 @@ impl EnergyInfrastructureTable {
         }
         if let Some(v) = &self.table_name {
             w.key(2228)?;
-            w.max_len("tableName", v, 1024)?; w.string(v)?;
+            w.max_len("tableName", "String", v, 1024)?; w.string(v)?;
         }
         w.count("energyInfrastructureSite", self.energy_infrastructure_site.len(), 1, usize::MAX)?;
         if !self.energy_infrastructure_site.is_empty() {
@@ -8584,7 +8584,7 @@ impl EnergyInfrastructureTablePublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -8592,7 +8592,7 @@ impl EnergyInfrastructureTablePublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -8684,7 +8684,7 @@ impl EnergyInfrastructureTablePublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -8694,7 +8694,7 @@ impl EnergyInfrastructureTablePublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -8837,10 +8837,10 @@ impl EnergyPrice {
             None => return Err(w.missing("aegi:priceType")),
         }
         match &self.value {
-            Some(v) => { w.digits("value", v, 8, 2)?; w.leaf("aegi:value", v)?; }
+            Some(v) => { w.digits("value", "AmountOfMoney", v, 8, 2)?; w.leaf("aegi:value", v)?; }
             None => return Err(w.missing("aegi:value")),
         }
-        if let Some(v) = &self.price_cap { w.digits("priceCap", v, 8, 2)?; w.leaf("aegi:priceCap", v)?; }
+        if let Some(v) = &self.price_cap { w.digits("priceCap", "AmountOfMoney", v, 8, 2)?; w.leaf("aegi:priceCap", v)?; }
         if let Some(v) = &self.tax_included { w.leaf("aegi:taxIncluded", v)?; }
         if let Some(v) = &self.tax_rate { w.leaf("aegi:taxRate", v)?; }
         if let Some(v) = &self.additional_information { w.multilingual("aegi:additionalInformation", v)?; }
@@ -8937,13 +8937,13 @@ impl EnergyPrice {
         match &self.value {
             Some(v) => {
                 w.key(2545)?;
-                w.digits("value", v, 8, 2)?; w.decimal(v)?;
+                w.digits("value", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
             }
             None => w.absent(2545, w.missing("value"))?,
         }
         if let Some(v) = &self.price_cap {
             w.key(1643)?;
-            w.digits("priceCap", v, 8, 2)?; w.decimal(v)?;
+            w.digits("priceCap", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.tax_included {
             w.key(2235)?;
@@ -9289,11 +9289,11 @@ impl EnergyRate {
             None => return Err(w.missing("aegi:lastUpdated")),
         }
         w.count("aegi:applicableCurrency", self.applicable_currency.len(), 1, usize::MAX)?;
-        for v in &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("aegi:applicableCurrency", v)?; }
+        for v in &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("aegi:applicableCurrency", v)?; }
         if let Some(v) = &self.rate_name { w.multilingual("aegi:rateName", v)?; }
         if let Some(v) = &self.combination_with_parking_fee { w.leaf("aegi:combinationWithParkingFee", v)?; }
-        if let Some(v) = &self.maximum_delivery_fee { w.digits("maximumDeliveryFee", v, 8, 2)?; w.leaf("aegi:maximumDeliveryFee", v)?; }
-        if let Some(v) = &self.minimum_delivery_fee { w.digits("minimumDeliveryFee", v, 8, 2)?; w.leaf("aegi:minimumDeliveryFee", v)?; }
+        if let Some(v) = &self.maximum_delivery_fee { w.digits("maximumDeliveryFee", "AmountOfMoney", v, 8, 2)?; w.leaf("aegi:maximumDeliveryFee", v)?; }
+        if let Some(v) = &self.minimum_delivery_fee { w.digits("minimumDeliveryFee", "AmountOfMoney", v, 8, 2)?; w.leaf("aegi:minimumDeliveryFee", v)?; }
         if let Some(v) = &self.discount { w.leaf("aegi:discount", v)?; }
         if let Some(v) = &self.additional_information { w.multilingual("aegi:additionalInformation", v)?; }
         if let Some(v) = &self.payment { v.write(w, "aegi:payment", "", "")?; }
@@ -9409,7 +9409,7 @@ impl EnergyRate {
             w.begin_array()?;
             for v in &self.applicable_currency {
                 w.item()?;
-                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -9423,11 +9423,11 @@ impl EnergyRate {
         }
         if let Some(v) = &self.maximum_delivery_fee {
             w.key(1276)?;
-            w.digits("maximumDeliveryFee", v, 8, 2)?; w.decimal(v)?;
+            w.digits("maximumDeliveryFee", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.minimum_delivery_fee {
             w.key(1327)?;
-            w.digits("minimumDeliveryFee", v, 8, 2)?; w.decimal(v)?;
+            w.digits("minimumDeliveryFee", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.discount {
             w.key(572)?;

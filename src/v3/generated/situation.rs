@@ -5029,7 +5029,7 @@ impl AbnormalTraffic {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -5226,7 +5226,7 @@ impl AbnormalTraffic {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -5584,7 +5584,7 @@ impl Accident {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -5790,7 +5790,7 @@ impl Accident {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -6163,7 +6163,7 @@ impl AnimalPresenceObstruction {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -6360,7 +6360,7 @@ impl AnimalPresenceObstruction {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -6693,7 +6693,7 @@ impl AuthorityOperation {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -6882,7 +6882,7 @@ impl AuthorityOperation {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -7471,7 +7471,7 @@ impl Conditions {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -7648,7 +7648,7 @@ impl Conditions {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -8012,7 +8012,7 @@ impl ConstructionWorks {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -8048,12 +8048,12 @@ impl ConstructionWorks {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         if let Some(v) = &self.action_origin { w.enumeration("sit:actionOrigin", v.literal())?; }
-        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
+        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
         if let Some(v) = &self.operator_action_status { w.enumeration("sit:operatorActionStatus", v.literal())?; }
         if let Some(v) = &self.operator_action_extension { v.write(w, "sit:_operatorActionExtension", "", "")?; }
         if let Some(v) = &self.public_transport_alternative { w.multilingual("sit:publicTransportAlternative", v)?; }
         if let Some(v) = &self.roadworks_duration_classification { w.enumeration("sit:roadworksDurationClassification", v.literal())?; }
-        if let Some(v) = &self.roadworks_identifier { w.max_len("roadworksIdentifier", v, 1024)?; w.leaf("sit:roadworksIdentifier", v)?; }
+        if let Some(v) = &self.roadworks_identifier { w.max_len("roadworksIdentifier", "String", v, 1024)?; w.leaf("sit:roadworksIdentifier", v)?; }
         if let Some(v) = &self.roadworks_scale { w.enumeration("sit:roadworksScale", v.literal())?; }
         if let Some(v) = &self.under_traffic { w.leaf("sit:underTraffic", v)?; }
         if let Some(v) = &self.urgent_roadworks { w.leaf("sit:urgentRoadworks", v)?; }
@@ -8241,7 +8241,7 @@ impl ConstructionWorks {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -8355,7 +8355,7 @@ impl ConstructionWorks {
         }
         if let Some(v) = &self.action_plan_identifier {
             w.key(37)?;
-            w.max_len("actionPlanIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operator_action_status {
             w.key(1485)?;
@@ -8375,7 +8375,7 @@ impl ConstructionWorks {
         }
         if let Some(v) = &self.roadworks_identifier {
             w.key(1986)?;
-            w.max_len("roadworksIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("roadworksIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.roadworks_scale {
             w.key(1987)?;
@@ -9217,7 +9217,7 @@ impl DisturbanceActivity {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -9406,7 +9406,7 @@ impl DisturbanceActivity {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -9741,7 +9741,7 @@ impl EnvironmentalObstruction {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -9938,7 +9938,7 @@ impl EnvironmentalObstruction {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -10267,7 +10267,7 @@ impl EquipmentOrSystemFault {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -10456,7 +10456,7 @@ impl EquipmentOrSystemFault {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -10820,7 +10820,7 @@ impl GeneralInstructionOrMessageToRoadUsers {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -10856,7 +10856,7 @@ impl GeneralInstructionOrMessageToRoadUsers {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         if let Some(v) = &self.action_origin { w.enumeration("sit:actionOrigin", v.literal())?; }
-        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
+        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
         if let Some(v) = &self.operator_action_status { w.enumeration("sit:operatorActionStatus", v.literal())?; }
         if let Some(v) = &self.operator_action_extension { v.write(w, "sit:_operatorActionExtension", "", "")?; }
         match &self.compliance_option {
@@ -11041,7 +11041,7 @@ impl GeneralInstructionOrMessageToRoadUsers {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -11155,7 +11155,7 @@ impl GeneralInstructionOrMessageToRoadUsers {
         }
         if let Some(v) = &self.action_plan_identifier {
             w.key(37)?;
-            w.max_len("actionPlanIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operator_action_status {
             w.key(1485)?;
@@ -11459,7 +11459,7 @@ impl GeneralNetworkManagement {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -11495,7 +11495,7 @@ impl GeneralNetworkManagement {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         if let Some(v) = &self.action_origin { w.enumeration("sit:actionOrigin", v.literal())?; }
-        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
+        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
         if let Some(v) = &self.operator_action_status { w.enumeration("sit:operatorActionStatus", v.literal())?; }
         if let Some(v) = &self.operator_action_extension { v.write(w, "sit:_operatorActionExtension", "", "")?; }
         match &self.compliance_option {
@@ -11684,7 +11684,7 @@ impl GeneralNetworkManagement {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -11798,7 +11798,7 @@ impl GeneralNetworkManagement {
         }
         if let Some(v) = &self.action_plan_identifier {
             w.key(37)?;
-            w.max_len("actionPlanIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operator_action_status {
             w.key(1485)?;
@@ -12073,7 +12073,7 @@ impl GeneralObstruction {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -12267,7 +12267,7 @@ impl GeneralObstruction {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -12588,7 +12588,7 @@ impl GenericSituationRecord {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -12624,7 +12624,7 @@ impl GenericSituationRecord {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         match &self.generic_situation_record_name {
-            Some(v) => { w.max_len("genericSituationRecordName", v, 1024)?; w.leaf("sit:genericSituationRecordName", v)?; }
+            Some(v) => { w.max_len("genericSituationRecordName", "String", v, 1024)?; w.leaf("sit:genericSituationRecordName", v)?; }
             None => return Err(w.missing("sit:genericSituationRecordName")),
         }
         if let Some(v) = &self.generic_situation_record_extension { w.extension("sit:_genericSituationRecordExtension", v)?; }
@@ -12761,7 +12761,7 @@ impl GenericSituationRecord {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -12872,7 +12872,7 @@ impl GenericSituationRecord {
         match &self.generic_situation_record_name {
             Some(v) => {
                 w.key(918)?;
-                w.max_len("genericSituationRecordName", v, 1024)?; w.string(v)?;
+                w.max_len("genericSituationRecordName", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(918, w.missing("genericSituationRecordName"))?,
         }
@@ -13381,7 +13381,7 @@ impl InfrastructureDamageObstruction {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -13574,7 +13574,7 @@ impl InfrastructureDamageObstruction {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -14071,7 +14071,7 @@ impl MaintenanceWorks {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -14107,12 +14107,12 @@ impl MaintenanceWorks {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         if let Some(v) = &self.action_origin { w.enumeration("sit:actionOrigin", v.literal())?; }
-        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
+        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
         if let Some(v) = &self.operator_action_status { w.enumeration("sit:operatorActionStatus", v.literal())?; }
         if let Some(v) = &self.operator_action_extension { v.write(w, "sit:_operatorActionExtension", "", "")?; }
         if let Some(v) = &self.public_transport_alternative { w.multilingual("sit:publicTransportAlternative", v)?; }
         if let Some(v) = &self.roadworks_duration_classification { w.enumeration("sit:roadworksDurationClassification", v.literal())?; }
-        if let Some(v) = &self.roadworks_identifier { w.max_len("roadworksIdentifier", v, 1024)?; w.leaf("sit:roadworksIdentifier", v)?; }
+        if let Some(v) = &self.roadworks_identifier { w.max_len("roadworksIdentifier", "String", v, 1024)?; w.leaf("sit:roadworksIdentifier", v)?; }
         if let Some(v) = &self.roadworks_scale { w.enumeration("sit:roadworksScale", v.literal())?; }
         if let Some(v) = &self.under_traffic { w.leaf("sit:underTraffic", v)?; }
         if let Some(v) = &self.urgent_roadworks { w.leaf("sit:urgentRoadworks", v)?; }
@@ -14297,7 +14297,7 @@ impl MaintenanceWorks {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -14411,7 +14411,7 @@ impl MaintenanceWorks {
         }
         if let Some(v) = &self.action_plan_identifier {
             w.key(37)?;
-            w.max_len("actionPlanIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operator_action_status {
             w.key(1485)?;
@@ -14431,7 +14431,7 @@ impl MaintenanceWorks {
         }
         if let Some(v) = &self.roadworks_identifier {
             w.key(1986)?;
-            w.max_len("roadworksIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("roadworksIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.roadworks_scale {
             w.key(1987)?;
@@ -14791,7 +14791,7 @@ impl NonWeatherRelatedRoadConditions {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -14981,7 +14981,7 @@ impl NonWeatherRelatedRoadConditions {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -15347,7 +15347,7 @@ impl PoorEnvironmentConditions {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -15561,7 +15561,7 @@ impl PoorEnvironmentConditions {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -15922,7 +15922,7 @@ impl PublicEvent {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -16115,7 +16115,7 @@ impl PublicEvent {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -16519,7 +16519,7 @@ impl ReroutingManagement {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -16555,7 +16555,7 @@ impl ReroutingManagement {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         if let Some(v) = &self.action_origin { w.enumeration("sit:actionOrigin", v.literal())?; }
-        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
+        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
         if let Some(v) = &self.operator_action_status { w.enumeration("sit:operatorActionStatus", v.literal())?; }
         if let Some(v) = &self.operator_action_extension { v.write(w, "sit:_operatorActionExtension", "", "")?; }
         match &self.compliance_option {
@@ -16572,10 +16572,10 @@ impl ReroutingManagement {
         for v in &self.rerouting_management_type { w.enumeration("sit:reroutingManagementType", v.literal())?; }
         if let Some(v) = &self.rerouting_itinerary_description { w.multilingual("sit:reroutingItineraryDescription", v)?; }
         if let Some(v) = &self.signed_rerouting { w.leaf("sit:signedRerouting", v)?; }
-        if let Some(v) = &self.alternative_route_identifier { w.max_len("alternativeRouteIdentifier", v, 1024)?; w.leaf("sit:alternativeRouteIdentifier", v)?; }
-        if let Some(v) = &self.entry { w.max_len("entry", v, 1024)?; w.leaf("sit:entry", v)?; }
-        if let Some(v) = &self.exit { w.max_len("exit", v, 1024)?; w.leaf("sit:exit", v)?; }
-        if let Some(v) = &self.road_or_junction_number { w.max_len("roadOrJunctionNumber", v, 1024)?; w.leaf("sit:roadOrJunctionNumber", v)?; }
+        if let Some(v) = &self.alternative_route_identifier { w.max_len("alternativeRouteIdentifier", "String", v, 1024)?; w.leaf("sit:alternativeRouteIdentifier", v)?; }
+        if let Some(v) = &self.entry { w.max_len("entry", "String", v, 1024)?; w.leaf("sit:entry", v)?; }
+        if let Some(v) = &self.exit { w.max_len("exit", "String", v, 1024)?; w.leaf("sit:exit", v)?; }
+        if let Some(v) = &self.road_or_junction_number { w.max_len("roadOrJunctionNumber", "String", v, 1024)?; w.leaf("sit:roadOrJunctionNumber", v)?; }
         for v in &self.alternative_route { v.write(w, "sit:alternativeRoute")?; }
         if let Some(v) = &self.destination { v.write(w, "sit:destination")?; }
         if let Some(v) = &self.rerouting_management_extension { w.extension("sit:_reroutingManagementExtension", v)?; }
@@ -16769,7 +16769,7 @@ impl ReroutingManagement {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -16883,7 +16883,7 @@ impl ReroutingManagement {
         }
         if let Some(v) = &self.action_plan_identifier {
             w.key(37)?;
-            w.max_len("actionPlanIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operator_action_status {
             w.key(1485)?;
@@ -16964,19 +16964,19 @@ impl ReroutingManagement {
         }
         if let Some(v) = &self.alternative_route_identifier {
             w.key(231)?;
-            w.max_len("alternativeRouteIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("alternativeRouteIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.entry {
             w.key(693)?;
-            w.max_len("entry", v, 1024)?; w.string(v)?;
+            w.max_len("entry", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.exit {
             w.key(723)?;
-            w.max_len("exit", v, 1024)?; w.string(v)?;
+            w.max_len("exit", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.road_or_junction_number {
             w.key(1976)?;
-            w.max_len("roadOrJunctionNumber", v, 1024)?; w.string(v)?;
+            w.max_len("roadOrJunctionNumber", "String", v, 1024)?; w.string(v)?;
         }
         if !self.alternative_route.is_empty() {
             w.key(230)?;
@@ -17169,7 +17169,7 @@ impl RoadOperatorServiceDisruption {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -17343,7 +17343,7 @@ impl RoadOperatorServiceDisruption {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -17700,7 +17700,7 @@ impl RoadOrCarriagewayOrLaneManagement {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -17736,7 +17736,7 @@ impl RoadOrCarriagewayOrLaneManagement {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         if let Some(v) = &self.action_origin { w.enumeration("sit:actionOrigin", v.literal())?; }
-        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
+        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
         if let Some(v) = &self.operator_action_status { w.enumeration("sit:operatorActionStatus", v.literal())?; }
         if let Some(v) = &self.operator_action_extension { v.write(w, "sit:_operatorActionExtension", "", "")?; }
         match &self.compliance_option {
@@ -17925,7 +17925,7 @@ impl RoadOrCarriagewayOrLaneManagement {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -18039,7 +18039,7 @@ impl RoadOrCarriagewayOrLaneManagement {
         }
         if let Some(v) = &self.action_plan_identifier {
             w.key(37)?;
-            w.max_len("actionPlanIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operator_action_status {
             w.key(1485)?;
@@ -18305,7 +18305,7 @@ impl RoadsideAssistance {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -18341,7 +18341,7 @@ impl RoadsideAssistance {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         if let Some(v) = &self.action_origin { w.enumeration("sit:actionOrigin", v.literal())?; }
-        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
+        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
         if let Some(v) = &self.operator_action_status { w.enumeration("sit:operatorActionStatus", v.literal())?; }
         if let Some(v) = &self.operator_action_extension { v.write(w, "sit:_operatorActionExtension", "", "")?; }
         match &self.roadside_assistance_type {
@@ -18494,7 +18494,7 @@ impl RoadsideAssistance {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -18608,7 +18608,7 @@ impl RoadsideAssistance {
         }
         if let Some(v) = &self.action_plan_identifier {
             w.key(37)?;
-            w.max_len("actionPlanIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operator_action_status {
             w.key(1485)?;
@@ -18803,7 +18803,7 @@ impl ServiceDisruption {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -18977,7 +18977,7 @@ impl ServiceDisruption {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -19419,7 +19419,7 @@ impl SituationPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -19427,7 +19427,7 @@ impl SituationPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -19514,7 +19514,7 @@ impl SituationPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -19524,7 +19524,7 @@ impl SituationPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -19621,7 +19621,7 @@ impl SituationRecordReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
+        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
         if let Some(v) = &self.external_publisher { v.write(w, "com:externalPublisher", "", "")?; }
         if let Some(v) = &self.global_reference_extension { w.extension("com:_globalReferenceExtension", v)?; }
         match &self.object_reference {
@@ -19684,7 +19684,7 @@ impl SituationRecordReference {
         }
         if let Some(v) = &self.external_publication_identifier {
             w.key(741)?;
-            w.max_len("externalPublicationIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.external_publisher {
             w.key(742)?;
@@ -19769,7 +19769,7 @@ impl SituationReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
+        if let Some(v) = &self.external_publication_identifier { w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.leaf("com:externalPublicationIdentifier", v)?; }
         if let Some(v) = &self.external_publisher { v.write(w, "com:externalPublisher", "", "")?; }
         if let Some(v) = &self.global_reference_extension { w.extension("com:_globalReferenceExtension", v)?; }
         match &self.object_reference {
@@ -19832,7 +19832,7 @@ impl SituationReference {
         }
         if let Some(v) = &self.external_publication_identifier {
             w.key(741)?;
-            w.max_len("externalPublicationIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalPublicationIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.external_publisher {
             w.key(742)?;
@@ -20083,7 +20083,7 @@ impl SpeedManagement {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -20119,7 +20119,7 @@ impl SpeedManagement {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         if let Some(v) = &self.action_origin { w.enumeration("sit:actionOrigin", v.literal())?; }
-        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
+        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
         if let Some(v) = &self.operator_action_status { w.enumeration("sit:operatorActionStatus", v.literal())?; }
         if let Some(v) = &self.operator_action_extension { v.write(w, "sit:_operatorActionExtension", "", "")?; }
         match &self.compliance_option {
@@ -20304,7 +20304,7 @@ impl SpeedManagement {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -20418,7 +20418,7 @@ impl SpeedManagement {
         }
         if let Some(v) = &self.action_plan_identifier {
             w.key(37)?;
-            w.max_len("actionPlanIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operator_action_status {
             w.key(1485)?;
@@ -20814,7 +20814,7 @@ impl TransitInformation {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -20852,7 +20852,7 @@ impl TransitInformation {
         if let Some(v) = &self.service_information_extension { w.extension("sit:_serviceInformationExtension", v)?; }
         if let Some(v) = &self.journey_destination { w.multilingual("sit:journeyDestination", v)?; }
         if let Some(v) = &self.journey_origin { w.multilingual("sit:journeyOrigin", v)?; }
-        if let Some(v) = &self.journey_reference { w.max_len("journeyReference", v, 1024)?; w.leaf("sit:journeyReference", v)?; }
+        if let Some(v) = &self.journey_reference { w.max_len("journeyReference", "String", v, 1024)?; w.leaf("sit:journeyReference", v)?; }
         match &self.transit_service_information {
             Some(v) => { w.enumeration("sit:transitServiceInformation", v.literal())?; }
             None => return Err(w.missing("sit:transitServiceInformation")),
@@ -21015,7 +21015,7 @@ impl TransitInformation {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -21137,7 +21137,7 @@ impl TransitInformation {
         }
         if let Some(v) = &self.journey_reference {
             w.key(1020)?;
-            w.max_len("journeyReference", v, 1024)?; w.string(v)?;
+            w.max_len("journeyReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.transit_service_information {
             Some(v) => {
@@ -21371,7 +21371,7 @@ impl VehicleObstruction {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -21576,7 +21576,7 @@ impl VehicleObstruction {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -21931,7 +21931,7 @@ impl WeatherRelatedRoadConditions {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -22125,7 +22125,7 @@ impl WeatherRelatedRoadConditions {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -22497,7 +22497,7 @@ impl WinterDrivingManagement {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
+        if let Some(v) = &self.situation_record_creation_reference { w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.leaf("sit:situationRecordCreationReference", v)?; }
         match &self.situation_record_creation_time {
             Some(v) => { w.leaf("sit:situationRecordCreationTime", v)?; }
             None => return Err(w.missing("sit:situationRecordCreationTime")),
@@ -22533,7 +22533,7 @@ impl WinterDrivingManagement {
         if let Some(v) = &self.impact_on_opposite_direction { v.write(w, "sit:impactOnOppositeDirection", "", "")?; }
         if let Some(v) = &self.situation_record_extension { w.extension("sit:_situationRecordExtension", v)?; }
         if let Some(v) = &self.action_origin { w.enumeration("sit:actionOrigin", v.literal())?; }
-        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
+        if let Some(v) = &self.action_plan_identifier { w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.leaf("sit:actionPlanIdentifier", v)?; }
         if let Some(v) = &self.operator_action_status { w.enumeration("sit:operatorActionStatus", v.literal())?; }
         if let Some(v) = &self.operator_action_extension { v.write(w, "sit:_operatorActionExtension", "", "")?; }
         match &self.compliance_option {
@@ -22718,7 +22718,7 @@ impl WinterDrivingManagement {
         }
         if let Some(v) = &self.situation_record_creation_reference {
             w.key(2136)?;
-            w.max_len("situationRecordCreationReference", v, 1024)?; w.string(v)?;
+            w.max_len("situationRecordCreationReference", "String", v, 1024)?; w.string(v)?;
         }
         match &self.situation_record_creation_time {
             Some(v) => {
@@ -22832,7 +22832,7 @@ impl WinterDrivingManagement {
         }
         if let Some(v) = &self.action_plan_identifier {
             w.key(37)?;
-            w.max_len("actionPlanIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("actionPlanIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operator_action_status {
             w.key(1485)?;

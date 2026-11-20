@@ -68,41 +68,36 @@ are those of the [XML writer](@/docs/writing.md), plus two that only the JSON sc
 language code is two lowercase letters, and a date and time carries a time zone. The tests
 check every document they write with Python `jsonschema`, a validator this project did not write.
 
-`json::write_container` writes `{"messageContainer": …}`. DATEX II publishes no JSON schema for
-the exchange part, so there the guarantee covers each payload.
+Pass a message container instead and they write `{"messageContainer": …}`. 3.7 has no JSON
+schema for the exchange part, so the writer applies its XML schema's rules there.
 
 ## Writing for the Mobilithek
 
 Static data (sites, stations, charging points, prices) is a table publication. Dynamic data
-(status, current prices) is a status publication inside a message container, whose exchange
-information says whether it is a complete snapshot or a delta:
+(status, current prices) is a status publication in a message container, built by `snapshot` or
+`delta`:
 
 ```rust,no_run
-use datex2::v3::exchange_information::{ExchangeContext, ExchangeInformation, ProtocolTypeEnum};
-use datex2::v3::{Publication, json, message_container::MessageContainer};
+use datex2::v3::{Publication, json::mobilithek};
 
-fn publish(table: &Publication, status: Publication) -> Result<(), datex2::Error> {
-    json::mobilithek::write(std::fs::File::create("table.json").unwrap(), table)?;
-    let delta = MessageContainer {
-        payload: vec![status],
-        exchange_information: Some(Box::new(ExchangeInformation {
-            exchange_context: Some(Box::new(ExchangeContext {
-                coded_exchange_protocol: Some(ProtocolTypeEnum::DeltaPush),
-                ..Default::default()
-            })),
-            ..Default::default()
-        })),
-        ..Default::default()
-    };
-    json::mobilithek::write_container(std::fs::File::create("status.json").unwrap(), &delta)
+fn publish(table: &Publication, status: Publication) -> Result<(), Box<dyn std::error::Error>> {
+    mobilithek::write(std::fs::File::create("table.json")?, table)?;
+    let snapshot = mobilithek::snapshot(status, "2026-11-20T08:05:00+01:00".parse()?);
+    mobilithek::write(std::fs::File::create("status.json")?, &snapshot)?;
+    Ok(())
 }
 ```
+
+A snapshot must hold every charging point of the table; consumers take missing ones as gone. A
+delta holds only the points that changed. Both fill the exchange information as the profile's
+sample does; the container is plain data you can change.
 
 A complete, runnable site with an AC point of 22 kW and a DC point of 150 kW is
 [`examples/mobilithek.rs`](https://github.com/hupe1980/datex2/blob/main/examples/mobilithek.rs);
 its test validates both files against the profile's schemas.
 
-**When `json::mobilithek::write` returns `Ok`, the profile's JSON schemas accept the output.**
+**When `json::mobilithek::write` returns `Ok`, the profile's JSON schemas accept the output**,
+for a container its container schema too.
 The profile is 3.7 cut down to the AFIR content, but taken from an earlier stage of the model, so
 some things are spelled differently. The writer handles them:
 
@@ -125,9 +120,22 @@ value not allowed by the schema: expected content the AFIR Energy Infrastructure
 required content missing: expected member "numberOfRefillPoints" that the AFIR Energy Infrastructure profile requires, found none at payload/aegiEnergyInfrastructureTablePublication/energyInfrastructureTable/energyInfrastructureSite/energyInfrastructureStation (byte 2589)
 ```
 
-Where the profile's schemas leave out a 3.7 value rule, the writer still applies it: a time zone
-is an offset such as `+01:00`, not `Europe/Berlin`, and an amount of money has at most two
-decimal places. Both are what the profile's own descriptions say.
+### Rules the profile's schemas do not show
+
+The writer applies these value rules of the model although the profile's JSON schemas leave them
+out:
+
+| Rule | Accepted | Refused |
+|---|---|---|
+| **`AmountOfMoney`**: every price, fee and cap, at most 8 digits, 2 of them after the point | `0.59`, `0.590`, `-1.5`, `12345678` | `0.589`, `123456789` |
+| A time zone is an offset | `+01:00`, `Z` | `Europe/Berlin` |
+
+The writer **refuses, never rounds**: round a computed price yourself, by your tariff's rule.
+The error names the type:
+
+```text
+value not allowed by the schema: expected at most 8 digits, 2 of them after the point, in "value" of type AmountOfMoney, found "0.589" at payload/aegiEnergyInfrastructureTablePublication/energyInfrastructureTable/energyInfrastructureSite/energyInfrastructureStation/refillPoint/aegiElectricChargingPoint/electricEnergy/energyRate/energyPrice/value (byte 2300)
+```
 
 When the publication does not set a profile name and version, the writer puts the profile's.
 One member, `refillPointByReference` on a station, exists only in the profile; the 3.7 model

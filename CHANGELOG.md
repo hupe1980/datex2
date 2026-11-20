@@ -7,6 +7,24 @@ the API; each break is named here with its migration.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-20
+
+### Added
+
+- Message containers in XML: `v3::write` and `v3::to_string` write a `MessageContainer` that the
+  official Exchange 2020 schema accepts.
+- `json::mobilithek::snapshot` and `json::mobilithek::delta`: a status publication in the container
+  the Mobilithek expects, in one call.
+- `MultilingualString::new(lang, text)`.
+
+### Changed
+
+- **Breaking:** every writer takes a publication or a message container (`impl Into<v3::Root>`).
+  `json::write_container` and `json::mobilithek::write_container` are removed. Migration: call
+  `write` with the same arguments, or `to_string(&container)` for a `String`.
+- **Breaking:** errors from a value rule of a named schema type name the type, for example
+  `… in "value" of type AmountOfMoney`. Code matching on `Error::expected` text adapts.
+
 ## [0.2.0] - 2026-11-20
 
 ### Added

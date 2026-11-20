@@ -288,7 +288,7 @@ fn write_sr003_each_rule_is_named_in_the_error() {
     assert!(e.starts_with(&format!("required content missing: expected required attribute \"id\", found none at {at} (byte ")), "{e}");
     // A text that is too long (com:String allows 1024 characters).
     let e = message(&|r| r.situation_record_creation_reference = Some("x".repeat(1025)));
-    assert!(e.starts_with("value not allowed by the schema: expected at most 1024 characters in \"situationRecordCreationReference\", found \"xxxx"), "{e}");
+    assert!(e.starts_with("value not allowed by the schema: expected at most 1024 characters in \"situationRecordCreationReference\" of type String, found \"xxxx"), "{e}");
     // A language code of the wrong form.
     let e = message(&|r| {
         r.general_public_comment = vec![datex2::v3::situation::Comment {
@@ -322,7 +322,7 @@ fn write_sr003_each_rule_is_named_in_the_error() {
     assert_eq!(e.kind, ErrorKind::InvalidValue);
     assert_eq!(
         (e.expected.as_str(), e.found.as_str()),
-        ("0 to 359 in \"bearing\"", "360")
+        ("0 to 359 in \"bearing\" of type AngleInDegrees", "360")
     );
 }
 

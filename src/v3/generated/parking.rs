@@ -4004,7 +4004,7 @@ impl AdditionalCharacteristics {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.floor { w.max_len("floor", v, 1024)?; w.leaf("prk:floor", v)?; }
+        if let Some(v) = &self.floor { w.max_len("floor", "String", v, 1024)?; w.leaf("prk:floor", v)?; }
         if let Some(v) = &self.weight_limit { w.leaf("prk:weightLimit", v)?; }
         for v in &self.additional_convenience { w.enumeration("prk:additionalConvenience", v.literal())?; }
         for v in &self.structural_characteristics { w.enumeration("prk:structuralCharacteristics", v.literal())?; }
@@ -4099,7 +4099,7 @@ impl AdditionalCharacteristics {
         }
         if let Some(v) = &self.floor {
             w.key(855)?;
-            w.max_len("floor", v, 1024)?; w.string(v)?;
+            w.max_len("floor", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.weight_limit {
             w.key(2664)?;
@@ -4754,7 +4754,7 @@ impl Campus {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -4966,7 +4966,7 @@ impl Campus {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -6592,7 +6592,7 @@ impl DemandTable {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.frequency { w.pattern("frequency", v, Pattern::Duration)?; w.leaf("prk:frequency", v)?; }
+        if let Some(v) = &self.frequency { w.pattern("frequency", "Duration", v, Pattern::Duration)?; w.leaf("prk:frequency", v)?; }
         match &self.timestamp {
             Some(v) => { w.leaf("prk:timestamp", v)?; }
             None => return Err(w.missing("prk:timestamp")),
@@ -6655,7 +6655,7 @@ impl DemandTable {
         }
         if let Some(v) = &self.frequency {
             w.key(864)?;
-            w.pattern("frequency", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("frequency", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         match &self.timestamp {
             Some(v) => {
@@ -7052,7 +7052,7 @@ impl JunctionInformation {
             Some(v) => { w.multilingual("prk:junctionName", v)?; }
             None => return Err(w.missing("prk:junctionName")),
         }
-        if let Some(v) = &self.junction_number { w.max_len("junctionNumber", v, 1024)?; w.leaf("prk:junctionNumber", v)?; }
+        if let Some(v) = &self.junction_number { w.max_len("junctionNumber", "String", v, 1024)?; w.leaf("prk:junctionNumber", v)?; }
         if let Some(v) = &self.motorway { v.write(w, "prk:motorway")?; }
         for v in &self.intersection_destination_motorway { v.write(w, "prk:intersectionDestinationMotorway")?; }
         if let Some(v) = &self.junction_information_extension { w.extension("prk:_junctionInformationExtension", v)?; }
@@ -7125,7 +7125,7 @@ impl JunctionInformation {
         }
         if let Some(v) = &self.junction_number {
             w.key(1024)?;
-            w.max_len("junctionNumber", v, 1024)?; w.string(v)?;
+            w.max_len("junctionNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.motorway {
             w.key(1344)?;
@@ -8452,7 +8452,7 @@ impl OperatorDefinedPlace {
             None => return Err(w.missing_attr("version")),
         }
         match &self.identifier {
-            Some(v) => { w.max_len("identifier", v, 1024)?; w.leaf("prk:identifier", v)?; }
+            Some(v) => { w.max_len("identifier", "String", v, 1024)?; w.leaf("prk:identifier", v)?; }
             None => return Err(w.missing("prk:identifier")),
         }
         for v in &self.organisation { v.write(w, "prk:organisation")?; }
@@ -8529,7 +8529,7 @@ impl OperatorDefinedPlace {
         match &self.identifier {
             Some(v) => {
                 w.key(965)?;
-                w.max_len("identifier", v, 1024)?; w.string(v)?;
+                w.max_len("identifier", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(965, w.missing("identifier"))?,
         }
@@ -8795,7 +8795,7 @@ impl ParkingRouteDetails {
         if let Some(v) = &self.name { w.multilingual("prk:name", v)?; }
         if let Some(v) = &self.r#type { w.enumeration("prk:type", v.literal())?; }
         if let Some(v) = &self.dynamic_route_management { w.leaf("prk:dynamicRouteManagement", v)?; }
-        if let Some(v) = &self.icon_index { w.max_len("iconIndex", v, 1024)?; w.leaf("prk:iconIndex", v)?; }
+        if let Some(v) = &self.icon_index { w.max_len("iconIndex", "String", v, 1024)?; w.leaf("prk:iconIndex", v)?; }
         if let Some(v) = &self.direction { w.enumeration("prk:direction", v.literal())?; }
         w.count("prk:orientation", self.orientation.len(), 0, 2)?;
         for v in &self.orientation { w.enumeration("prk:orientation", v.literal())?; }
@@ -8916,7 +8916,7 @@ impl ParkingRouteDetails {
         }
         if let Some(v) = &self.icon_index {
             w.key(963)?;
-            w.max_len("iconIndex", v, 1024)?; w.string(v)?;
+            w.max_len("iconIndex", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.direction {
             w.key(561)?;
@@ -9612,7 +9612,7 @@ impl ParkingStatusPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -9620,7 +9620,7 @@ impl ParkingStatusPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -9716,7 +9716,7 @@ impl ParkingStatusPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -9726,7 +9726,7 @@ impl ParkingStatusPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -10069,7 +10069,7 @@ impl ParkingTablePublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -10077,7 +10077,7 @@ impl ParkingTablePublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -10169,7 +10169,7 @@ impl ParkingTablePublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -10179,7 +10179,7 @@ impl ParkingTablePublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -10613,7 +10613,7 @@ impl PedestrianAccess {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -10869,7 +10869,7 @@ impl PedestrianAccess {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -11478,7 +11478,7 @@ impl Place {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -11514,7 +11514,7 @@ impl Place {
         if let Some(v) = &self.supply { v.write(w, "prk:supply", "", "")?; }
         if let Some(v) = &self.hierarchy_element_general_extension { w.extension("prk:_hierarchyElementGeneralExtension", v)?; }
         if let Some(v) = &self.layout { w.enumeration("prk:layout", v.literal())?; }
-        if let Some(v) = &self.available_floors { w.max_len("availableFloors", v, 1024)?; w.leaf("prk:availableFloors", v)?; }
+        if let Some(v) = &self.available_floors { w.max_len("availableFloors", "String", v, 1024)?; w.leaf("prk:availableFloors", v)?; }
         if let Some(v) = &self.common_components { v.write(w, "prk:commonComponents", "", "")?; }
         if let Some(v) = &self.place_extension { w.extension("prk:_placeExtension", v)?; }
         w.end(tag)
@@ -11698,7 +11698,7 @@ impl Place {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -11879,7 +11879,7 @@ impl Place {
         }
         if let Some(v) = &self.available_floors {
             w.key(276)?;
-            w.max_len("availableFloors", v, 1024)?; w.string(v)?;
+            w.max_len("availableFloors", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.common_components {
             w.key(420)?;
@@ -12090,7 +12090,7 @@ impl PlaceStatus {
         if let Some(v) = &self.demand_table { v.write(w, "prk:demandTable", "", "")?; }
         if let Some(v) = &self.parking_status_information_extension { w.extension("prk:_parkingStatusInformationExtension", v)?; }
         for v in &self.status { w.enumeration("prk:status", v.literal())?; }
-        for v in &self.parking_place_full_at_floor { w.max_len("parkingPlaceFullAtFloor", v, 1024)?; w.leaf("prk:parkingPlaceFullAtFloor", v)?; }
+        for v in &self.parking_place_full_at_floor { w.max_len("parkingPlaceFullAtFloor", "String", v, 1024)?; w.leaf("prk:parkingPlaceFullAtFloor", v)?; }
         if let Some(v) = &self.declaration_valid_now { w.leaf("prk:declarationValidNow", v)?; }
         if let Some(v) = &self.place_status_extension { w.extension("prk:_placeStatusExtension", v)?; }
         w.end(tag)
@@ -12346,7 +12346,7 @@ impl PlaceStatus {
             w.begin_array()?;
             for v in &self.parking_place_full_at_floor {
                 w.item()?;
-                w.max_len("parkingPlaceFullAtFloor", v, 1024)?; w.string(v)?;
+                w.max_len("parkingPlaceFullAtFloor", "String", v, 1024)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -12936,7 +12936,7 @@ impl PublicTransportSchedule {
             Some(v) => { w.leaf("prk:lastUpdated", v)?; }
             None => return Err(w.missing("prk:lastUpdated")),
         }
-        for v in &self.line { w.max_len("line", v, 1024)?; w.leaf("prk:line", v)?; }
+        for v in &self.line { w.max_len("line", "String", v, 1024)?; w.leaf("prk:line", v)?; }
         for v in &self.next_departures { w.leaf("prk:nextDepartures", v)?; }
         if let Some(v) = &self.destination { w.multilingual("prk:destination", v)?; }
         if let Some(v) = &self.interval { w.leaf("prk:interval", v)?; }
@@ -13055,7 +13055,7 @@ impl PublicTransportSchedule {
             w.begin_array()?;
             for v in &self.line {
                 w.item()?;
-                w.max_len("line", v, 1024)?; w.string(v)?;
+                w.max_len("line", "String", v, 1024)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -13667,9 +13667,9 @@ impl RoadInformationEnhanced {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.road_destination { w.max_len("roadDestination", v, 1024)?; w.leaf("loc:roadDestination", v)?; }
-        if let Some(v) = &self.road_name { w.max_len("roadName", v, 1024)?; w.leaf("loc:roadName", v)?; }
-        if let Some(v) = &self.road_number { w.max_len("roadNumber", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
+        if let Some(v) = &self.road_destination { w.max_len("roadDestination", "String", v, 1024)?; w.leaf("loc:roadDestination", v)?; }
+        if let Some(v) = &self.road_name { w.max_len("roadName", "String", v, 1024)?; w.leaf("loc:roadName", v)?; }
+        if let Some(v) = &self.road_number { w.max_len("roadNumber", "String", v, 1024)?; w.leaf("loc:roadNumber", v)?; }
         if let Some(v) = &self.road_information_extension { w.extension("loc:_roadInformationExtension", v)?; }
         if let Some(v) = &self.type_of_road { w.enumeration("prk:typeOfRoad", v.literal())?; }
         for v in &self.road_origination { w.multilingual("prk:roadOrigination", v)?; }
@@ -13734,15 +13734,15 @@ impl RoadInformationEnhanced {
         }
         if let Some(v) = &self.road_destination {
             w.key(1966)?;
-            w.max_len("roadDestination", v, 1024)?; w.string(v)?;
+            w.max_len("roadDestination", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.road_name {
             w.key(1970)?;
-            w.max_len("roadName", v, 1024)?; w.string(v)?;
+            w.max_len("roadName", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.road_number {
             w.key(1971)?;
-            w.max_len("roadNumber", v, 1024)?; w.string(v)?;
+            w.max_len("roadNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.road_information_extension {
             w.key(1200)?;
@@ -14215,7 +14215,7 @@ impl Space {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -14435,7 +14435,7 @@ impl Space {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -15349,7 +15349,7 @@ impl SpecificArea {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -15573,7 +15573,7 @@ impl SpecificArea {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -16144,7 +16144,7 @@ impl SubplaceElement {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -16360,7 +16360,7 @@ impl SubplaceElement {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -16786,7 +16786,7 @@ impl SupplementalFacility {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -17014,7 +17014,7 @@ impl SupplementalFacility {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -19296,7 +19296,7 @@ impl VehicularAccess {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -19560,7 +19560,7 @@ impl VehicularAccess {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;

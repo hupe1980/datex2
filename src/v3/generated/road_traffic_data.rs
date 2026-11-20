@@ -1594,7 +1594,7 @@ impl ElaboratedDataPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -1602,7 +1602,7 @@ impl ElaboratedDataPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -1718,7 +1718,7 @@ impl ElaboratedDataPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -1728,7 +1728,7 @@ impl ElaboratedDataPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -2316,7 +2316,7 @@ impl MeasuredDataPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -2324,7 +2324,7 @@ impl MeasuredDataPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -2425,7 +2425,7 @@ impl MeasuredDataPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -2435,7 +2435,7 @@ impl MeasuredDataPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -2731,11 +2731,11 @@ impl MeasurementSite {
             None => return Err(w.missing_attr("version")),
         }
         if let Some(v) = &self.measurement_site_record_version_time { w.leaf("roa:measurementSiteRecordVersionTime", v)?; }
-        if let Some(v) = &self.measurement_equipment_reference { w.max_len("measurementEquipmentReference", v, 1024)?; w.leaf("roa:measurementEquipmentReference", v)?; }
+        if let Some(v) = &self.measurement_equipment_reference { w.max_len("measurementEquipmentReference", "String", v, 1024)?; w.leaf("roa:measurementEquipmentReference", v)?; }
         if let Some(v) = &self.measurement_equipment_type_used { w.multilingual("roa:measurementEquipmentTypeUsed", v)?; }
         if let Some(v) = &self.measurement_site_name { w.multilingual("roa:measurementSiteName", v)?; }
         if let Some(v) = &self.measurement_site_number_of_lanes { w.leaf("roa:measurementSiteNumberOfLanes", v)?; }
-        if let Some(v) = &self.measurement_site_identification { w.max_len("measurementSiteIdentification", v, 1024)?; w.leaf("roa:measurementSiteIdentification", v)?; }
+        if let Some(v) = &self.measurement_site_identification { w.max_len("measurementSiteIdentification", "String", v, 1024)?; w.leaf("roa:measurementSiteIdentification", v)?; }
         for v in &self.measurement_specific_characteristics { v.write(w, "roa:measurementSpecificCharacteristics", "", "")?; }
         match &self.measurement_site_location {
             Some(v) => { v.write(w, "roa:measurementSiteLocation")?; }
@@ -2839,7 +2839,7 @@ impl MeasurementSite {
         }
         if let Some(v) = &self.measurement_equipment_reference {
             w.key(1291)?;
-            w.max_len("measurementEquipmentReference", v, 1024)?; w.string(v)?;
+            w.max_len("measurementEquipmentReference", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.measurement_equipment_type_used {
             w.key(1292)?;
@@ -2855,7 +2855,7 @@ impl MeasurementSite {
         }
         if let Some(v) = &self.measurement_site_identification {
             w.key(1297)?;
-            w.max_len("measurementSiteIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("measurementSiteIdentification", "String", v, 1024)?; w.string(v)?;
         }
         if !self.measurement_specific_characteristics.is_empty() {
             w.key(1306)?;
@@ -2955,7 +2955,7 @@ impl MeasurementSiteTable {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.measurement_site_table_identification { w.max_len("measurementSiteTableIdentification", v, 1024)?; w.leaf("roa:measurementSiteTableIdentification", v)?; }
+        if let Some(v) = &self.measurement_site_table_identification { w.max_len("measurementSiteTableIdentification", "String", v, 1024)?; w.leaf("roa:measurementSiteTableIdentification", v)?; }
         w.count("roa:measurementSite", self.measurement_site.len(), 1, usize::MAX)?;
         for v in &self.measurement_site { v.write(w, "roa:measurementSite", "", "")?; }
         if let Some(v) = &self.information_manager { v.write(w, "roa:informationManager", "", "")?; }
@@ -3033,7 +3033,7 @@ impl MeasurementSiteTable {
         }
         if let Some(v) = &self.measurement_site_table_identification {
             w.key(1304)?;
-            w.max_len("measurementSiteTableIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("measurementSiteTableIdentification", "String", v, 1024)?; w.string(v)?;
         }
         w.count("measurementSite", self.measurement_site.len(), 1, usize::MAX)?;
         if !self.measurement_site.is_empty() {
@@ -3157,7 +3157,7 @@ impl MeasurementSiteTablePublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -3165,7 +3165,7 @@ impl MeasurementSiteTablePublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -3261,7 +3261,7 @@ impl MeasurementSiteTablePublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -3271,7 +3271,7 @@ impl MeasurementSiteTablePublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -3865,7 +3865,7 @@ impl PhysicalQuantityFault {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
+        if let Some(v) = &self.fault_identifier { w.max_len("faultIdentifier", "String", v, 1024)?; w.leaf("com:faultIdentifier", v)?; }
         if let Some(v) = &self.fault_description { w.multilingual("com:faultDescription", v)?; }
         if let Some(v) = &self.fault_creation_time { w.leaf("com:faultCreationTime", v)?; }
         match &self.fault_last_update_time {
@@ -3874,7 +3874,7 @@ impl PhysicalQuantityFault {
         }
         if let Some(v) = &self.fault_impact_severity { w.enumeration("com:faultImpactSeverity", v.literal())?; }
         if let Some(v) = &self.fault_urgency_to_rectify { w.enumeration("com:faultUrgencyToRectify", v.literal())?; }
-        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
+        if let Some(v) = &self.manufacturer_fault_code { w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.leaf("com:manufacturerFaultCode", v)?; }
         if let Some(v) = &self.fault_extension { w.extension("com:_faultExtension", v)?; }
         match &self.physical_quantity_fault_type {
             Some(v) => { w.enumeration("roa:physicalQuantityFaultType", v.literal())?; }
@@ -3952,7 +3952,7 @@ impl PhysicalQuantityFault {
         }
         if let Some(v) = &self.fault_identifier {
             w.key(836)?;
-            w.max_len("faultIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("faultIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_description {
             w.key(835)?;
@@ -3979,7 +3979,7 @@ impl PhysicalQuantityFault {
         }
         if let Some(v) = &self.manufacturer_fault_code {
             w.key(1258)?;
-            w.max_len("manufacturerFaultCode", v, 1024)?; w.string(v)?;
+            w.max_len("manufacturerFaultCode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fault_extension {
             w.key(363)?;

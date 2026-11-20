@@ -1728,7 +1728,7 @@ impl PtSchedule {
             Some(v) => { w.leaf("rer:lastUpdated", v)?; }
             None => return Err(w.missing("rer:lastUpdated")),
         }
-        for v in &self.line { w.max_len("line", v, 1024)?; w.leaf("rer:line", v)?; }
+        for v in &self.line { w.max_len("line", "String", v, 1024)?; w.leaf("rer:line", v)?; }
         for v in &self.next_departures { w.leaf("rer:nextDepartures", v)?; }
         if let Some(v) = &self.destination { w.multilingual("rer:destination", v)?; }
         if let Some(v) = &self.interval { w.leaf("rer:interval", v)?; }
@@ -1847,7 +1847,7 @@ impl PtSchedule {
             w.begin_array()?;
             for v in &self.line {
                 w.item()?;
-                w.max_len("line", v, 1024)?; w.string(v)?;
+                w.max_len("line", "String", v, 1024)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -2415,12 +2415,12 @@ impl RouteDescription {
         if let Some(v) = &self.route_closed { w.leaf("rer:routeClosed", v)?; }
         if let Some(v) = &self.is_public_transport_route { w.leaf("rer:isPublicTransportRoute", v)?; }
         for v in &self.tro_reference { v.write(w, "rer:troReference", "", " targetClass=\"tro:TrafficRegulationOrder\"")?; }
-        if let Some(v) = &self.priority_index { w.range("priorityIndex", *v, 0, 10)?; w.leaf("rer:priorityIndex", v)?; }
+        if let Some(v) = &self.priority_index { w.range("priorityIndex", "PriorityIndex", *v, 0, 10)?; w.leaf("rer:priorityIndex", v)?; }
         if let Some(v) = &self.capacity_available { w.leaf("rer:capacityAvailable", v)?; }
         if let Some(v) = &self.signed_rerouting { w.leaf("rer:signedRerouting", v)?; }
-        if let Some(v) = &self.entry { w.max_len("entry", v, 1024)?; w.leaf("rer:entry", v)?; }
-        if let Some(v) = &self.exit { w.max_len("exit", v, 1024)?; w.leaf("rer:exit", v)?; }
-        if let Some(v) = &self.road_or_junction_number { w.max_len("roadOrJunctionNumber", v, 1024)?; w.leaf("rer:roadOrJunctionNumber", v)?; }
+        if let Some(v) = &self.entry { w.max_len("entry", "String", v, 1024)?; w.leaf("rer:entry", v)?; }
+        if let Some(v) = &self.exit { w.max_len("exit", "String", v, 1024)?; w.leaf("rer:exit", v)?; }
+        if let Some(v) = &self.road_or_junction_number { w.max_len("roadOrJunctionNumber", "String", v, 1024)?; w.leaf("rer:roadOrJunctionNumber", v)?; }
         if let Some(v) = &self.traffic_constriction { w.enumeration("rer:trafficConstriction", v.literal())?; }
         if let Some(v) = &self.route_length { w.leaf("rer:routeLength", v)?; }
         if let Some(v) = &self.itinerary { v.write(w, "rer:itinerary")?; }
@@ -2563,7 +2563,7 @@ impl RouteDescription {
         }
         if let Some(v) = &self.priority_index {
             w.key(1650)?;
-            w.range("priorityIndex", *v, 0, 10)?; w.integer(*v)?;
+            w.range("priorityIndex", "PriorityIndex", *v, 0, 10)?; w.integer(*v)?;
         }
         if let Some(v) = &self.capacity_available {
             w.key(310)?;
@@ -2575,15 +2575,15 @@ impl RouteDescription {
         }
         if let Some(v) = &self.entry {
             w.key(693)?;
-            w.max_len("entry", v, 1024)?; w.string(v)?;
+            w.max_len("entry", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.exit {
             w.key(723)?;
-            w.max_len("exit", v, 1024)?; w.string(v)?;
+            w.max_len("exit", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.road_or_junction_number {
             w.key(1976)?;
-            w.max_len("roadOrJunctionNumber", v, 1024)?; w.string(v)?;
+            w.max_len("roadOrJunctionNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.traffic_constriction {
             w.key(2355)?;
@@ -2844,7 +2844,7 @@ impl SpecificDestinationFacility {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -3024,7 +3024,7 @@ impl SpecificDestinationFacility {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -3242,7 +3242,7 @@ impl TrafficSignal {
             Some(v) => { w.attr_value("index", v)?; }
             None => return Err(w.missing_attr("index")),
         }
-        if let Some(v) = &self.external_id { w.max_len("externalId", v, 1024)?; w.leaf("rer:externalId", v)?; }
+        if let Some(v) = &self.external_id { w.max_len("externalId", "String", v, 1024)?; w.leaf("rer:externalId", v)?; }
         if let Some(v) = &self.green_time_adjustment_override { w.leaf("rer:greenTimeAdjustmentOverride", v)?; }
         if let Some(v) = &self.cycle_length_override { w.leaf("rer:cycleLengthOverride", v)?; }
         if let Some(v) = &self.signal_group { v.write(w, "rer:signalGroup", "", "")?; }
@@ -3316,7 +3316,7 @@ impl TrafficSignal {
         }
         if let Some(v) = &self.external_id {
             w.key(736)?;
-            w.max_len("externalId", v, 1024)?; w.string(v)?;
+            w.max_len("externalId", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.green_time_adjustment_override {
             w.key(926)?;

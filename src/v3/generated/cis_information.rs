@@ -621,8 +621,8 @@ impl ServiceRequest {
         if let Some(v) = &self.element_to_process_reference { v.write(w, "cis:elementToProcessReference", "", "")?; }
         if let Some(v) = &self.element_to_process_versioned_reference { v.write(w, "cis:elementToProcessVersionedReference", "", "")?; }
         if let Some(v) = &self.expiry_time { v.write(w, "cis:expiryTime", "", "")?; }
-        if let Some(v) = &self.external_reference { w.max_len("externalReference", v, 1024)?; w.leaf("cis:externalReference", v)?; }
-        if let Some(v) = &self.not_predefined_service_name { w.max_len("notPredefinedServiceName", v, 1024)?; w.leaf("cis:notPredefinedServiceName", v)?; }
+        if let Some(v) = &self.external_reference { w.max_len("externalReference", "String", v, 1024)?; w.leaf("cis:externalReference", v)?; }
+        if let Some(v) = &self.not_predefined_service_name { w.max_len("notPredefinedServiceName", "String", v, 1024)?; w.leaf("cis:notPredefinedServiceName", v)?; }
         match &self.predefined_service {
             Some(v) => { w.enumeration("cis:predefinedService", v.literal())?; }
             None => return Err(w.missing("cis:predefinedService")),
@@ -639,7 +639,7 @@ impl ServiceRequest {
             Some(v) => { w.leaf("cis:servicerRequestVersionTime", v)?; }
             None => return Err(w.missing("cis:servicerRequestVersionTime")),
         }
-        if let Some(v) = &self.custom_service_parameter { w.max_len("customServiceParameter", v, 1024)?; w.leaf("cis:customServiceParameter", v)?; }
+        if let Some(v) = &self.custom_service_parameter { w.max_len("customServiceParameter", "String", v, 1024)?; w.leaf("cis:customServiceParameter", v)?; }
         match &self.service_requester {
             Some(v) => { v.write(w, "cis:serviceRequester", "", "")?; }
             None => return Err(w.missing("cis:serviceRequester")),
@@ -768,11 +768,11 @@ impl ServiceRequest {
         }
         if let Some(v) = &self.external_reference {
             w.key(743)?;
-            w.max_len("externalReference", v, 1024)?; w.string(v)?;
+            w.max_len("externalReference", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.not_predefined_service_name {
             w.key(1381)?;
-            w.max_len("notPredefinedServiceName", v, 1024)?; w.string(v)?;
+            w.max_len("notPredefinedServiceName", "String", v, 1024)?; w.string(v)?;
         }
         match &self.predefined_service {
             Some(v) => {
@@ -804,7 +804,7 @@ impl ServiceRequest {
         }
         if let Some(v) = &self.custom_service_parameter {
             w.key(483)?;
-            w.max_len("customServiceParameter", v, 1024)?; w.string(v)?;
+            w.max_len("customServiceParameter", "String", v, 1024)?; w.string(v)?;
         }
         match &self.service_requester {
             Some(v) => {
@@ -895,7 +895,7 @@ impl ServiceRequestCondition {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.condition_description { w.multilingual("cis:conditionDescription", v)?; }
-        for v in &self.external_id_condition { w.max_len("externalIdCondition", v, 1024)?; w.leaf("cis:externalIdCondition", v)?; }
+        for v in &self.external_id_condition { w.max_len("externalIdCondition", "String", v, 1024)?; w.leaf("cis:externalIdCondition", v)?; }
         for v in &self.referenced_condition { v.write(w, "cis:referencedCondition", "", "")?; }
         for v in &self.version_referenced_condition { v.write(w, "cis:versionReferencedCondition", "", "")?; }
         if let Some(v) = &self.service_request_condition_extension { w.extension("cis:_serviceRequestConditionExtension", v)?; }
@@ -960,7 +960,7 @@ impl ServiceRequestCondition {
             w.begin_array()?;
             for v in &self.external_id_condition {
                 w.item()?;
-                w.max_len("externalIdCondition", v, 1024)?; w.string(v)?;
+                w.max_len("externalIdCondition", "String", v, 1024)?; w.string(v)?;
             }
             w.end_array()?;
         }

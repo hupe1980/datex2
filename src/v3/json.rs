@@ -27,7 +27,7 @@ use std::io::{BufRead, Write};
 use super::exchange_information::ExchangeInformation;
 use super::generated::{JSON, JSON_DEFS};
 use super::message_container::MessageContainer;
-use super::{Document, Envelope, Publication};
+use super::{Document, Envelope, Publication, Root};
 use crate::error::{Error, ErrorKind, WarningKind, quote};
 use crate::json::{JsonReader, JsonWriter, Profile};
 use crate::xml::Limits;
@@ -125,73 +125,79 @@ pub fn read_with<'a>(input: impl BufRead + 'a, limits: &Limits) -> Result<Docume
     Ok(doc)
 }
 
-fn write_publication(
+fn write_root(
     sink: &mut dyn Write,
-    publication: &Publication,
+    root: Root<'_>,
     profile: Option<&'static Profile>,
 ) -> Result<(), Error> {
     let mut w = JsonWriter::new(sink, &JSON, JSON_DEFS, profile);
     w.document_start()?;
-    w.root_key("payload")?;
-    publication.write_json(&mut w)?;
+    match root {
+        Root::Publication(publication) => {
+            w.root_key("payload")?;
+            publication.write_json(&mut w)?;
+        }
+        Root::Container(container) => {
+            w.root_key("messageContainer")?;
+            container.write_json(&mut w, None)?;
+        }
+    }
     w.document_end()
 }
 
-fn write_container_with(
-    sink: &mut dyn Write,
-    container: &MessageContainer,
-    profile: Option<&'static Profile>,
-) -> Result<(), Error> {
-    let mut w = JsonWriter::new(sink, &JSON, JSON_DEFS, profile);
-    w.document_start()?;
-    w.root_key("messageContainer")?;
-    container.write_json(&mut w, None)?;
-    w.document_end()
-}
-
-/// Writes a publication in the official DATEX II 3.7 JSON encoding: `{"payload": …}`.
-///
-/// When the write succeeds, the official 3.7 JSON schemas accept the output. The rules are those
-/// of the XML writer, plus two that only JSON has: a language code is two lowercase letters, and
-/// a date and time carries a time zone.
-///
-/// # Errors
-///
-/// When the publication breaks a rule of the schema, holds extension content read from XML, or
-/// the sink fails. The error names the member and the rule.
-pub fn write(mut sink: impl Write, publication: &Publication) -> Result<(), Error> {
-    write_publication(&mut sink, publication, None)
-}
-
-/// Writes a publication as official DATEX II 3.7 JSON in memory. See [`write()`].
-///
-/// # Errors
-///
-/// As for [`write()`].
-pub fn to_string(publication: &Publication) -> Result<String, Error> {
+fn root_to_string(root: Root<'_>, profile: Option<&'static Profile>) -> Result<String, Error> {
     let mut bytes = Vec::new();
-    write(&mut bytes, publication)?;
+    write_root(&mut bytes, root, profile)?;
     Ok(String::from_utf8(bytes).expect("the writer produces UTF-8"))
 }
 
-/// Writes a message container in the DATEX II 3.7 JSON mapping: `{"messageContainer": …}`.
+/// Writes a publication (`{"payload": …}`) or a message container (`{"messageContainer": …}`) in
+/// the official DATEX II 3.7 JSON encoding.
 ///
-/// DATEX II publishes no JSON schema for Exchange 2020; each payload follows the 3.7 schemas.
+/// When the write succeeds, the official 3.7 JSON schemas accept each publication. The rules are
+/// those of the XML writer, plus two that only JSON has: a language code is two lowercase letters,
+/// and a date and time carries a time zone. For the exchange part of a container, which has no
+/// JSON schema, the writer applies the XML schema's rules.
+///
+/// # Errors
+///
+/// When the publication or container breaks a rule of the schema, holds extension content read
+/// from XML, or the sink fails. The error names the member and the rule.
+pub fn write<'a>(mut sink: impl Write, root: impl Into<Root<'a>>) -> Result<(), Error> {
+    write_root(&mut sink, root.into(), None)
+}
+
+/// Writes a publication or a message container as official DATEX II 3.7 JSON in memory. See
+/// [`write()`].
 ///
 /// # Errors
 ///
 /// As for [`write()`].
-pub fn write_container(mut sink: impl Write, container: &MessageContainer) -> Result<(), Error> {
-    write_container_with(&mut sink, container, None)
+pub fn to_string<'a>(root: impl Into<Root<'a>>) -> Result<String, Error> {
+    root_to_string(root.into(), None)
 }
 
 /// The German AFIR Recharging profile, as the Mobilithek requires it.
 ///
 /// DATEX II profile "AFIR Energy Infrastructure" 01-00-00, revision 2 of 10 April 2026, published
-/// by the Mobilithek. Static data (sites, stations, charging points, prices) is a table
-/// publication written with [`write()`]; dynamic data is a status publication in a message
-/// container written with [`write_container()`], whose exchange information says whether it is a
-/// complete snapshot (`snapshotPush`) or a delta (`deltaPush`).
+/// by the Mobilithek. It has two deliveries:
+///
+/// - **Static data** (sites, stations, charging points, prices): a table publication, written
+///   with [`write()`](mobilithek::write) or [`to_string()`](mobilithek::to_string).
+/// - **Dynamic data** (status, current prices): a status publication in a message container.
+///   [`snapshot()`](mobilithek::snapshot) and [`delta()`](mobilithek::delta) build the container,
+///   the same functions write it.
+///
+/// ```
+/// use datex2::v3::{Publication, json::mobilithek};
+///
+/// fn deliver(table: &Publication, status: Publication) -> Result<(String, String), datex2::Error> {
+///     let generated = "2026-04-14T14:00:00+02:00".parse().expect("a date and time");
+///     let static_data = mobilithek::to_string(table)?;
+///     let dynamic_data = mobilithek::to_string(&mobilithek::snapshot(status, generated))?;
+///     Ok((static_data, dynamic_data))
+/// }
+/// ```
 ///
 /// The profile is DATEX II 3.7 cut down to the AFIR content, but taken from an earlier stage of
 /// the model, so a few things are spelled differently. The writer takes care of them:
@@ -212,10 +218,16 @@ pub fn write_container(mut sink: impl Write, container: &MessageContainer) -> Re
 ///
 /// The profile also allows less than 3.7: fewer members, fewer enumeration values, and some
 /// members are required. A write that would produce something the profile's schemas reject fails
-/// and names the place and the rule. The 3.7 value rules still apply where the profile's schemas
-/// leave them out, so a time zone is an offset such as `+01:00` (not `Europe/Berlin`) and an amount
-/// of money has at most two decimal places. When the publication does not set its profile name
-/// and version, the profile's are written.
+/// and names the place and the rule. When the publication does not set its profile name and
+/// version, the profile's are written.
+///
+/// # Rules the profile's schemas do not show
+///
+/// The writer applies these value rules of the model although the profile's JSON schemas omit them:
+///
+/// - **`AmountOfMoney`** (every price, fee and cap): at most 8 digits, 2 after the point. `0.590`
+///   is written as `0.590`; `0.589` is refused, never rounded.
+/// - **Time zones**: an offset such as `+01:00`, not `Europe/Berlin`.
 ///
 /// One member exists only in the profile and cannot be held by the 3.7 model:
 /// `refillPointByReference` on a station. It is read as an unknown member, with a warning.
@@ -223,46 +235,83 @@ pub mod mobilithek {
     use std::io::Write;
 
     use super::super::Publication;
+    use super::super::exchange_information::{
+        Agent, DynamicInformation, ExchangeContext, ExchangeInformation, ExchangeStatusEnum,
+        ProtocolTypeEnum,
+    };
     use super::super::generated::MOBILITHEK;
-    use super::MessageContainer;
-    use crate::Error;
+    use super::{MessageContainer, Root};
+    use crate::{DateTime, Error};
 
     /// The profile name the writer puts on a publication that sets none.
     pub const PROFILE_NAME: &str = "AFIR Energy Infrastructure";
     /// The profile version the writer puts on a publication that sets none.
     pub const PROFILE_VERSION: &str = "01-00-00";
 
-    /// Writes a publication, normally the table publication of static data, for the Mobilithek.
+    /// Writes a table publication or a status container for the Mobilithek.
+    ///
+    /// When the write succeeds, the profile's JSON schemas accept the output: the table schema for
+    /// a publication, the container schema for a message container.
     ///
     /// # Errors
     ///
-    /// When the publication holds something the profile does not allow, breaks a rule of the
-    /// schema, or the sink fails. The error names the member and the rule.
-    pub fn write(mut sink: impl Write, publication: &Publication) -> Result<(), Error> {
-        super::write_publication(&mut sink, publication, Some(&MOBILITHEK))
+    /// When the publication or container holds something the profile does not allow (including a
+    /// publication type outside the profile), breaks a rule of the schema, or the sink fails. The
+    /// error names the member and the rule.
+    pub fn write<'a>(mut sink: impl Write, root: impl Into<Root<'a>>) -> Result<(), Error> {
+        super::write_root(&mut sink, root.into(), Some(&MOBILITHEK))
     }
 
-    /// Writes a publication for the Mobilithek in memory. See [`write()`].
+    /// Writes a table publication or a status container for the Mobilithek in memory. See
+    /// [`write()`].
     ///
     /// # Errors
     ///
     /// As for [`write()`].
-    pub fn to_string(publication: &Publication) -> Result<String, Error> {
-        let mut bytes = Vec::new();
-        write(&mut bytes, publication)?;
-        Ok(String::from_utf8(bytes).expect("the writer produces UTF-8"))
+    pub fn to_string<'a>(root: impl Into<Root<'a>>) -> Result<String, Error> {
+        super::root_to_string(root.into(), Some(&MOBILITHEK))
     }
 
-    /// Writes a message container, normally a status publication of dynamic data, for the
-    /// Mobilithek.
+    /// Wraps a status publication as a **complete snapshot** (`snapshotPush`) generated at
+    /// `generated`.
     ///
-    /// # Errors
+    /// A snapshot must hold every charging point of the table; consumers take missing ones as gone.
+    /// For only the points that changed, use [`delta()`].
     ///
-    /// As for [`write()`].
-    pub fn write_container(
-        mut sink: impl Write,
-        container: &MessageContainer,
-    ) -> Result<(), Error> {
-        super::write_container_with(&mut sink, container, Some(&MOBILITHEK))
+    /// The exchange information is the profile sample's: specification version `3.0`, an empty
+    /// supplier, status `online`. No clock is read. The supplier is the one thing you may add.
+    pub fn snapshot(publication: Publication, generated: DateTime) -> MessageContainer {
+        container(ProtocolTypeEnum::SnapshotPush, publication, generated)
+    }
+
+    /// Wraps a status publication as a **delta** (`deltaPush`): only the points that changed since
+    /// the last delivery. Otherwise as [`snapshot()`].
+    pub fn delta(publication: Publication, generated: DateTime) -> MessageContainer {
+        container(ProtocolTypeEnum::DeltaPush, publication, generated)
+    }
+
+    fn container(
+        protocol: ProtocolTypeEnum,
+        publication: Publication,
+        generated: DateTime,
+    ) -> MessageContainer {
+        MessageContainer {
+            payload: vec![publication],
+            exchange_information: Some(Box::new(ExchangeInformation {
+                exchange_context: Some(Box::new(ExchangeContext {
+                    coded_exchange_protocol: Some(protocol),
+                    exchange_specification_version: Some("3.0".to_owned()),
+                    supplier_or_cis_requester: Some(Box::new(Agent::default())),
+                    ..ExchangeContext::default()
+                })),
+                dynamic_information: Some(Box::new(DynamicInformation {
+                    exchange_status: Some(ExchangeStatusEnum::Online),
+                    message_generation_timestamp: Some(generated),
+                    ..DynamicInformation::default()
+                })),
+                ..ExchangeInformation::default()
+            })),
+            ..MessageContainer::default()
+        }
     }
 }

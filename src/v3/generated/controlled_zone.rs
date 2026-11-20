@@ -1709,7 +1709,7 @@ impl ControlledZoneTablePublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -1721,7 +1721,7 @@ impl ControlledZoneTablePublication {
             None => return Err(w.missing_attr("id")),
         }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -1825,7 +1825,7 @@ impl ControlledZoneTablePublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -1842,7 +1842,7 @@ impl ControlledZoneTablePublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -2005,7 +2005,7 @@ impl DynamicActivationStatusPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -2017,7 +2017,7 @@ impl DynamicActivationStatusPublication {
             None => return Err(w.missing_attr("id")),
         }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -2120,7 +2120,7 @@ impl DynamicActivationStatusPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -2137,7 +2137,7 @@ impl DynamicActivationStatusPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -2659,7 +2659,7 @@ impl Penalty {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.amount_due {
-            Some(v) => { w.digits("amountDue", v, 8, 2)?; w.leaf("cz:amountDue", v)?; }
+            Some(v) => { w.digits("amountDue", "AmountOfMoney", v, 8, 2)?; w.leaf("cz:amountDue", v)?; }
             None => return Err(w.missing("cz:amountDue")),
         }
         if let Some(v) = &self.penalty_description { w.multilingual("cz:penaltyDescription", v)?; }
@@ -2714,7 +2714,7 @@ impl Penalty {
         match &self.amount_due {
             Some(v) => {
                 w.key(237)?;
-                w.digits("amountDue", v, 8, 2)?; w.decimal(v)?;
+                w.digits("amountDue", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
             }
             None => w.absent(237, w.missing("amountDue"))?,
         }

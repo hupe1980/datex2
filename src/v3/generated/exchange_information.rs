@@ -533,10 +533,10 @@ impl Agent {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.address { w.max_len("address", v, 1024)?; w.leaf("ex:address", v)?; }
-        if let Some(v) = &self.name { w.max_len("name", v, 1024)?; w.leaf("ex:name", v)?; }
-        if let Some(v) = &self.reference_id { w.max_len("referenceID", v, 1024)?; w.leaf("ex:referenceID", v)?; }
-        if let Some(v) = &self.service_url { w.max_len("serviceURL", v, 1024)?; w.leaf("ex:serviceURL", v)?; }
+        if let Some(v) = &self.address { w.max_len("address", "String", v, 1024)?; w.leaf("ex:address", v)?; }
+        if let Some(v) = &self.name { w.max_len("name", "String", v, 1024)?; w.leaf("ex:name", v)?; }
+        if let Some(v) = &self.reference_id { w.max_len("referenceID", "String", v, 1024)?; w.leaf("ex:referenceID", v)?; }
+        if let Some(v) = &self.service_url { w.max_len("serviceURL", "String", v, 1024)?; w.leaf("ex:serviceURL", v)?; }
         if let Some(v) = &self.international_identifier { v.write(w, "ex:internationalIdentifier", "", "")?; }
         if let Some(v) = &self.agent_extension { w.extension("ex:_agentExtension", v)?; }
         w.end(tag)
@@ -596,19 +596,19 @@ impl Agent {
         }
         if let Some(v) = &self.address {
             w.key(64)?;
-            w.max_len("address", v, 1024)?; w.string(v)?;
+            w.max_len("address", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.name {
             w.key(1345)?;
-            w.max_len("name", v, 1024)?; w.string(v)?;
+            w.max_len("name", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.reference_id {
             w.key(1818)?;
-            w.max_len("referenceID", v, 1024)?; w.string(v)?;
+            w.max_len("referenceID", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.service_url {
             w.key(2041)?;
-            w.max_len("serviceURL", v, 1024)?; w.string(v)?;
+            w.max_len("serviceURL", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.international_identifier {
             w.key(1001)?;
@@ -904,12 +904,12 @@ impl ExchangeContext {
             None => return Err(w.missing("ex:codedExchangeProtocol")),
         }
         match &self.exchange_specification_version {
-            Some(v) => { w.max_len("exchangeSpecificationVersion", v, 1024)?; w.leaf("ex:exchangeSpecificationVersion", v)?; }
+            Some(v) => { w.max_len("exchangeSpecificationVersion", "String", v, 1024)?; w.leaf("ex:exchangeSpecificationVersion", v)?; }
             None => return Err(w.missing("ex:exchangeSpecificationVersion")),
         }
         if let Some(v) = &self.operating_mode { w.enumeration("ex:operatingMode", v.literal())?; }
         if let Some(v) = &self.update_method { w.enumeration("ex:updateMethod", v.literal())?; }
-        if let Some(v) = &self.non_coded_exchange_protocol { w.max_len("nonCodedExchangeProtocol", v, 1024)?; w.leaf("ex:nonCodedExchangeProtocol", v)?; }
+        if let Some(v) = &self.non_coded_exchange_protocol { w.max_len("nonCodedExchangeProtocol", "String", v, 1024)?; w.leaf("ex:nonCodedExchangeProtocol", v)?; }
         match &self.supplier_or_cis_requester {
             Some(v) => { v.write(w, "ex:supplierOrCisRequester", "", "")?; }
             None => return Err(w.missing("ex:supplierOrCisRequester")),
@@ -994,7 +994,7 @@ impl ExchangeContext {
         match &self.exchange_specification_version {
             Some(v) => {
                 w.key(717)?;
-                w.max_len("exchangeSpecificationVersion", v, 1024)?; w.string(v)?;
+                w.max_len("exchangeSpecificationVersion", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(717, w.missing("exchangeSpecificationVersion"))?,
         }
@@ -1008,7 +1008,7 @@ impl ExchangeContext {
         }
         if let Some(v) = &self.non_coded_exchange_protocol {
             w.key(1364)?;
-            w.max_len("nonCodedExchangeProtocol", v, 1024)?; w.string(v)?;
+            w.max_len("nonCodedExchangeProtocol", "String", v, 1024)?; w.string(v)?;
         }
         match &self.supplier_or_cis_requester {
             Some(v) => {
@@ -1414,7 +1414,7 @@ impl SessionInformation {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.session_id {
-            Some(v) => { w.max_len("sessionID", v, 1024)?; w.leaf("ex:sessionID", v)?; }
+            Some(v) => { w.max_len("sessionID", "String", v, 1024)?; w.leaf("ex:sessionID", v)?; }
             None => return Err(w.missing("ex:sessionID")),
         }
         if let Some(v) = &self.start_session { w.leaf("ex:startSession", v)?; }
@@ -1469,7 +1469,7 @@ impl SessionInformation {
         match &self.session_id {
             Some(v) => {
                 w.key(2044)?;
-                w.max_len("sessionID", v, 1024)?; w.string(v)?;
+                w.max_len("sessionID", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(2044, w.missing("sessionID"))?,
         }
@@ -1554,7 +1554,7 @@ impl Subscription {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.name { w.max_len("name", v, 1024)?; w.leaf("ex:name", v)?; }
+        if let Some(v) = &self.name { w.max_len("name", "String", v, 1024)?; w.leaf("ex:name", v)?; }
         if let Some(v) = &self.reference_id { v.write(w, "ex:referenceID", "", "")?; }
         if let Some(v) = &self.subscription_start { w.leaf("ex:subscriptionStart", v)?; }
         if let Some(v) = &self.subscription_end { w.leaf("ex:subscriptionEnd", v)?; }
@@ -1621,7 +1621,7 @@ impl Subscription {
         }
         if let Some(v) = &self.name {
             w.key(1345)?;
-            w.max_len("name", v, 1024)?; w.string(v)?;
+            w.max_len("name", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.reference_id {
             w.key(1818)?;

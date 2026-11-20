@@ -37,8 +37,9 @@ No version, namespace, schema or envelope has to be stated. A byte slice works a
   Level C namespaces, a payload without `xsi:type`, required elements left out, a decimal comma
   in a number. The reader accepts these and reports each as a warning with its kind, the element
   path and the byte offset. Nothing is dropped silently and no value is made up.
-- **A strict writer.** When `write` succeeds, the official 3.7 schema accepts the document.
-  When it cannot, the error names the element and the rule.
+- **A strict writer.** `write` takes a publication or a message container. When it succeeds,
+  the official schema accepts the document; when it cannot, the error names the element, the
+  rule and the schema type. Nothing is rounded to fit.
 - **JSON, including the Mobilithek.** The official 3.7 JSON mapping and the AFIR Recharging
   profile the Mobilithek requires, read and written from the same model. Money keeps its exact
   digits; no JSON library is involved.
@@ -120,10 +121,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Static data is a table publication; dynamic data a status publication in a message container
-marked as snapshot or delta. [`examples/mobilithek.rs`](examples/mobilithek.rs) publishes a site
-with an AC and a DC charging point. When a write succeeds, the profile's schemas accept the
-output; where the profile spells something differently from 3.7, the writer handles it.
+Static data is a table publication; dynamic data a status publication in a message container,
+which `json::mobilithek::snapshot(status, generated)` or `delta(…)` builds in one call.
+[`examples/mobilithek.rs`](examples/mobilithek.rs) publishes a site with an AC and a DC charging
+point. When a write succeeds, the profile's schemas accept the output. Prices follow
+`AmountOfMoney` (at most 8 digits, 2 after the point), which the profile's schemas do not show:
+`0.589` is refused, not rounded.
 [More on JSON](https://hupe1980.github.io/datex2/docs/json/).
 
 ## Tested on
@@ -165,7 +168,14 @@ prints the envelope, each publication with its record count, and the warnings gr
 ```text
 cargo xtask fetch            # download the official schemas and verify their checksums
 cargo xtask codegen --check  # the committed model is what the schemas produce
-cargo test                   # validation uses xmllint and Python jsonschema when installed
+cargo test                   # validates every written document when the validators are there
+```
+
+Validation needs `xmllint` and Python `jsonschema` (or `uv`). Without them the tests pass and
+print `note: validation skipped: …`; CI makes that a failure:
+
+```text
+DATEX2_REQUIRE_VALIDATORS=1 cargo test
 ```
 
 The typed model is generated from the schemas published at <https://docs.datex2.eu/>; the schemas

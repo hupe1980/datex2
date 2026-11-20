@@ -208,9 +208,9 @@ impl Address {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.postcode { w.max_len("postcode", v, 1024)?; w.leaf("locx:postcode", v)?; }
+        if let Some(v) = &self.postcode { w.max_len("postcode", "String", v, 1024)?; w.leaf("locx:postcode", v)?; }
         if let Some(v) = &self.city { w.multilingual("locx:city", v)?; }
-        if let Some(v) = &self.country_code { w.max_len("countryCode", v, 2)?; w.leaf("locx:countryCode", v)?; }
+        if let Some(v) = &self.country_code { w.max_len("countryCode", "CountryCode", v, 2)?; w.leaf("locx:countryCode", v)?; }
         for v in &self.address_line { v.write(w, "locx:addressLine", "", "")?; }
         if let Some(v) = &self.address_extension { w.extension("locx:_addressExtension", v)?; }
         w.end(tag)
@@ -267,7 +267,7 @@ impl Address {
         }
         if let Some(v) = &self.postcode {
             w.key(1615)?;
-            w.max_len("postcode", v, 1024)?; w.string(v)?;
+            w.max_len("postcode", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.city {
             w.key(337)?;
@@ -275,7 +275,7 @@ impl Address {
         }
         if let Some(v) = &self.country_code {
             w.key(469)?;
-            w.max_len("countryCode", v, 2)?; w.string(v)?;
+            w.max_len("countryCode", "CountryCode", v, 2)?; w.string(v)?;
         }
         if !self.address_line.is_empty() {
             w.key(65)?;
@@ -487,7 +487,7 @@ impl FacilityLocation {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.time_zone { w.max_len("timeZone", v, 1024)?; w.pattern("timeZone", v, Pattern::TimeZone)?; w.leaf("locx:timeZone", v)?; }
+        if let Some(v) = &self.time_zone { w.max_len("timeZone", "TimeZone", v, 1024)?; w.pattern("timeZone", "TimeZone", v, Pattern::TimeZone)?; w.leaf("locx:timeZone", v)?; }
         if let Some(v) = &self.address { v.write(w, "locx:address", "", "")?; }
         w.end(tag)
     }
@@ -534,7 +534,7 @@ impl FacilityLocation {
         }
         if let Some(v) = &self.time_zone {
             w.key(2263)?;
-            w.max_len("timeZone", v, 1024)?; w.pattern("timeZone", v, Pattern::TimeZone)?; w.string(v)?;
+            w.max_len("timeZone", "TimeZone", v, 1024)?; w.pattern("timeZone", "TimeZone", v, Pattern::TimeZone)?; w.string(v)?;
         }
         if let Some(v) = &self.address {
             w.key(64)?;
@@ -585,7 +585,7 @@ impl NamedAreaExtended {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.named_area_code {
-            Some(v) => { w.max_len("namedAreaCode", v, 8)?; w.leaf("locx:namedAreaCode", v)?; }
+            Some(v) => { w.max_len("namedAreaCode", "NamedAreaCode", v, 8)?; w.leaf("locx:namedAreaCode", v)?; }
             None => return Err(w.missing("locx:namedAreaCode")),
         }
         w.end(tag)
@@ -632,7 +632,7 @@ impl NamedAreaExtended {
         match &self.named_area_code {
             Some(v) => {
                 w.key(1348)?;
-                w.max_len("namedAreaCode", v, 8)?; w.string(v)?;
+                w.max_len("namedAreaCode", "NamedAreaCode", v, 8)?; w.string(v)?;
             }
             None => w.absent(1348, w.missing("namedAreaCode"))?,
         }

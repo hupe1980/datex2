@@ -106,7 +106,7 @@
           The writer checks required content, list sizes and every value
           rule of the schema. When it succeeds, the official 3.7 schemas, or
           the Mobilithek profile's, accept the document; when it cannot, it
-          names the place and the rule.
+          names the place, the rule and the schema type. It never rounds.
         </p>
       </article>
 
@@ -164,9 +164,9 @@
             <tbody>
               <tr><td>Read a document</td><td><code>v3::read(input)</code></td></tr>
               <tr><td>Process a large feed record by record</td><td><code>v3::stream::&lt;T&gt;(input)</code></td></tr>
-              <tr><td>Publish a document</td><td><code>v3::write(sink, &amp;publication)</code></td></tr>
+              <tr><td>Publish a publication or a message container</td><td><code>v3::write(sink, &amp;publication)</code>, <code>v3::write(sink, &amp;container)</code></td></tr>
               <tr><td>Read or write JSON</td><td><code>v3::json::read(input)</code>, <code>v3::json::write(…)</code></td></tr>
-              <tr><td>Publish charging data for the Mobilithek</td><td><code>v3::json::mobilithek::write(…)</code></td></tr>
+              <tr><td>Publish charging data for the Mobilithek</td><td><code>mobilithek::write(sink, &amp;table)</code>, <code>mobilithek::snapshot(status, at)</code></td></tr>
               <tr><td>See what a file contains</td><td><code>cargo run --example inspect</code></td></tr>
             </tbody>
           </table>

@@ -251,18 +251,31 @@ pub trait Rules {
         ))
     }
 
-    fn max_len(&self, name: &'static str, value: &str, max: usize) -> Result<(), Error> {
+    fn max_len(
+        &self,
+        name: &'static str,
+        ty: &'static str,
+        value: &str,
+        max: usize,
+    ) -> Result<(), Error> {
         if value.chars().count() <= max {
             return Ok(());
         }
         Err(self.fail(
             ErrorKind::InvalidValue,
-            format!("at most {max} characters in {}", quote(name)),
+            format!("at most {max} characters in {}", typed(name, ty)),
             quote(value),
         ))
     }
 
-    fn range(&self, name: &'static str, value: u64, min: u64, max: u64) -> Result<(), Error> {
+    fn range(
+        &self,
+        name: &'static str,
+        ty: &'static str,
+        value: u64,
+        min: u64,
+        max: u64,
+    ) -> Result<(), Error> {
         if (min..=max).contains(&value) {
             return Ok(());
         }
@@ -273,7 +286,7 @@ pub trait Rules {
         };
         Err(self.fail(
             ErrorKind::InvalidValue,
-            format!("{bounds} in {}", quote(name)),
+            format!("{bounds} in {}", typed(name, ty)),
             value.to_string(),
         ))
     }
@@ -281,6 +294,7 @@ pub trait Rules {
     fn digits(
         &self,
         name: &'static str,
+        ty: &'static str,
         value: &Decimal,
         total: usize,
         fraction: usize,
@@ -295,21 +309,38 @@ pub trait Rules {
             ErrorKind::InvalidValue,
             format!(
                 "at most {total} digits, {fraction} of them after the point, in {}",
-                quote(name)
+                typed(name, ty)
             ),
             quote(value.as_str()),
         ))
     }
 
-    fn pattern(&self, name: &'static str, value: &str, pattern: Pattern) -> Result<(), Error> {
+    fn pattern(
+        &self,
+        name: &'static str,
+        ty: &'static str,
+        value: &str,
+        pattern: Pattern,
+    ) -> Result<(), Error> {
         if pattern.matches(value) {
             return Ok(());
         }
         Err(self.fail(
             ErrorKind::InvalidValue,
-            format!("{} in {}", pattern.describe(), quote(name)),
+            format!("{} in {}", pattern.describe(), typed(name, ty)),
             quote(value),
         ))
+    }
+}
+
+/// The member or element a value rule applies to, with the schema type the rule comes from when
+/// it has a name: `"value" of type AmountOfMoney`. The type name is what to look up in the
+/// standard, and what the generated Rust model calls the field's type.
+fn typed(name: &str, ty: &str) -> String {
+    if ty.is_empty() {
+        quote(name)
+    } else {
+        format!("{} of type {ty}", quote(name))
     }
 }
 
@@ -507,7 +538,7 @@ impl<'a> Out<'a> {
         self.begin("com:values")?;
         for entry in &value.values {
             self.begin("com:value")?;
-            self.pattern("lang", &entry.lang, Pattern::Language)?;
+            self.pattern("lang", "", &entry.lang, Pattern::Language)?;
             self.attr("lang", &entry.lang)?;
             if entry.text.chars().count() > 1024 {
                 return Err(self.error(
@@ -664,14 +695,18 @@ mod tests {
             ("-999999.99", true),
         ] {
             let value: Decimal = text.parse().unwrap();
-            assert_eq!(out.digits("price", &value, 8, 2).is_ok(), ok, "{text}");
+            assert_eq!(
+                out.digits("price", "AmountOfMoney", &value, 8, 2).is_ok(),
+                ok,
+                "{text}"
+            );
         }
         let e = out
-            .digits("price", &"1.234".parse().unwrap(), 8, 2)
+            .digits("price", "AmountOfMoney", &"1.234".parse().unwrap(), 8, 2)
             .unwrap_err();
         assert_eq!(
             e.expected,
-            "at most 8 digits, 2 of them after the point, in \"price\""
+            "at most 8 digits, 2 of them after the point, in \"price\" of type AmountOfMoney"
         );
     }
 

@@ -2116,7 +2116,7 @@ impl ActivatedRegulation {
             Some(v) => { w.multilingual("tro:issuingAuthority", v)?; }
             None => return Err(w.missing("tro:issuingAuthority")),
         }
-        if let Some(v) = &self.regulation_id { w.max_len("regulationId", v, 1024)?; w.leaf("tro:regulationId", v)?; }
+        if let Some(v) = &self.regulation_id { w.max_len("regulationId", "String", v, 1024)?; w.leaf("tro:regulationId", v)?; }
         w.count("tro:trafficRegulation", self.traffic_regulation.len(), 1, usize::MAX)?;
         for v in &self.traffic_regulation { v.write(w, "tro:trafficRegulation")?; }
         if let Some(v) = &self.activated_regulation_extension { w.extension("tro:_activatedRegulationExtension", v)?; }
@@ -2190,7 +2190,7 @@ impl ActivatedRegulation {
         }
         if let Some(v) = &self.regulation_id {
             w.key(1840)?;
-            w.max_len("regulationId", v, 1024)?; w.string(v)?;
+            w.max_len("regulationId", "String", v, 1024)?; w.string(v)?;
         }
         w.count("trafficRegulation", self.traffic_regulation.len(), 1, usize::MAX)?;
         if !self.traffic_regulation.is_empty() {
@@ -4087,7 +4087,7 @@ impl GddPictogramIdentification {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.country {
-            Some(v) => { w.max_len("country", v, 2)?; w.leaf("tro:country", v)?; }
+            Some(v) => { w.max_len("country", "CountryCode", v, 2)?; w.leaf("tro:country", v)?; }
             None => return Err(w.missing("tro:country")),
         }
         match &self.service_category {
@@ -4095,7 +4095,7 @@ impl GddPictogramIdentification {
             None => return Err(w.missing("tro:serviceCategory")),
         }
         match &self.pictogram_category_code {
-            Some(v) => { w.range("pictogramCategoryCode", *v, 1, u64::MAX)?; w.leaf("tro:pictogramCategoryCode", v)?; }
+            Some(v) => { w.range("pictogramCategoryCode", "GddPictogramCategoryCode", *v, 1, u64::MAX)?; w.leaf("tro:pictogramCategoryCode", v)?; }
             None => return Err(w.missing("tro:pictogramCategoryCode")),
         }
         if let Some(v) = &self.gdd_pictogram_identification_extension { w.extension("tro:_gddPictogramIdentificationExtension", v)?; }
@@ -4154,7 +4154,7 @@ impl GddPictogramIdentification {
         match &self.country {
             Some(v) => {
                 w.key(468)?;
-                w.max_len("country", v, 2)?; w.string(v)?;
+                w.max_len("country", "CountryCode", v, 2)?; w.string(v)?;
             }
             None => w.absent(468, w.missing("country"))?,
         }
@@ -4168,7 +4168,7 @@ impl GddPictogramIdentification {
         match &self.pictogram_category_code {
             Some(v) => {
                 w.key(1580)?;
-                w.range("pictogramCategoryCode", *v, 1, u64::MAX)?; w.integer(*v)?;
+                w.range("pictogramCategoryCode", "GddPictogramCategoryCode", *v, 1, u64::MAX)?; w.integer(*v)?;
             }
             None => w.absent(1580, w.missing("pictogramCategoryCode"))?,
         }
@@ -4366,7 +4366,7 @@ impl LegalBasis {
             Some(v) => { w.multilingual("tro:name", v)?; }
             None => return Err(w.missing("tro:name")),
         }
-        if let Some(v) = &self.version { w.max_len("version", v, 1024)?; w.leaf("tro:version", v)?; }
+        if let Some(v) = &self.version { w.max_len("version", "String", v, 1024)?; w.leaf("tro:version", v)?; }
         if let Some(v) = &self.date { w.leaf("tro:date", v)?; }
         if let Some(v) = &self.legal_basis_extension { w.extension("tro:_legalBasisExtension", v)?; }
         w.end(tag)
@@ -4428,7 +4428,7 @@ impl LegalBasis {
         }
         if let Some(v) = &self.version {
             w.key(2577)?;
-            w.max_len("version", v, 1024)?; w.string(v)?;
+            w.max_len("version", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.date {
             w.key(516)?;
@@ -4697,7 +4697,7 @@ impl MainSign {
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.picture_of_road_sign { w.leaf("tro:pictureOfRoadSign", v)?; }
         if let Some(v) = &self.url_to_road_sign { w.leaf("tro:urlToRoadSign", v)?; }
-        if let Some(v) = &self.national_sign_id { w.max_len("nationalSignID", v, 1024)?; w.leaf("tro:nationalSignID", v)?; }
+        if let Some(v) = &self.national_sign_id { w.max_len("nationalSignID", "String", v, 1024)?; w.leaf("tro:nationalSignID", v)?; }
         if let Some(v) = &self.description { w.multilingual("tro:description", v)?; }
         if let Some(v) = &self.gdd_pictogram_identification { v.write(w, "tro:gddPictogramIdentification", "", "")?; }
         for v in &self.location_of_sign { v.write(w, "tro:locationOfSign")?; }
@@ -4774,7 +4774,7 @@ impl MainSign {
         }
         if let Some(v) = &self.national_sign_id {
             w.key(1353)?;
-            w.max_len("nationalSignID", v, 1024)?; w.string(v)?;
+            w.max_len("nationalSignID", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.description {
             w.key(545)?;
@@ -5713,9 +5713,9 @@ impl PermitInformation {
         if let Some(v) = &self.application_required { w.leaf("tro:applicationRequired", v)?; }
         if let Some(v) = &self.description { w.multilingual("tro:description", v)?; }
         if let Some(v) = &self.location_related_permit { w.leaf("tro:locationRelatedPermit", v)?; }
-        if let Some(v) = &self.max_duration_of_permit { w.pattern("maxDurationOfPermit", v, Pattern::Duration)?; w.leaf("tro:maxDurationOfPermit", v)?; }
+        if let Some(v) = &self.max_duration_of_permit { w.pattern("maxDurationOfPermit", "Duration", v, Pattern::Duration)?; w.leaf("tro:maxDurationOfPermit", v)?; }
         if let Some(v) = &self.where_to_apply_for_permit { w.leaf("tro:whereToApplyForPermit", v)?; }
-        if let Some(v) = &self.where_to_call_for_permit { w.max_len("whereToCallForPermit", v, 1024)?; w.leaf("tro:whereToCallForPermit", v)?; }
+        if let Some(v) = &self.where_to_call_for_permit { w.max_len("whereToCallForPermit", "String", v, 1024)?; w.leaf("tro:whereToCallForPermit", v)?; }
         if let Some(v) = &self.permit_owner_type { w.enumeration("tro:permitOwnerType", v.literal())?; }
         if let Some(v) = &self.url_for_further_information { w.leaf("tro:urlForFurtherInformation", v)?; }
         if let Some(v) = &self.how_to_obtain_permit { w.multilingual("tro:howToObtainPermit", v)?; }
@@ -5724,7 +5724,7 @@ impl PermitInformation {
             None => return Err(w.missing("tro:permitType")),
         }
         if let Some(v) = &self.disabled_parking_permit { w.leaf("tro:disabledParkingPermit", v)?; }
-        if let Some(v) = &self.minimum_time_to_next_entry { w.pattern("minimumTimeToNextEntry", v, Pattern::Duration)?; w.leaf("tro:minimumTimeToNextEntry", v)?; }
+        if let Some(v) = &self.minimum_time_to_next_entry { w.pattern("minimumTimeToNextEntry", "Duration", v, Pattern::Duration)?; w.leaf("tro:minimumTimeToNextEntry", v)?; }
         if let Some(v) = &self.permit_subject_to_fee { v.write(w, "tro:permitSubjectToFee", "", "")?; }
         for v in &self.location_of_registration_machine { v.write(w, "tro:locationOfRegistrationMachine")?; }
         if let Some(v) = &self.permit_information_extension { w.extension("tro:_permitInformationExtension", v)?; }
@@ -5847,7 +5847,7 @@ impl PermitInformation {
         }
         if let Some(v) = &self.max_duration_of_permit {
             w.key(1262)?;
-            w.pattern("maxDurationOfPermit", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("maxDurationOfPermit", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.where_to_apply_for_permit {
             w.key(2666)?;
@@ -5855,7 +5855,7 @@ impl PermitInformation {
         }
         if let Some(v) = &self.where_to_call_for_permit {
             w.key(2667)?;
-            w.max_len("whereToCallForPermit", v, 1024)?; w.string(v)?;
+            w.max_len("whereToCallForPermit", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.permit_owner_type {
             w.key(1564)?;
@@ -5882,7 +5882,7 @@ impl PermitInformation {
         }
         if let Some(v) = &self.minimum_time_to_next_entry {
             w.key(1332)?;
-            w.pattern("minimumTimeToNextEntry", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("minimumTimeToNextEntry", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.permit_subject_to_fee {
             w.key(1565)?;
@@ -5959,8 +5959,8 @@ impl PermitSubjectToFee {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.amount_due { w.digits("amountDue", v, 8, 2)?; w.leaf("tro:amountDue", v)?; }
-        if let Some(v) = &self.maximum_access_duration { w.pattern("maximumAccessDuration", v, Pattern::Duration)?; w.leaf("tro:maximumAccessDuration", v)?; }
+        if let Some(v) = &self.amount_due { w.digits("amountDue", "AmountOfMoney", v, 8, 2)?; w.leaf("tro:amountDue", v)?; }
+        if let Some(v) = &self.maximum_access_duration { w.pattern("maximumAccessDuration", "Duration", v, Pattern::Duration)?; w.leaf("tro:maximumAccessDuration", v)?; }
         if let Some(v) = &self.payment_information { w.leaf("tro:paymentInformation", v)?; }
         if let Some(v) = &self.permit_subject_to_fee_extension { w.extension("tro:_permitSubjectToFeeExtension", v)?; }
         w.end(tag)
@@ -6014,11 +6014,11 @@ impl PermitSubjectToFee {
         }
         if let Some(v) = &self.amount_due {
             w.key(237)?;
-            w.digits("amountDue", v, 8, 2)?; w.decimal(v)?;
+            w.digits("amountDue", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.maximum_access_duration {
             w.key(1273)?;
-            w.pattern("maximumAccessDuration", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("maximumAccessDuration", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.payment_information {
             w.key(1546)?;
@@ -6277,7 +6277,7 @@ impl PredefinedConditionPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -6289,7 +6289,7 @@ impl PredefinedConditionPublication {
             None => return Err(w.missing_attr("id")),
         }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -6381,7 +6381,7 @@ impl PredefinedConditionPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -6398,7 +6398,7 @@ impl PredefinedConditionPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -6808,7 +6808,7 @@ impl RequiredPermitCondition {
         if let Some(v) = &self.active { w.leaf("tro:active", v)?; }
         if let Some(v) = &self.legal_basis { v.write(w, "tro:legalBasis", "", "")?; }
         if let Some(v) = &self.condition_extension { w.extension("tro:_conditionExtension", v)?; }
-        if let Some(v) = &self.identifier { w.max_len("identifier", v, 1024)?; w.leaf("tro:identifier", v)?; }
+        if let Some(v) = &self.identifier { w.max_len("identifier", "String", v, 1024)?; w.leaf("tro:identifier", v)?; }
         if let Some(v) = &self.issuing_authority { w.multilingual("tro:issuingAuthority", v)?; }
         if let Some(v) = &self.permit_characteristics { v.write(w, "tro:permitCharacteristics", "", " targetClass=\"tro:PermitInformation\"")?; }
         w.count("tro:permitType", self.permit_type.len(), 1, usize::MAX)?;
@@ -6896,7 +6896,7 @@ impl RequiredPermitCondition {
         }
         if let Some(v) = &self.identifier {
             w.key(965)?;
-            w.max_len("identifier", v, 1024)?; w.string(v)?;
+            w.max_len("identifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.issuing_authority {
             w.key(1016)?;
@@ -7679,8 +7679,8 @@ impl StandingOrParkingControl {
             Some(v) => { w.enumeration("tro:standingOrParkingControlType", v.literal())?; }
             None => return Err(w.missing("tro:standingOrParkingControlType")),
         }
-        if let Some(v) = &self.permitted_standing_time { w.pattern("permittedStandingTime", v, Pattern::Duration)?; w.leaf("tro:permittedStandingTime", v)?; }
-        if let Some(v) = &self.permitted_parking_time { w.pattern("permittedParkingTime", v, Pattern::Duration)?; w.leaf("tro:permittedParkingTime", v)?; }
+        if let Some(v) = &self.permitted_standing_time { w.pattern("permittedStandingTime", "Duration", v, Pattern::Duration)?; w.leaf("tro:permittedStandingTime", v)?; }
+        if let Some(v) = &self.permitted_parking_time { w.pattern("permittedParkingTime", "Duration", v, Pattern::Duration)?; w.leaf("tro:permittedParkingTime", v)?; }
         if let Some(v) = &self.paid_parking { w.leaf("tro:paidParking", v)?; }
         if let Some(v) = &self.standing_or_parking_control_extension { w.extension("tro:_standingOrParkingControlExtension", v)?; }
         w.end(tag)
@@ -7752,11 +7752,11 @@ impl StandingOrParkingControl {
         }
         if let Some(v) = &self.permitted_standing_time {
             w.key(1569)?;
-            w.pattern("permittedStandingTime", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("permittedStandingTime", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.permitted_parking_time {
             w.key(1568)?;
-            w.pattern("permittedParkingTime", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("permittedParkingTime", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.paid_parking {
             w.key(1524)?;
@@ -8002,7 +8002,7 @@ impl SupplementaryPanel {
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.picture_of_road_sign { w.leaf("tro:pictureOfRoadSign", v)?; }
         if let Some(v) = &self.url_to_road_sign { w.leaf("tro:urlToRoadSign", v)?; }
-        if let Some(v) = &self.national_sign_id { w.max_len("nationalSignID", v, 1024)?; w.leaf("tro:nationalSignID", v)?; }
+        if let Some(v) = &self.national_sign_id { w.max_len("nationalSignID", "String", v, 1024)?; w.leaf("tro:nationalSignID", v)?; }
         if let Some(v) = &self.description { w.multilingual("tro:description", v)?; }
         if let Some(v) = &self.gdd_pictogram_identification { v.write(w, "tro:gddPictogramIdentification", "", "")?; }
         for v in &self.location_of_sign { v.write(w, "tro:locationOfSign")?; }
@@ -8079,7 +8079,7 @@ impl SupplementaryPanel {
         }
         if let Some(v) = &self.national_sign_id {
             w.key(1353)?;
-            w.max_len("nationalSignID", v, 1024)?; w.string(v)?;
+            w.max_len("nationalSignID", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.description {
             w.key(545)?;
@@ -8240,7 +8240,7 @@ impl TemporaryTrafficRegulationOrder {
         }
         for v in &self.reason { w.enumeration("tro:reason", v.literal())?; }
         match &self.regulation_id {
-            Some(v) => { w.max_len("regulationId", v, 1024)?; w.leaf("tro:regulationId", v)?; }
+            Some(v) => { w.max_len("regulationId", "String", v, 1024)?; w.leaf("tro:regulationId", v)?; }
             None => return Err(w.missing("tro:regulationId")),
         }
         match &self.status {
@@ -8384,7 +8384,7 @@ impl TemporaryTrafficRegulationOrder {
         match &self.regulation_id {
             Some(v) => {
                 w.key(1840)?;
-                w.max_len("regulationId", v, 1024)?; w.string(v)?;
+                w.max_len("regulationId", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(1840, w.missing("regulationId"))?,
         }
@@ -8498,7 +8498,7 @@ impl TimeDriversLicenceHeld {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.value {
-            Some(v) => { w.pattern("value", v, Pattern::Duration)?; w.leaf("tro:value", v)?; }
+            Some(v) => { w.pattern("value", "Duration", v, Pattern::Duration)?; w.leaf("tro:value", v)?; }
             None => return Err(w.missing("tro:value")),
         }
         match &self.comparison_operator {
@@ -8557,7 +8557,7 @@ impl TimeDriversLicenceHeld {
         match &self.value {
             Some(v) => {
                 w.key(2545)?;
-                w.pattern("value", v, Pattern::Duration)?; w.string(v)?;
+                w.pattern("value", "Duration", v, Pattern::Duration)?; w.string(v)?;
             }
             None => w.absent(2545, w.missing("value"))?,
         }
@@ -9203,7 +9203,7 @@ impl TrafficRegulationOrder {
         }
         for v in &self.reason { w.enumeration("tro:reason", v.literal())?; }
         match &self.regulation_id {
-            Some(v) => { w.max_len("regulationId", v, 1024)?; w.leaf("tro:regulationId", v)?; }
+            Some(v) => { w.max_len("regulationId", "String", v, 1024)?; w.leaf("tro:regulationId", v)?; }
             None => return Err(w.missing("tro:regulationId")),
         }
         match &self.status {
@@ -9339,7 +9339,7 @@ impl TrafficRegulationOrder {
         match &self.regulation_id {
             Some(v) => {
                 w.key(1840)?;
-                w.max_len("regulationId", v, 1024)?; w.string(v)?;
+                w.max_len("regulationId", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(1840, w.missing("regulationId"))?,
         }
@@ -9511,7 +9511,7 @@ impl TrafficRegulationPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -9523,7 +9523,7 @@ impl TrafficRegulationPublication {
             None => return Err(w.missing_attr("id")),
         }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -9634,7 +9634,7 @@ impl TrafficRegulationPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -9651,7 +9651,7 @@ impl TrafficRegulationPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -10566,7 +10566,7 @@ impl WarningPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -10578,7 +10578,7 @@ impl WarningPublication {
             None => return Err(w.missing_attr("id")),
         }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -10670,7 +10670,7 @@ impl WarningPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -10687,7 +10687,7 @@ impl WarningPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {

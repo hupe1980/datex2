@@ -1153,16 +1153,16 @@ impl DangerousGoodsExtended {
         }
         if let Some(v) = &self.dangerous_goods_flash_point { w.leaf("com:dangerousGoodsFlashPoint", v)?; }
         if let Some(v) = &self.dangerous_goods_regulations { w.enumeration("com:dangerousGoodsRegulations", v.literal())?; }
-        if let Some(v) = &self.hazard_code_identification { w.max_len("hazardCodeIdentification", v, 1024)?; w.leaf("com:hazardCodeIdentification", v)?; }
+        if let Some(v) = &self.hazard_code_identification { w.max_len("hazardCodeIdentification", "String", v, 1024)?; w.leaf("com:hazardCodeIdentification", v)?; }
         if let Some(v) = &self.hazard_code_version_number { w.leaf("com:hazardCodeVersionNumber", v)?; }
-        if let Some(v) = &self.hazard_substance_item_page_number { w.max_len("hazardSubstanceItemPageNumber", v, 1024)?; w.leaf("com:hazardSubstanceItemPageNumber", v)?; }
-        if let Some(v) = &self.trem_card_number { w.max_len("tremCardNumber", v, 1024)?; w.leaf("com:tremCardNumber", v)?; }
-        if let Some(v) = &self.undg_number { w.max_len("undgNumber", v, 1024)?; w.leaf("com:undgNumber", v)?; }
+        if let Some(v) = &self.hazard_substance_item_page_number { w.max_len("hazardSubstanceItemPageNumber", "String", v, 1024)?; w.leaf("com:hazardSubstanceItemPageNumber", v)?; }
+        if let Some(v) = &self.trem_card_number { w.max_len("tremCardNumber", "String", v, 1024)?; w.leaf("com:tremCardNumber", v)?; }
+        if let Some(v) = &self.undg_number { w.max_len("undgNumber", "String", v, 1024)?; w.leaf("com:undgNumber", v)?; }
         if let Some(v) = &self.volume_of_dangerous_goods { w.leaf("com:volumeOfDangerousGoods", v)?; }
         if let Some(v) = &self.weight_of_dangerous_goods { w.leaf("com:weightOfDangerousGoods", v)?; }
         if let Some(v) = &self.hazardous_materials_extension { w.extension("com:_hazardousMaterialsExtension", v)?; }
         w.count("comx:adrClassValue", self.adr_class_value.len(), 0, 13)?;
-        for v in &self.adr_class_value { w.max_len("adrClassValue", v, 1024)?; w.pattern("adrClassValue", v, Pattern::AdrClass)?; w.leaf("comx:adrClassValue", v)?; }
+        for v in &self.adr_class_value { w.max_len("adrClassValue", "ADRClass", v, 1024)?; w.pattern("adrClassValue", "ADRClass", v, Pattern::AdrClass)?; w.leaf("comx:adrClassValue", v)?; }
         if let Some(v) = &self.dangerous_goods_extended_extension { w.extension("comx:_dangerousGoodsExtendedExtension", v)?; }
         w.end(tag)
     }
@@ -1258,7 +1258,7 @@ impl DangerousGoodsExtended {
         }
         if let Some(v) = &self.hazard_code_identification {
             w.key(935)?;
-            w.max_len("hazardCodeIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("hazardCodeIdentification", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.hazard_code_version_number {
             w.key(936)?;
@@ -1266,15 +1266,15 @@ impl DangerousGoodsExtended {
         }
         if let Some(v) = &self.hazard_substance_item_page_number {
             w.key(937)?;
-            w.max_len("hazardSubstanceItemPageNumber", v, 1024)?; w.string(v)?;
+            w.max_len("hazardSubstanceItemPageNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.trem_card_number {
             w.key(2383)?;
-            w.max_len("tremCardNumber", v, 1024)?; w.string(v)?;
+            w.max_len("tremCardNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.undg_number {
             w.key(2508)?;
-            w.max_len("undgNumber", v, 1024)?; w.string(v)?;
+            w.max_len("undgNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.volume_of_dangerous_goods {
             w.key(2657)?;
@@ -1294,7 +1294,7 @@ impl DangerousGoodsExtended {
             w.begin_array()?;
             for v in &self.adr_class_value {
                 w.item()?;
-                w.max_len("adrClassValue", v, 1024)?; w.pattern("adrClassValue", v, Pattern::AdrClass)?; w.string(v)?;
+                w.max_len("adrClassValue", "ADRClass", v, 1024)?; w.pattern("adrClassValue", "ADRClass", v, Pattern::AdrClass)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -2093,7 +2093,7 @@ impl NumberPlateCharacteristics {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.country_of_registration { w.max_len("countryOfRegistration", v, 2)?; w.leaf("comx:countryOfRegistration", v)?; }
+        if let Some(v) = &self.country_of_registration { w.max_len("countryOfRegistration", "CountryCode", v, 2)?; w.leaf("comx:countryOfRegistration", v)?; }
         if let Some(v) = &self.start_of_numeric_code { w.leaf("comx:startOfNumericCode", v)?; }
         if let Some(v) = &self.number_plate_characteristics_extension { w.extension("comx:_numberPlateCharacteristicsExtension", v)?; }
         w.end(tag)
@@ -2144,7 +2144,7 @@ impl NumberPlateCharacteristics {
         }
         if let Some(v) = &self.country_of_registration {
             w.key(471)?;
-            w.max_len("countryOfRegistration", v, 2)?; w.string(v)?;
+            w.max_len("countryOfRegistration", "CountryCode", v, 2)?; w.string(v)?;
         }
         if let Some(v) = &self.start_of_numeric_code {
             w.key(2180)?;

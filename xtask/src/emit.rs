@@ -922,6 +922,11 @@ impl<'a> Emitter<'a> {
         value: &str,
     ) -> Result<String, String> {
         let facets = self.facets(ty);
+        // The declared type names the rule in an error: `"value" of type AmountOfMoney`.
+        let ty_name = match ty {
+            TypeRef::Named(_, n) => n.as_str(),
+            TypeRef::Xs(_) => "",
+        };
         let mut out = String::new();
         let number = |v: &String| {
             v.parse::<u64>()
@@ -931,7 +936,12 @@ impl<'a> Emitter<'a> {
             if prim != Prim::Str {
                 return Err(format!("{name}: maxLength on a type that is not text"));
             }
-            write!(out, "w.max_len(\"{name}\", {value}, {})?; ", number(max)?).unwrap();
+            write!(
+                out,
+                "w.max_len(\"{name}\", \"{ty_name}\", {value}, {})?; ",
+                number(max)?
+            )
+            .unwrap();
         }
         if facets.contains_key("minInclusive") || facets.contains_key("maxInclusive") {
             if prim != Prim::U64 {
@@ -949,7 +959,11 @@ impl<'a> Emitter<'a> {
                 .map(number)
                 .transpose()?
                 .map_or("u64::MAX".to_owned(), |m| m.to_string());
-            write!(out, "w.range(\"{name}\", *{value}, {min}, {max})?; ").unwrap();
+            write!(
+                out,
+                "w.range(\"{name}\", \"{ty_name}\", *{value}, {min}, {max})?; "
+            )
+            .unwrap();
         }
         if let (Some(total), Some(fraction)) =
             (facets.get("totalDigits"), facets.get("fractionDigits"))
@@ -961,7 +975,7 @@ impl<'a> Emitter<'a> {
             }
             write!(
                 out,
-                "w.digits(\"{name}\", {value}, {}, {})?; ",
+                "w.digits(\"{name}\", \"{ty_name}\", {value}, {}, {})?; ",
                 number(total)?,
                 number(fraction)?
             )
@@ -969,12 +983,16 @@ impl<'a> Emitter<'a> {
         }
         // Built-in types with a lexical form of their own that the model keeps as text.
         match self.builtin(ty) {
-            "language" => {
-                write!(out, "w.pattern(\"{name}\", {value}, Pattern::Language)?; ").unwrap()
-            }
-            "duration" => {
-                write!(out, "w.pattern(\"{name}\", {value}, Pattern::Duration)?; ").unwrap()
-            }
+            "language" => write!(
+                out,
+                "w.pattern(\"{name}\", \"{ty_name}\", {value}, Pattern::Language)?; "
+            )
+            .unwrap(),
+            "duration" => write!(
+                out,
+                "w.pattern(\"{name}\", \"{ty_name}\", {value}, Pattern::Duration)?; "
+            )
+            .unwrap(),
             _ => {}
         }
         if let Some(pattern) = facets.get("pattern") {
@@ -996,7 +1014,11 @@ impl<'a> Emitter<'a> {
             if prim != Prim::Str {
                 return Err(format!("{name}: a pattern on a type that is not text"));
             }
-            write!(out, "w.pattern(\"{name}\", {value}, Pattern::{check})?; ").unwrap();
+            write!(
+                out,
+                "w.pattern(\"{name}\", \"{ty_name}\", {value}, Pattern::{check})?; "
+            )
+            .unwrap();
         }
         Ok(out)
     }

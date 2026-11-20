@@ -37,7 +37,7 @@ fn load(path: &Path) -> Vec<u8> {
 #[test]
 fn what_was_read_is_written_valid_or_refused() {
     let Some(corpus) = common::corpus_dir() else {
-        eprintln!("skipped: DATEX2_CORPUS_DIR is not set");
+        common::notice("corpus tests skipped: DATEX2_CORPUS_DIR is not set");
         return;
     };
     let (mut written, mut validated, mut refused) = (0, 0, BTreeMap::<String, usize>::new());

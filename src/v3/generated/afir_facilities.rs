@@ -2075,7 +2075,7 @@ impl AfirFacilityLocation {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.time_zone { w.max_len("timeZone", v, 1024)?; w.pattern("timeZone", v, Pattern::TimeZone)?; w.leaf("afac:timeZone", v)?; }
+        if let Some(v) = &self.time_zone { w.max_len("timeZone", "TimeZone", v, 1024)?; w.pattern("timeZone", "TimeZone", v, Pattern::TimeZone)?; w.leaf("afac:timeZone", v)?; }
         if let Some(v) = &self.address { v.write(w, "afac:address", "", "")?; }
         for v in &self.nuts_area { v.write(w, "afac:nutsArea", "", "")?; }
         w.end(tag)
@@ -2126,7 +2126,7 @@ impl AfirFacilityLocation {
         }
         if let Some(v) = &self.time_zone {
             w.key(2263)?;
-            w.max_len("timeZone", v, 1024)?; w.pattern("timeZone", v, Pattern::TimeZone)?; w.string(v)?;
+            w.max_len("timeZone", "TimeZone", v, 1024)?; w.pattern("timeZone", "TimeZone", v, Pattern::TimeZone)?; w.string(v)?;
         }
         if let Some(v) = &self.address {
             w.key(64)?;
@@ -2337,11 +2337,11 @@ impl AmountInCurrency {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.currency_value {
-            Some(v) => { w.digits("currencyValue", v, 8, 2)?; w.leaf("afac:currencyValue", v)?; }
+            Some(v) => { w.digits("currencyValue", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:currencyValue", v)?; }
             None => return Err(w.missing("afac:currencyValue")),
         }
         match &self.currency_type {
-            Some(v) => { w.max_len("currencyType", v, 1024)?; w.pattern("currencyType", v, Pattern::CurrencyCode)?; w.leaf("afac:currencyType", v)?; }
+            Some(v) => { w.max_len("currencyType", "CurrencyCode", v, 1024)?; w.pattern("currencyType", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:currencyType", v)?; }
             None => return Err(w.missing("afac:currencyType")),
         }
         if let Some(v) = &self.amount_in_currency_extension { w.extension("afac:_amountInCurrencyExtension", v)?; }
@@ -2396,14 +2396,14 @@ impl AmountInCurrency {
         match &self.currency_value {
             Some(v) => {
                 w.key(478)?;
-                w.digits("currencyValue", v, 8, 2)?; w.decimal(v)?;
+                w.digits("currencyValue", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
             }
             None => w.absent(478, w.missing("currencyValue"))?,
         }
         match &self.currency_type {
             Some(v) => {
                 w.key(477)?;
-                w.max_len("currencyType", v, 1024)?; w.pattern("currencyType", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("currencyType", "CurrencyCode", v, 1024)?; w.pattern("currencyType", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             None => w.absent(477, w.missing("currencyType"))?,
         }
@@ -2566,9 +2566,9 @@ impl AnOrganisation {
         for v in &self.responsibility { w.multilingual("afac:responsibility", v)?; }
         if let Some(v) = &self.publishing_agreement { w.leaf("afac:publishingAgreement", v)?; }
         if let Some(v) = &self.r#type { w.enumeration("afac:type", v.literal())?; }
-        if let Some(v) = &self.national_organisation_number { w.max_len("nationalOrganisationNumber", v, 1024)?; w.leaf("afac:nationalOrganisationNumber", v)?; }
-        if let Some(v) = &self.national_register { w.max_len("nationalRegister", v, 1024)?; w.leaf("afac:nationalRegister", v)?; }
-        if let Some(v) = &self.vat_identification_number { w.max_len("vatIdentificationNumber", v, 1024)?; w.leaf("afac:vatIdentificationNumber", v)?; }
+        if let Some(v) = &self.national_organisation_number { w.max_len("nationalOrganisationNumber", "String", v, 1024)?; w.leaf("afac:nationalOrganisationNumber", v)?; }
+        if let Some(v) = &self.national_register { w.max_len("nationalRegister", "String", v, 1024)?; w.leaf("afac:nationalRegister", v)?; }
+        if let Some(v) = &self.vat_identification_number { w.max_len("vatIdentificationNumber", "String", v, 1024)?; w.leaf("afac:vatIdentificationNumber", v)?; }
         for v in &self.organisation_unit { v.write(w, "afac:organisationUnit", "", "")?; }
         for v in &self.external_identifier { v.write(w, "afac:externalIdentifier", "", "")?; }
         for v in &self.sub_organisation { v.write(w, "afac:subOrganisation")?; }
@@ -2733,15 +2733,15 @@ impl AnOrganisation {
         }
         if let Some(v) = &self.national_organisation_number {
             w.key(1351)?;
-            w.max_len("nationalOrganisationNumber", v, 1024)?; w.string(v)?;
+            w.max_len("nationalOrganisationNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.national_register {
             w.key(1352)?;
-            w.max_len("nationalRegister", v, 1024)?; w.string(v)?;
+            w.max_len("nationalRegister", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.vat_identification_number {
             w.key(2547)?;
-            w.max_len("vatIdentificationNumber", v, 1024)?; w.string(v)?;
+            w.max_len("vatIdentificationNumber", "String", v, 1024)?; w.string(v)?;
         }
         if !self.organisation_unit.is_empty() {
             w.key(1496)?;
@@ -3112,10 +3112,10 @@ impl ContactInformation {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        for v in &self.language { w.pattern("language", v, Pattern::Language)?; w.leaf("afac:language", v)?; }
-        if let Some(v) = &self.telephone_number { w.max_len("telephoneNumber", v, 1024)?; w.leaf("afac:telephoneNumber", v)?; }
-        if let Some(v) = &self.fax_number { w.max_len("faxNumber", v, 1024)?; w.leaf("afac:faxNumber", v)?; }
-        if let Some(v) = &self.e_mail { w.max_len("eMail", v, 1024)?; w.leaf("afac:eMail", v)?; }
+        for v in &self.language { w.pattern("language", "Language", v, Pattern::Language)?; w.leaf("afac:language", v)?; }
+        if let Some(v) = &self.telephone_number { w.max_len("telephoneNumber", "String", v, 1024)?; w.leaf("afac:telephoneNumber", v)?; }
+        if let Some(v) = &self.fax_number { w.max_len("faxNumber", "String", v, 1024)?; w.leaf("afac:faxNumber", v)?; }
+        if let Some(v) = &self.e_mail { w.max_len("eMail", "String", v, 1024)?; w.leaf("afac:eMail", v)?; }
         if let Some(v) = &self.contact_information_extension { w.extension("afac:_contactInformationExtension", v)?; }
         w.end(tag)
     }
@@ -3174,21 +3174,21 @@ impl ContactInformation {
             w.begin_array()?;
             for v in &self.language {
                 w.item()?;
-                w.pattern("language", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("language", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             w.end_array()?;
         }
         if let Some(v) = &self.telephone_number {
             w.key(2238)?;
-            w.max_len("telephoneNumber", v, 1024)?; w.string(v)?;
+            w.max_len("telephoneNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fax_number {
             w.key(846)?;
-            w.max_len("faxNumber", v, 1024)?; w.string(v)?;
+            w.max_len("faxNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.e_mail {
             w.key(605)?;
-            w.max_len("eMail", v, 1024)?; w.string(v)?;
+            w.max_len("eMail", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.contact_information_extension {
             w.key(119)?;
@@ -3283,16 +3283,16 @@ impl ContactPerson {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        for v in &self.language { w.pattern("language", v, Pattern::Language)?; w.leaf("afac:language", v)?; }
-        if let Some(v) = &self.telephone_number { w.max_len("telephoneNumber", v, 1024)?; w.leaf("afac:telephoneNumber", v)?; }
-        if let Some(v) = &self.fax_number { w.max_len("faxNumber", v, 1024)?; w.leaf("afac:faxNumber", v)?; }
-        if let Some(v) = &self.e_mail { w.max_len("eMail", v, 1024)?; w.leaf("afac:eMail", v)?; }
+        for v in &self.language { w.pattern("language", "Language", v, Pattern::Language)?; w.leaf("afac:language", v)?; }
+        if let Some(v) = &self.telephone_number { w.max_len("telephoneNumber", "String", v, 1024)?; w.leaf("afac:telephoneNumber", v)?; }
+        if let Some(v) = &self.fax_number { w.max_len("faxNumber", "String", v, 1024)?; w.leaf("afac:faxNumber", v)?; }
+        if let Some(v) = &self.e_mail { w.max_len("eMail", "String", v, 1024)?; w.leaf("afac:eMail", v)?; }
         if let Some(v) = &self.contact_information_extension { w.extension("afac:_contactInformationExtension", v)?; }
         match &self.name {
-            Some(v) => { w.max_len("name", v, 1024)?; w.leaf("afac:name", v)?; }
+            Some(v) => { w.max_len("name", "String", v, 1024)?; w.leaf("afac:name", v)?; }
             None => return Err(w.missing("afac:name")),
         }
-        if let Some(v) = &self.first_name { w.max_len("firstName", v, 1024)?; w.leaf("afac:firstName", v)?; }
+        if let Some(v) = &self.first_name { w.max_len("firstName", "String", v, 1024)?; w.leaf("afac:firstName", v)?; }
         if let Some(v) = &self.title { w.multilingual("afac:title", v)?; }
         if let Some(v) = &self.position { w.multilingual("afac:position", v)?; }
         if let Some(v) = &self.contact_person_extension { w.extension("afac:_contactPersonExtension", v)?; }
@@ -3369,21 +3369,21 @@ impl ContactPerson {
             w.begin_array()?;
             for v in &self.language {
                 w.item()?;
-                w.pattern("language", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("language", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             w.end_array()?;
         }
         if let Some(v) = &self.telephone_number {
             w.key(2238)?;
-            w.max_len("telephoneNumber", v, 1024)?; w.string(v)?;
+            w.max_len("telephoneNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.fax_number {
             w.key(846)?;
-            w.max_len("faxNumber", v, 1024)?; w.string(v)?;
+            w.max_len("faxNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.e_mail {
             w.key(605)?;
-            w.max_len("eMail", v, 1024)?; w.string(v)?;
+            w.max_len("eMail", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.contact_information_extension {
             w.key(119)?;
@@ -3392,13 +3392,13 @@ impl ContactPerson {
         match &self.name {
             Some(v) => {
                 w.key(1345)?;
-                w.max_len("name", v, 1024)?; w.string(v)?;
+                w.max_len("name", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(1345, w.missing("name"))?,
         }
         if let Some(v) = &self.first_name {
             w.key(852)?;
-            w.max_len("firstName", v, 1024)?; w.string(v)?;
+            w.max_len("firstName", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.title {
             w.key(2265)?;
@@ -3470,7 +3470,7 @@ impl Credential {
             Some(v) => { w.enumeration("afac:type", v.literal())?; }
             None => return Err(w.missing("afac:type")),
         }
-        if let Some(v) = &self.other_type { w.max_len("otherType", v, 1024)?; w.leaf("afac:otherType", v)?; }
+        if let Some(v) = &self.other_type { w.max_len("otherType", "String", v, 1024)?; w.leaf("afac:otherType", v)?; }
         if let Some(v) = &self.credential_extension { w.extension("afac:_credentialExtension", v)?; }
         w.end(tag)
     }
@@ -3528,7 +3528,7 @@ impl Credential {
         }
         if let Some(v) = &self.other_type {
             w.key(1509)?;
-            w.max_len("otherType", v, 1024)?; w.string(v)?;
+            w.max_len("otherType", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.credential_extension {
             w.key(125)?;
@@ -3608,9 +3608,9 @@ impl CredentialAssigned {
             Some(v) => { w.enumeration("afac:type", v.literal())?; }
             None => return Err(w.missing("afac:type")),
         }
-        if let Some(v) = &self.other_type { w.max_len("otherType", v, 1024)?; w.leaf("afac:otherType", v)?; }
+        if let Some(v) = &self.other_type { w.max_len("otherType", "String", v, 1024)?; w.leaf("afac:otherType", v)?; }
         if let Some(v) = &self.credential_extension { w.extension("afac:_credentialExtension", v)?; }
-        if let Some(v) = &self.local_identifier { w.max_len("localIdentifier", v, 1024)?; w.leaf("afac:localIdentifier", v)?; }
+        if let Some(v) = &self.local_identifier { w.max_len("localIdentifier", "String", v, 1024)?; w.leaf("afac:localIdentifier", v)?; }
         match &self.issuer {
             Some(v) => { v.write(w, "afac:issuer", "", " targetClass=\"afac:Organisation\"")?; }
             None => return Err(w.missing("afac:issuer")),
@@ -3682,7 +3682,7 @@ impl CredentialAssigned {
         }
         if let Some(v) = &self.other_type {
             w.key(1509)?;
-            w.max_len("otherType", v, 1024)?; w.string(v)?;
+            w.max_len("otherType", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.credential_extension {
             w.key(125)?;
@@ -3690,7 +3690,7 @@ impl CredentialAssigned {
         }
         if let Some(v) = &self.local_identifier {
             w.key(1227)?;
-            w.max_len("localIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("localIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         match &self.issuer {
             Some(v) => {
@@ -4338,11 +4338,11 @@ impl ExternalIdentifier {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         match &self.identifier {
-            Some(v) => { w.max_len("identifier", v, 1024)?; w.leaf("afac:identifier", v)?; }
+            Some(v) => { w.max_len("identifier", "String", v, 1024)?; w.leaf("afac:identifier", v)?; }
             None => return Err(w.missing("afac:identifier")),
         }
         if let Some(v) = &self.type_of_identifier { w.enumeration("afac:typeOfIdentifier", v.literal())?; }
-        if let Some(v) = &self.other_type_of_identifier { w.max_len("otherTypeOfIdentifier", v, 1024)?; w.leaf("afac:otherTypeOfIdentifier", v)?; }
+        if let Some(v) = &self.other_type_of_identifier { w.max_len("otherTypeOfIdentifier", "String", v, 1024)?; w.leaf("afac:otherTypeOfIdentifier", v)?; }
         if let Some(v) = &self.external_identifier_extension { w.extension("afac:_externalIdentifierExtension", v)?; }
         w.end(tag)
     }
@@ -4397,7 +4397,7 @@ impl ExternalIdentifier {
         match &self.identifier {
             Some(v) => {
                 w.key(965)?;
-                w.max_len("identifier", v, 1024)?; w.string(v)?;
+                w.max_len("identifier", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(965, w.missing("identifier"))?,
         }
@@ -4407,7 +4407,7 @@ impl ExternalIdentifier {
         }
         if let Some(v) = &self.other_type_of_identifier {
             w.key(1510)?;
-            w.max_len("otherTypeOfIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("otherTypeOfIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.external_identifier_extension {
             w.key(129)?;
@@ -4933,7 +4933,7 @@ impl FreeOfCharge {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        for v in &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        for v in &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
         if let Some(v) = &self.payment { v.write(w, "afac:payment", "", "")?; }
         if let Some(v) = &self.overall_period { v.write(w, "afac:overallPeriod", "", "")?; }
         if let Some(v) = &self.rates_extension { w.extension("afac:_ratesExtension", v)?; }
@@ -4995,7 +4995,7 @@ impl FreeOfCharge {
             w.begin_array()?;
             for v in &self.applicable_currency {
                 w.item()?;
-                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -5078,7 +5078,7 @@ impl GeneralRateInformation {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        for v in &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        for v in &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
         if let Some(v) = &self.payment { v.write(w, "afac:payment", "", "")?; }
         if let Some(v) = &self.overall_period { v.write(w, "afac:overallPeriod", "", "")?; }
         if let Some(v) = &self.rates_extension { w.extension("afac:_ratesExtension", v)?; }
@@ -5140,7 +5140,7 @@ impl GeneralRateInformation {
             w.begin_array()?;
             for v in &self.applicable_currency {
                 w.item()?;
-                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -5464,7 +5464,7 @@ impl NutsArea {
             None => return Err(w.missing("afac:nutsCodeType")),
         }
         match &self.nuts_code {
-            Some(v) => { w.max_len("nutsCode", v, 5)?; w.leaf("afac:nutsCode", v)?; }
+            Some(v) => { w.max_len("nutsCode", "NutsCode", v, 5)?; w.leaf("afac:nutsCode", v)?; }
             None => return Err(w.missing("afac:nutsCode")),
         }
         if let Some(v) = &self.nuts_area_extension { w.extension("afac:_nutsAreaExtension", v)?; }
@@ -5527,7 +5527,7 @@ impl NutsArea {
         match &self.nuts_code {
             Some(v) => {
                 w.key(1420)?;
-                w.max_len("nutsCode", v, 5)?; w.string(v)?;
+                w.max_len("nutsCode", "NutsCode", v, 5)?; w.string(v)?;
             }
             None => w.absent(1420, w.missing("nutsCode"))?,
         }
@@ -5900,7 +5900,7 @@ impl OperatingHoursPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -5908,7 +5908,7 @@ impl OperatingHoursPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -6000,7 +6000,7 @@ impl OperatingHoursPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -6010,7 +6010,7 @@ impl OperatingHoursPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -6146,7 +6146,7 @@ impl OperatingHoursSpecification {
         if let Some(v) = &self.closure_information { v.write(w, "afac:closureInformation", "", "")?; }
         if let Some(v) = &self.operating_hours_extension { w.extension("afac:_operatingHoursExtension", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("afac:lastUpdated", v)?; }
-        if let Some(v) = &self.label { w.max_len("label", v, 1024)?; w.leaf("afac:label", v)?; }
+        if let Some(v) = &self.label { w.max_len("label", "String", v, 1024)?; w.leaf("afac:label", v)?; }
         if let Some(v) = &self.operating_all_year { w.leaf("afac:operatingAllYear", v)?; }
         if let Some(v) = &self.url_link_address { w.leaf("afac:urlLinkAddress", v)?; }
         match &self.overall_period {
@@ -6252,7 +6252,7 @@ impl OperatingHoursSpecification {
         }
         if let Some(v) = &self.label {
             w.key(1026)?;
-            w.max_len("label", v, 1024)?; w.string(v)?;
+            w.max_len("label", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.operating_all_year {
             w.key(1468)?;
@@ -6717,7 +6717,7 @@ impl OrganisationPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -6725,7 +6725,7 @@ impl OrganisationPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -6817,7 +6817,7 @@ impl OrganisationPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -6827,7 +6827,7 @@ impl OrganisationPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -7293,7 +7293,7 @@ impl Payment {
         for v in &self.payment_means { w.enumeration("afac:paymentMeans", v.literal())?; }
         for v in &self.other_payment_means { w.multilingual("afac:otherPaymentMeans", v)?; }
         for v in &self.brands_accepted { w.enumeration("afac:brandsAccepted", v.literal())?; }
-        for v in &self.other_brands_accepted { w.max_len("otherBrandsAccepted", v, 1024)?; w.leaf("afac:otherBrandsAccepted", v)?; }
+        for v in &self.other_brands_accepted { w.max_len("otherBrandsAccepted", "String", v, 1024)?; w.leaf("afac:otherBrandsAccepted", v)?; }
         if let Some(v) = &self.payment_extension { w.extension("afac:_paymentExtension", v)?; }
         w.end(tag)
     }
@@ -7391,7 +7391,7 @@ impl Payment {
             w.begin_array()?;
             for v in &self.other_brands_accepted {
                 w.item()?;
-                w.max_len("otherBrandsAccepted", v, 1024)?; w.string(v)?;
+                w.max_len("otherBrandsAccepted", "String", v, 1024)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -7509,7 +7509,7 @@ impl Qualification {
         for v in &self.membership_name { w.multilingual("afac:membershipName", v)?; }
         if let Some(v) = &self.member_of_other_rate_table { w.leaf("afac:memberOfOtherRateTable", v)?; }
         for v in &self.rate_table_member { v.write(w, "afac:rateTableMember", "", " targetClass=\"afac:RateTable\"")?; }
-        if let Some(v) = &self.active_assigned_right { w.max_len("activeAssignedRight", v, 1024)?; w.leaf("afac:activeAssignedRight", v)?; }
+        if let Some(v) = &self.active_assigned_right { w.max_len("activeAssignedRight", "String", v, 1024)?; w.leaf("afac:activeAssignedRight", v)?; }
         for v in &self.payment { v.write(w, "afac:payment", "", "")?; }
         for v in &self.vehicle_characteristics { v.write(w, "afac:vehicleCharacteristics", "", "")?; }
         if let Some(v) = &self.linked_right_specification { v.write(w, "afac:linkedRightSpecification", "", "")?; }
@@ -7636,7 +7636,7 @@ impl Qualification {
         }
         if let Some(v) = &self.active_assigned_right {
             w.key(49)?;
-            w.max_len("activeAssignedRight", v, 1024)?; w.string(v)?;
+            w.max_len("activeAssignedRight", "String", v, 1024)?; w.string(v)?;
         }
         if !self.payment.is_empty() {
             w.key(1545)?;
@@ -7912,15 +7912,15 @@ impl RateLine {
         if let Some(v) = &self.description { w.multilingual("afac:description", v)?; }
         if let Some(v) = &self.duration_start { w.leaf("afac:durationStart", v)?; }
         if let Some(v) = &self.duration_end { w.leaf("afac:durationEnd", v)?; }
-        if let Some(v) = &self.increment_period { w.pattern("incrementPeriod", v, Pattern::Duration)?; w.leaf("afac:incrementPeriod", v)?; }
+        if let Some(v) = &self.increment_period { w.pattern("incrementPeriod", "Duration", v, Pattern::Duration)?; w.leaf("afac:incrementPeriod", v)?; }
         match &self.value {
-            Some(v) => { w.digits("value", v, 8, 2)?; w.leaf("afac:value", v)?; }
+            Some(v) => { w.digits("value", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:value", v)?; }
             None => return Err(w.missing("afac:value")),
         }
-        if let Some(v) = &self.min_value { w.digits("minValue", v, 8, 2)?; w.leaf("afac:minValue", v)?; }
-        if let Some(v) = &self.max_value { w.digits("maxValue", v, 8, 2)?; w.leaf("afac:maxValue", v)?; }
+        if let Some(v) = &self.min_value { w.digits("minValue", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:minValue", v)?; }
+        if let Some(v) = &self.max_value { w.digits("maxValue", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:maxValue", v)?; }
         if let Some(v) = &self.usage_condition { w.enumeration("afac:usageCondition", v.literal())?; }
-        if let Some(v) = &self.usage_duration_limitation { w.pattern("usageDurationLimitation", v, Pattern::Duration)?; w.leaf("afac:usageDurationLimitation", v)?; }
+        if let Some(v) = &self.usage_duration_limitation { w.pattern("usageDurationLimitation", "Duration", v, Pattern::Duration)?; w.leaf("afac:usageDurationLimitation", v)?; }
         if let Some(v) = &self.usage_count_limitation { w.leaf("afac:usageCountLimitation", v)?; }
         for v in &self.surcharge { v.write(w, "afac:surcharge", "", "")?; }
         for v in &self.rate_line_tax { v.write(w, "afac:rateLineTax", "", "")?; }
@@ -8038,22 +8038,22 @@ impl RateLine {
         }
         if let Some(v) = &self.increment_period {
             w.key(980)?;
-            w.pattern("incrementPeriod", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("incrementPeriod", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         match &self.value {
             Some(v) => {
                 w.key(2545)?;
-                w.digits("value", v, 8, 2)?; w.decimal(v)?;
+                w.digits("value", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
             }
             None => w.absent(2545, w.missing("value"))?,
         }
         if let Some(v) = &self.min_value {
             w.key(1323)?;
-            w.digits("minValue", v, 8, 2)?; w.decimal(v)?;
+            w.digits("minValue", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.max_value {
             w.key(1271)?;
-            w.digits("maxValue", v, 8, 2)?; w.decimal(v)?;
+            w.digits("maxValue", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.usage_condition {
             w.key(2524)?;
@@ -8061,7 +8061,7 @@ impl RateLine {
         }
         if let Some(v) = &self.usage_duration_limitation {
             w.key(2526)?;
-            w.pattern("usageDurationLimitation", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("usageDurationLimitation", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.usage_count_limitation {
             w.key(2525)?;
@@ -8205,17 +8205,17 @@ impl RateLineCollection {
             Some(v) => { w.attr_value("collectionSequence", v)?; }
             None => return Err(w.missing_attr("collectionSequence")),
         }
-        if let Some(v) = &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
-        if let Some(v) = &self.min_value_collection { w.digits("minValueCollection", v, 8, 2)?; w.leaf("afac:minValueCollection", v)?; }
-        if let Some(v) = &self.max_value_collection { w.digits("maxValueCollection", v, 8, 2)?; w.leaf("afac:maxValueCollection", v)?; }
+        if let Some(v) = &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        if let Some(v) = &self.min_value_collection { w.digits("minValueCollection", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:minValueCollection", v)?; }
+        if let Some(v) = &self.max_value_collection { w.digits("maxValueCollection", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:maxValueCollection", v)?; }
         if let Some(v) = &self.valid_start { w.leaf("afac:validStart", v)?; }
         if let Some(v) = &self.valid_end { w.leaf("afac:validEnd", v)?; }
-        if let Some(v) = &self.min_time { w.pattern("minTime", v, Pattern::Duration)?; w.leaf("afac:minTime", v)?; }
-        if let Some(v) = &self.max_time { w.pattern("maxTime", v, Pattern::Duration)?; w.leaf("afac:maxTime", v)?; }
+        if let Some(v) = &self.min_time { w.pattern("minTime", "Duration", v, Pattern::Duration)?; w.leaf("afac:minTime", v)?; }
+        if let Some(v) = &self.max_time { w.pattern("maxTime", "Duration", v, Pattern::Duration)?; w.leaf("afac:maxTime", v)?; }
         if let Some(v) = &self.reset_time { w.leaf("afac:resetTime", v)?; }
         if let Some(v) = &self.tax_included { w.leaf("afac:taxIncluded", v)?; }
         if let Some(v) = &self.tax_rate { w.leaf("afac:taxRate", v)?; }
-        if let Some(v) = &self.tax_value { w.digits("taxValue", v, 8, 2)?; w.leaf("afac:taxValue", v)?; }
+        if let Some(v) = &self.tax_value { w.digits("taxValue", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:taxValue", v)?; }
         if let Some(v) = &self.relative_times { w.leaf("afac:relativeTimes", v)?; }
         w.count("afac:rateLine", self.rate_line.len(), 1, usize::MAX)?;
         for v in &self.rate_line { v.write(w, "afac:rateLine", "", "")?; }
@@ -8312,15 +8312,15 @@ impl RateLineCollection {
         }
         if let Some(v) = &self.applicable_currency {
             w.key(243)?;
-            w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
         }
         if let Some(v) = &self.min_value_collection {
             w.key(1324)?;
-            w.digits("minValueCollection", v, 8, 2)?; w.decimal(v)?;
+            w.digits("minValueCollection", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.max_value_collection {
             w.key(1272)?;
-            w.digits("maxValueCollection", v, 8, 2)?; w.decimal(v)?;
+            w.digits("maxValueCollection", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.valid_start {
             w.key(2537)?;
@@ -8332,11 +8332,11 @@ impl RateLineCollection {
         }
         if let Some(v) = &self.min_time {
             w.key(1322)?;
-            w.pattern("minTime", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("minTime", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.max_time {
             w.key(1270)?;
-            w.pattern("maxTime", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("maxTime", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.reset_time {
             w.key(1886)?;
@@ -8352,7 +8352,7 @@ impl RateLineCollection {
         }
         if let Some(v) = &self.tax_value {
             w.key(2237)?;
-            w.digits("taxValue", v, 8, 2)?; w.decimal(v)?;
+            w.digits("taxValue", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.relative_times {
             w.key(1847)?;
@@ -8441,7 +8441,7 @@ impl RateLineTax {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.tax_value { w.digits("taxValue", v, 8, 2)?; w.leaf("afac:taxValue", v)?; }
+        if let Some(v) = &self.tax_value { w.digits("taxValue", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:taxValue", v)?; }
         if let Some(v) = &self.tax_rate { w.leaf("afac:taxRate", v)?; }
         match &self.tax_included {
             Some(v) => { w.leaf("afac:taxIncluded", v)?; }
@@ -8508,7 +8508,7 @@ impl RateLineTax {
         }
         if let Some(v) = &self.tax_value {
             w.key(2237)?;
-            w.digits("taxValue", v, 8, 2)?; w.decimal(v)?;
+            w.digits("taxValue", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.tax_rate {
             w.key(2236)?;
@@ -8638,7 +8638,7 @@ impl RateMatrix {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        for v in &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        for v in &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
         if let Some(v) = &self.payment { v.write(w, "afac:payment", "", "")?; }
         if let Some(v) = &self.overall_period { v.write(w, "afac:overallPeriod", "", "")?; }
         if let Some(v) = &self.rates_extension { w.extension("afac:_ratesExtension", v)?; }
@@ -8747,7 +8747,7 @@ impl RateMatrix {
             w.begin_array()?;
             for v in &self.applicable_currency {
                 w.item()?;
-                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -8865,7 +8865,7 @@ impl RateMatrixByReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        for v in &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        for v in &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
         if let Some(v) = &self.payment { v.write(w, "afac:payment", "", "")?; }
         if let Some(v) = &self.overall_period { v.write(w, "afac:overallPeriod", "", "")?; }
         if let Some(v) = &self.rates_extension { w.extension("afac:_ratesExtension", v)?; }
@@ -8935,7 +8935,7 @@ impl RateMatrixByReference {
             w.begin_array()?;
             for v in &self.applicable_currency {
                 w.item()?;
-                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -9106,13 +9106,13 @@ impl RateTable {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        for v in &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        for v in &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
         if let Some(v) = &self.payment { v.write(w, "afac:payment", "", "")?; }
         if let Some(v) = &self.overall_period { v.write(w, "afac:overallPeriod", "", "")?; }
         if let Some(v) = &self.rates_extension { w.extension("afac:_ratesExtension", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("afac:lastUpdated", v)?; }
         if let Some(v) = &self.rate_table_name { w.multilingual("afac:rateTableName", v)?; }
-        for v in &self.active_times { w.pattern("activeTimes", v, Pattern::Duration)?; w.leaf("afac:activeTimes", v)?; }
+        for v in &self.active_times { w.pattern("activeTimes", "Duration", v, Pattern::Duration)?; w.leaf("afac:activeTimes", v)?; }
         if let Some(v) = &self.availability { w.enumeration("afac:availability", v.literal())?; }
         if let Some(v) = &self.rate_responsible_party { v.write(w, "afac:rateResponsibleParty", "", " targetClass=\"afac:ReferenceableOrganisation\"")?; }
         if let Some(v) = &self.rate_supersede_link { v.write(w, "afac:rateSupersedeLink", "", " targetClass=\"afac:RateTable\"")?; }
@@ -9242,7 +9242,7 @@ impl RateTable {
             w.begin_array()?;
             for v in &self.applicable_currency {
                 w.item()?;
-                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -9271,7 +9271,7 @@ impl RateTable {
             w.begin_array()?;
             for v in &self.active_times {
                 w.item()?;
-                w.pattern("activeTimes", v, Pattern::Duration)?; w.string(v)?;
+                w.pattern("activeTimes", "Duration", v, Pattern::Duration)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -9393,7 +9393,7 @@ impl RateTableByReference {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        for v in &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        for v in &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
         if let Some(v) = &self.payment { v.write(w, "afac:payment", "", "")?; }
         if let Some(v) = &self.overall_period { v.write(w, "afac:overallPeriod", "", "")?; }
         if let Some(v) = &self.rates_extension { w.extension("afac:_ratesExtension", v)?; }
@@ -9463,7 +9463,7 @@ impl RateTableByReference {
             w.begin_array()?;
             for v in &self.applicable_currency {
                 w.item()?;
-                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -9593,7 +9593,7 @@ impl RatesPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -9601,7 +9601,7 @@ impl RatesPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -9693,7 +9693,7 @@ impl RatesPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -9703,7 +9703,7 @@ impl RatesPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -9917,9 +9917,9 @@ impl ReferenceableOrganisation {
         for v in &self.responsibility { w.multilingual("afac:responsibility", v)?; }
         if let Some(v) = &self.publishing_agreement { w.leaf("afac:publishingAgreement", v)?; }
         if let Some(v) = &self.r#type { w.enumeration("afac:type", v.literal())?; }
-        if let Some(v) = &self.national_organisation_number { w.max_len("nationalOrganisationNumber", v, 1024)?; w.leaf("afac:nationalOrganisationNumber", v)?; }
-        if let Some(v) = &self.national_register { w.max_len("nationalRegister", v, 1024)?; w.leaf("afac:nationalRegister", v)?; }
-        if let Some(v) = &self.vat_identification_number { w.max_len("vatIdentificationNumber", v, 1024)?; w.leaf("afac:vatIdentificationNumber", v)?; }
+        if let Some(v) = &self.national_organisation_number { w.max_len("nationalOrganisationNumber", "String", v, 1024)?; w.leaf("afac:nationalOrganisationNumber", v)?; }
+        if let Some(v) = &self.national_register { w.max_len("nationalRegister", "String", v, 1024)?; w.leaf("afac:nationalRegister", v)?; }
+        if let Some(v) = &self.vat_identification_number { w.max_len("vatIdentificationNumber", "String", v, 1024)?; w.leaf("afac:vatIdentificationNumber", v)?; }
         for v in &self.organisation_unit { v.write(w, "afac:organisationUnit", "", "")?; }
         for v in &self.external_identifier { v.write(w, "afac:externalIdentifier", "", "")?; }
         for v in &self.sub_organisation { v.write(w, "afac:subOrganisation")?; }
@@ -10110,15 +10110,15 @@ impl ReferenceableOrganisation {
         }
         if let Some(v) = &self.national_organisation_number {
             w.key(1351)?;
-            w.max_len("nationalOrganisationNumber", v, 1024)?; w.string(v)?;
+            w.max_len("nationalOrganisationNumber", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.national_register {
             w.key(1352)?;
-            w.max_len("nationalRegister", v, 1024)?; w.string(v)?;
+            w.max_len("nationalRegister", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.vat_identification_number {
             w.key(2547)?;
-            w.max_len("vatIdentificationNumber", v, 1024)?; w.string(v)?;
+            w.max_len("vatIdentificationNumber", "String", v, 1024)?; w.string(v)?;
         }
         if !self.organisation_unit.is_empty() {
             w.key(1496)?;
@@ -10224,10 +10224,10 @@ impl RelativeOffsets {
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
         if let Some(v) = &self.assigned_right_time_relative_extension { w.extension("afac:_assignedRightTimeRelativeExtension", v)?; }
-        if let Some(v) = &self.earliest_start_relative { w.pattern("earliestStartRelative", v, Pattern::Duration)?; w.leaf("afac:earliestStartRelative", v)?; }
-        if let Some(v) = &self.latest_start_relative { w.pattern("latestStartRelative", v, Pattern::Duration)?; w.leaf("afac:latestStartRelative", v)?; }
-        if let Some(v) = &self.earliest_end_relative { w.pattern("earliestEndRelative", v, Pattern::Duration)?; w.leaf("afac:earliestEndRelative", v)?; }
-        if let Some(v) = &self.latest_end_relative { w.pattern("latestEndRelative", v, Pattern::Duration)?; w.leaf("afac:latestEndRelative", v)?; }
+        if let Some(v) = &self.earliest_start_relative { w.pattern("earliestStartRelative", "Duration", v, Pattern::Duration)?; w.leaf("afac:earliestStartRelative", v)?; }
+        if let Some(v) = &self.latest_start_relative { w.pattern("latestStartRelative", "Duration", v, Pattern::Duration)?; w.leaf("afac:latestStartRelative", v)?; }
+        if let Some(v) = &self.earliest_end_relative { w.pattern("earliestEndRelative", "Duration", v, Pattern::Duration)?; w.leaf("afac:earliestEndRelative", v)?; }
+        if let Some(v) = &self.latest_end_relative { w.pattern("latestEndRelative", "Duration", v, Pattern::Duration)?; w.leaf("afac:latestEndRelative", v)?; }
         if let Some(v) = &self.relative_offsets_extension { w.extension("afac:_relativeOffsetsExtension", v)?; }
         w.end(tag)
     }
@@ -10290,19 +10290,19 @@ impl RelativeOffsets {
         }
         if let Some(v) = &self.earliest_start_relative {
             w.key(609)?;
-            w.pattern("earliestStartRelative", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("earliestStartRelative", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.latest_start_relative {
             w.key(1047)?;
-            w.pattern("latestStartRelative", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("latestStartRelative", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.earliest_end_relative {
             w.key(607)?;
-            w.pattern("earliestEndRelative", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("earliestEndRelative", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.latest_end_relative {
             w.key(1045)?;
-            w.pattern("latestEndRelative", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("latestEndRelative", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.relative_offsets_extension {
             w.key(179)?;
@@ -10439,17 +10439,17 @@ impl RelativeTimeRates {
             Some(v) => { w.attr_value("collectionSequence", v)?; }
             None => return Err(w.missing_attr("collectionSequence")),
         }
-        if let Some(v) = &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
-        if let Some(v) = &self.min_value_collection { w.digits("minValueCollection", v, 8, 2)?; w.leaf("afac:minValueCollection", v)?; }
-        if let Some(v) = &self.max_value_collection { w.digits("maxValueCollection", v, 8, 2)?; w.leaf("afac:maxValueCollection", v)?; }
+        if let Some(v) = &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        if let Some(v) = &self.min_value_collection { w.digits("minValueCollection", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:minValueCollection", v)?; }
+        if let Some(v) = &self.max_value_collection { w.digits("maxValueCollection", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:maxValueCollection", v)?; }
         if let Some(v) = &self.valid_start { w.leaf("afac:validStart", v)?; }
         if let Some(v) = &self.valid_end { w.leaf("afac:validEnd", v)?; }
-        if let Some(v) = &self.min_time { w.pattern("minTime", v, Pattern::Duration)?; w.leaf("afac:minTime", v)?; }
-        if let Some(v) = &self.max_time { w.pattern("maxTime", v, Pattern::Duration)?; w.leaf("afac:maxTime", v)?; }
+        if let Some(v) = &self.min_time { w.pattern("minTime", "Duration", v, Pattern::Duration)?; w.leaf("afac:minTime", v)?; }
+        if let Some(v) = &self.max_time { w.pattern("maxTime", "Duration", v, Pattern::Duration)?; w.leaf("afac:maxTime", v)?; }
         if let Some(v) = &self.reset_time { w.leaf("afac:resetTime", v)?; }
         if let Some(v) = &self.tax_included { w.leaf("afac:taxIncluded", v)?; }
         if let Some(v) = &self.tax_rate { w.leaf("afac:taxRate", v)?; }
-        if let Some(v) = &self.tax_value { w.digits("taxValue", v, 8, 2)?; w.leaf("afac:taxValue", v)?; }
+        if let Some(v) = &self.tax_value { w.digits("taxValue", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:taxValue", v)?; }
         if let Some(v) = &self.relative_times { w.leaf("afac:relativeTimes", v)?; }
         w.count("afac:rateLine", self.rate_line.len(), 1, usize::MAX)?;
         for v in &self.rate_line { v.write(w, "afac:rateLine", "", "")?; }
@@ -10558,15 +10558,15 @@ impl RelativeTimeRates {
         }
         if let Some(v) = &self.applicable_currency {
             w.key(243)?;
-            w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+            w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
         }
         if let Some(v) = &self.min_value_collection {
             w.key(1324)?;
-            w.digits("minValueCollection", v, 8, 2)?; w.decimal(v)?;
+            w.digits("minValueCollection", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.max_value_collection {
             w.key(1272)?;
-            w.digits("maxValueCollection", v, 8, 2)?; w.decimal(v)?;
+            w.digits("maxValueCollection", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.valid_start {
             w.key(2537)?;
@@ -10578,11 +10578,11 @@ impl RelativeTimeRates {
         }
         if let Some(v) = &self.min_time {
             w.key(1322)?;
-            w.pattern("minTime", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("minTime", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.max_time {
             w.key(1270)?;
-            w.pattern("maxTime", v, Pattern::Duration)?; w.string(v)?;
+            w.pattern("maxTime", "Duration", v, Pattern::Duration)?; w.string(v)?;
         }
         if let Some(v) = &self.reset_time {
             w.key(1886)?;
@@ -10598,7 +10598,7 @@ impl RelativeTimeRates {
         }
         if let Some(v) = &self.tax_value {
             w.key(2237)?;
-            w.digits("taxValue", v, 8, 2)?; w.decimal(v)?;
+            w.digits("taxValue", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.relative_times {
             w.key(1847)?;
@@ -10731,7 +10731,7 @@ impl RightSpecification {
         }
         if let Some(v) = &self.r#type { w.enumeration("afac:type", v.literal())?; }
         for v in &self.description { w.multilingual("afac:description", v)?; }
-        if let Some(v) = &self.financial_reference { w.max_len("financialReference", v, 1024)?; w.leaf("afac:financialReference", v)?; }
+        if let Some(v) = &self.financial_reference { w.max_len("financialReference", "String", v, 1024)?; w.leaf("afac:financialReference", v)?; }
         if let Some(v) = &self.issuer { v.write(w, "afac:issuer", "", " targetClass=\"afac:ReferenceableOrganisation\"")?; }
         if let Some(v) = &self.transferable { w.leaf("afac:transferable", v)?; }
         if let Some(v) = &self.transferable_conditions { w.multilingual("afac:transferableConditions", v)?; }
@@ -10839,7 +10839,7 @@ impl RightSpecification {
         }
         if let Some(v) = &self.financial_reference {
             w.key(850)?;
-            w.max_len("financialReference", v, 1024)?; w.string(v)?;
+            w.max_len("financialReference", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.issuer {
             w.key(1015)?;
@@ -12348,7 +12348,7 @@ impl Surcharge {
             Some(v) => { w.enumeration("afac:surchargeType", v.literal())?; }
             None => return Err(w.missing("afac:surchargeType")),
         }
-        if let Some(v) = &self.value { w.digits("value", v, 8, 2)?; w.leaf("afac:value", v)?; }
+        if let Some(v) = &self.value { w.digits("value", "AmountOfMoney", v, 8, 2)?; w.leaf("afac:value", v)?; }
         if let Some(v) = &self.rate { w.leaf("afac:rate", v)?; }
         if let Some(v) = &self.trigger { w.multilingual("afac:trigger", v)?; }
         if let Some(v) = &self.refund { w.enumeration("afac:refund", v.literal())?; }
@@ -12422,7 +12422,7 @@ impl Surcharge {
         }
         if let Some(v) = &self.value {
             w.key(2545)?;
-            w.digits("value", v, 8, 2)?; w.decimal(v)?;
+            w.digits("value", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.rate {
             w.key(1788)?;
@@ -13116,7 +13116,7 @@ impl UnknownRates {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        for v in &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        for v in &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
         if let Some(v) = &self.payment { v.write(w, "afac:payment", "", "")?; }
         if let Some(v) = &self.overall_period { v.write(w, "afac:overallPeriod", "", "")?; }
         if let Some(v) = &self.rates_extension { w.extension("afac:_ratesExtension", v)?; }
@@ -13178,7 +13178,7 @@ impl UnknownRates {
             w.begin_array()?;
             for v in &self.applicable_currency {
                 w.item()?;
-                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -13261,7 +13261,7 @@ impl UnspecifiedRates {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        for v in &self.applicable_currency { w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
+        for v in &self.applicable_currency { w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.leaf("afac:applicableCurrency", v)?; }
         if let Some(v) = &self.payment { v.write(w, "afac:payment", "", "")?; }
         if let Some(v) = &self.overall_period { v.write(w, "afac:overallPeriod", "", "")?; }
         if let Some(v) = &self.rates_extension { w.extension("afac:_ratesExtension", v)?; }
@@ -13323,7 +13323,7 @@ impl UnspecifiedRates {
             w.begin_array()?;
             for v in &self.applicable_currency {
                 w.item()?;
-                w.max_len("applicableCurrency", v, 1024)?; w.pattern("applicableCurrency", v, Pattern::CurrencyCode)?; w.string(v)?;
+                w.max_len("applicableCurrency", "CurrencyCode", v, 1024)?; w.pattern("applicableCurrency", "CurrencyCode", v, Pattern::CurrencyCode)?; w.string(v)?;
             }
             w.end_array()?;
         }

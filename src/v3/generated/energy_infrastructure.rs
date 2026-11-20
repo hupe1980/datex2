@@ -1666,8 +1666,8 @@ impl Connector {
             Some(v) => { w.enumeration("egi:connectorType", v.literal())?; }
             None => return Err(w.missing("egi:connectorType")),
         }
-        if let Some(v) = &self.other_connector { w.max_len("otherConnector", v, 1024)?; w.leaf("egi:otherConnector", v)?; }
-        for v in &self.country_of_domestic_socket { w.max_len("countryOfDomesticSocket", v, 2)?; w.leaf("egi:countryOfDomesticSocket", v)?; }
+        if let Some(v) = &self.other_connector { w.max_len("otherConnector", "String", v, 1024)?; w.leaf("egi:otherConnector", v)?; }
+        for v in &self.country_of_domestic_socket { w.max_len("countryOfDomesticSocket", "CountryCode", v, 2)?; w.leaf("egi:countryOfDomesticSocket", v)?; }
         if let Some(v) = &self.charging_mode { w.enumeration("egi:chargingMode", v.literal())?; }
         if let Some(v) = &self.connector_format { w.enumeration("egi:connectorFormat", v.literal())?; }
         match &self.max_power_at_socket {
@@ -1752,14 +1752,14 @@ impl Connector {
         }
         if let Some(v) = &self.other_connector {
             w.key(1502)?;
-            w.max_len("otherConnector", v, 1024)?; w.string(v)?;
+            w.max_len("otherConnector", "String", v, 1024)?; w.string(v)?;
         }
         if !self.country_of_domestic_socket.is_empty() {
             w.key(470)?;
             w.begin_array()?;
             for v in &self.country_of_domestic_socket {
                 w.item()?;
-                w.max_len("countryOfDomesticSocket", v, 2)?; w.string(v)?;
+                w.max_len("countryOfDomesticSocket", "CountryCode", v, 2)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -2001,7 +2001,7 @@ impl DieselRefillPoint {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -2197,7 +2197,7 @@ impl DieselRefillPoint {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -2543,7 +2543,7 @@ impl ElectricChargingEquipment {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -2723,7 +2723,7 @@ impl ElectricChargingEquipment {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -3096,7 +3096,7 @@ impl ElectricChargingPoint {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -3312,7 +3312,7 @@ impl ElectricChargingPoint {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -4180,7 +4180,7 @@ impl ElectricEnergySourceRatio {
             Some(v) => { w.enumeration("egi:energySource", v.literal())?; }
             None => return Err(w.missing("egi:energySource")),
         }
-        if let Some(v) = &self.other_energy_source { w.max_len("otherEnergySource", v, 1024)?; w.leaf("egi:otherEnergySource", v)?; }
+        if let Some(v) = &self.other_energy_source { w.max_len("otherEnergySource", "String", v, 1024)?; w.leaf("egi:otherEnergySource", v)?; }
         match &self.source_ratio_value {
             Some(v) => { v.write(w, "egi:sourceRatioValue", "", "")?; }
             None => return Err(w.missing("egi:sourceRatioValue")),
@@ -4246,7 +4246,7 @@ impl ElectricEnergySourceRatio {
         }
         if let Some(v) = &self.other_energy_source {
             w.key(1503)?;
-            w.max_len("otherEnergySource", v, 1024)?; w.string(v)?;
+            w.max_len("otherEnergySource", "String", v, 1024)?; w.string(v)?;
         }
         match &self.source_ratio_value {
             Some(v) => {
@@ -4460,7 +4460,7 @@ impl EnergyInfrastructureSite {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -4648,7 +4648,7 @@ impl EnergyInfrastructureSite {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -5313,7 +5313,7 @@ impl EnergyInfrastructureStation {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -5335,7 +5335,7 @@ impl EnergyInfrastructureStation {
         for v in &self.authentication_and_identification_methods { w.enumeration("egi:authenticationAndIdentificationMethods", v.literal())?; }
         if let Some(v) = &self.number_of_refill_points { w.leaf("egi:numberOfRefillPoints", v)?; }
         for v in &self.refill_point_by_reference { v.write(w, "egi:refillPointByReference", "", "")?; }
-        for v in &self.user_interface_language { w.pattern("userInterfaceLanguage", v, Pattern::Language)?; w.leaf("egi:userInterfaceLanguage", v)?; }
+        for v in &self.user_interface_language { w.pattern("userInterfaceLanguage", "Language", v, Pattern::Language)?; w.leaf("egi:userInterfaceLanguage", v)?; }
         if let Some(v) = &self.energy_provider { v.write(w, "egi:energyProvider")?; }
         if let Some(v) = &self.energy_distributor { v.write(w, "egi:energyDistributor")?; }
         if let Some(v) = &self.service_type { v.write(w, "egi:serviceType", "", "")?; }
@@ -5505,7 +5505,7 @@ impl EnergyInfrastructureStation {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -5646,7 +5646,7 @@ impl EnergyInfrastructureStation {
             w.begin_array()?;
             for v in &self.user_interface_language {
                 w.item()?;
-                w.pattern("userInterfaceLanguage", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("userInterfaceLanguage", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -6058,7 +6058,7 @@ impl EnergyInfrastructureStatusPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -6066,7 +6066,7 @@ impl EnergyInfrastructureStatusPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -6161,7 +6161,7 @@ impl EnergyInfrastructureStatusPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -6171,7 +6171,7 @@ impl EnergyInfrastructureStatusPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -6286,7 +6286,7 @@ impl EnergyInfrastructureTable {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.table_name { w.max_len("tableName", v, 1024)?; w.leaf("egi:tableName", v)?; }
+        if let Some(v) = &self.table_name { w.max_len("tableName", "String", v, 1024)?; w.leaf("egi:tableName", v)?; }
         w.count("egi:energyInfrastructureSite", self.energy_infrastructure_site.len(), 1, usize::MAX)?;
         for v in &self.energy_infrastructure_site { v.write(w, "egi:energyInfrastructureSite", "", "")?; }
         if let Some(v) = &self.energy_infrastructure_table_extension { w.extension("egi:_energyInfrastructureTableExtension", v)?; }
@@ -6360,7 +6360,7 @@ impl EnergyInfrastructureTable {
         }
         if let Some(v) = &self.table_name {
             w.key(2228)?;
-            w.max_len("tableName", v, 1024)?; w.string(v)?;
+            w.max_len("tableName", "String", v, 1024)?; w.string(v)?;
         }
         w.count("energyInfrastructureSite", self.energy_infrastructure_site.len(), 1, usize::MAX)?;
         if !self.energy_infrastructure_site.is_empty() {
@@ -6479,7 +6479,7 @@ impl EnergyInfrastructureTablePublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -6487,7 +6487,7 @@ impl EnergyInfrastructureTablePublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -6579,7 +6579,7 @@ impl EnergyInfrastructureTablePublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -6589,7 +6589,7 @@ impl EnergyInfrastructureTablePublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -6703,8 +6703,8 @@ impl EnergyPricingPolicy {
         for v in &self.pricing_policy { w.enumeration("egi:pricingPolicy", v.literal())?; }
         if let Some(v) = &self.combination_with_parking_fee { w.leaf("egi:combinationWithParkingFee", v)?; }
         if let Some(v) = &self.discount { w.leaf("egi:discount", v)?; }
-        if let Some(v) = &self.maximum_delivery_fee { w.digits("maximumDeliveryFee", v, 8, 2)?; w.leaf("egi:maximumDeliveryFee", v)?; }
-        if let Some(v) = &self.minimum_delivery_fee { w.digits("minimumDeliveryFee", v, 8, 2)?; w.leaf("egi:minimumDeliveryFee", v)?; }
+        if let Some(v) = &self.maximum_delivery_fee { w.digits("maximumDeliveryFee", "AmountOfMoney", v, 8, 2)?; w.leaf("egi:maximumDeliveryFee", v)?; }
+        if let Some(v) = &self.minimum_delivery_fee { w.digits("minimumDeliveryFee", "AmountOfMoney", v, 8, 2)?; w.leaf("egi:minimumDeliveryFee", v)?; }
         if let Some(v) = &self.additional_information { w.multilingual("egi:additionalInformation", v)?; }
         if let Some(v) = &self.energy_pricing_policy_extension { w.extension("egi:_energyPricingPolicyExtension", v)?; }
         w.end(tag)
@@ -6784,11 +6784,11 @@ impl EnergyPricingPolicy {
         }
         if let Some(v) = &self.maximum_delivery_fee {
             w.key(1276)?;
-            w.digits("maximumDeliveryFee", v, 8, 2)?; w.decimal(v)?;
+            w.digits("maximumDeliveryFee", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.minimum_delivery_fee {
             w.key(1327)?;
-            w.digits("minimumDeliveryFee", v, 8, 2)?; w.decimal(v)?;
+            w.digits("minimumDeliveryFee", "AmountOfMoney", v, 8, 2)?; w.decimal(v)?;
         }
         if let Some(v) = &self.additional_information {
             w.key(61)?;
@@ -7015,7 +7015,7 @@ impl HydrogenRefillPoint {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -7219,7 +7219,7 @@ impl HydrogenRefillPoint {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -7586,7 +7586,7 @@ impl OrganicGasRefillPoint {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -7778,7 +7778,7 @@ impl OrganicGasRefillPoint {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -8154,7 +8154,7 @@ impl PetrolRefillPoint {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -8358,7 +8358,7 @@ impl PetrolRefillPoint {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;
@@ -9093,7 +9093,7 @@ impl VehicleSpace {
         }
         if let Some(v) = &self.name { w.multilingual("fac:name", v)?; }
         for v in &self.alias { w.multilingual("fac:alias", v)?; }
-        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
+        if let Some(v) = &self.external_identifier { w.max_len("externalIdentifier", "String", v, 1024)?; w.leaf("fac:externalIdentifier", v)?; }
         if let Some(v) = &self.last_updated { w.leaf("fac:lastUpdated", v)?; }
         if let Some(v) = &self.description { w.multilingual("fac:description", v)?; }
         for v in &self.accessibility { w.enumeration("fac:accessibility", v.literal())?; }
@@ -9257,7 +9257,7 @@ impl VehicleSpace {
         }
         if let Some(v) = &self.external_identifier {
             w.key(739)?;
-            w.max_len("externalIdentifier", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentifier", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.last_updated {
             w.key(1043)?;

@@ -475,7 +475,7 @@ impl ActionDefinition {
             None => return Err(w.missing("tmp:versionTime")),
         }
         if let Some(v) = &self.action_extension { w.extension("tmp:_actionExtension", v)?; }
-        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
+        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", "String", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
         match &self.description {
             Some(v) => { w.multilingual("tmp:description", v)?; }
             None => return Err(w.missing("tmp:description")),
@@ -582,7 +582,7 @@ impl ActionDefinition {
         }
         if let Some(v) = &self.external_identification {
             w.key(738)?;
-            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentification", "String", v, 1024)?; w.string(v)?;
         }
         match &self.description {
             Some(v) => {
@@ -2143,7 +2143,7 @@ impl MeasureDefinition {
             None => return Err(w.missing("tmp:versionTime")),
         }
         if let Some(v) = &self.measure_extension { w.extension("tmp:_measureExtension", v)?; }
-        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
+        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", "String", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
         match &self.description {
             Some(v) => { w.multilingual("tmp:description", v)?; }
             None => return Err(w.missing("tmp:description")),
@@ -2152,7 +2152,7 @@ impl MeasureDefinition {
             Some(v) => { v.write(w, "tmp:responsibleRoadOperator", "", " targetClass=\"fac:Organisation\"")?; }
             None => return Err(w.missing("tmp:responsibleRoadOperator")),
         }
-        if let Some(v) = &self.short_name { w.max_len("shortName", v, 1024)?; w.leaf("tmp:shortName", v)?; }
+        if let Some(v) = &self.short_name { w.max_len("shortName", "String", v, 1024)?; w.leaf("tmp:shortName", v)?; }
         w.count("tmp:action", self.action.len(), 1, usize::MAX)?;
         for v in &self.action { v.write(w, "tmp:action")?; }
         if let Some(v) = &self.response_type { v.write(w, "tmp:responseType", "", "")?; }
@@ -2263,7 +2263,7 @@ impl MeasureDefinition {
         }
         if let Some(v) = &self.external_identification {
             w.key(738)?;
-            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentification", "String", v, 1024)?; w.string(v)?;
         }
         match &self.description {
             Some(v) => {
@@ -2281,7 +2281,7 @@ impl MeasureDefinition {
         }
         if let Some(v) = &self.short_name {
             w.key(2049)?;
-            w.max_len("shortName", v, 1024)?; w.string(v)?;
+            w.max_len("shortName", "String", v, 1024)?; w.string(v)?;
         }
         w.count("action", self.action.len(), 1, usize::MAX)?;
         if !self.action.is_empty() {
@@ -2379,7 +2379,7 @@ impl NonPredefinedAction {
             Some(v) => { w.multilingual("tmp:nonPredefinedActionDescription", v)?; }
             None => return Err(w.missing("tmp:nonPredefinedActionDescription")),
         }
-        if let Some(v) = &self.non_predefined_action_id { w.max_len("nonPredefinedActionId", v, 1024)?; w.leaf("tmp:nonPredefinedActionId", v)?; }
+        if let Some(v) = &self.non_predefined_action_id { w.max_len("nonPredefinedActionId", "String", v, 1024)?; w.leaf("tmp:nonPredefinedActionId", v)?; }
         if let Some(v) = &self.action_implementing_situation_record { v.write(w, "tmp:actionImplementingSituationRecord", "", " targetClass=\"sit:SituationRecord\"")?; }
         match &self.international_identifier {
             Some(v) => { v.write(w, "tmp:internationalIdentifier", "", "")?; }
@@ -2453,7 +2453,7 @@ impl NonPredefinedAction {
         }
         if let Some(v) = &self.non_predefined_action_id {
             w.key(1368)?;
-            w.max_len("nonPredefinedActionId", v, 1024)?; w.string(v)?;
+            w.max_len("nonPredefinedActionId", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.action_implementing_situation_record {
             w.key(35)?;
@@ -2628,12 +2628,12 @@ impl NonPredefinedTmplanOperation {
             Some(v) => { w.multilingual("tmp:nonPredefinedScenarioDescription", v)?; }
             None => return Err(w.missing("tmp:nonPredefinedScenarioDescription")),
         }
-        if let Some(v) = &self.non_predefined_scenario_id { w.max_len("nonPredefinedScenarioId", v, 1024)?; w.leaf("tmp:nonPredefinedScenarioId", v)?; }
+        if let Some(v) = &self.non_predefined_scenario_id { w.max_len("nonPredefinedScenarioId", "String", v, 1024)?; w.leaf("tmp:nonPredefinedScenarioId", v)?; }
         match &self.non_predefined_strategy_description {
             Some(v) => { w.multilingual("tmp:nonPredefinedStrategyDescription", v)?; }
             None => return Err(w.missing("tmp:nonPredefinedStrategyDescription")),
         }
-        if let Some(v) = &self.non_predefined_strategy_id { w.max_len("nonPredefinedStrategyId", v, 1024)?; w.leaf("tmp:nonPredefinedStrategyId", v)?; }
+        if let Some(v) = &self.non_predefined_strategy_id { w.max_len("nonPredefinedStrategyId", "String", v, 1024)?; w.leaf("tmp:nonPredefinedStrategyId", v)?; }
         w.count("tmp:nonPredefinedAction", self.non_predefined_action.len(), 1, usize::MAX)?;
         for v in &self.non_predefined_action { v.write(w, "tmp:nonPredefinedAction", "", "")?; }
         if let Some(v) = &self.non_predefined_tmplan_operation_extension { w.extension("tmp:_nonPredefinedTmplanOperationExtension", v)?; }
@@ -2797,7 +2797,7 @@ impl NonPredefinedTmplanOperation {
         }
         if let Some(v) = &self.non_predefined_scenario_id {
             w.key(1371)?;
-            w.max_len("nonPredefinedScenarioId", v, 1024)?; w.string(v)?;
+            w.max_len("nonPredefinedScenarioId", "String", v, 1024)?; w.string(v)?;
         }
         match &self.non_predefined_strategy_description {
             Some(v) => {
@@ -2808,7 +2808,7 @@ impl NonPredefinedTmplanOperation {
         }
         if let Some(v) = &self.non_predefined_strategy_id {
             w.key(1373)?;
-            w.max_len("nonPredefinedStrategyId", v, 1024)?; w.string(v)?;
+            w.max_len("nonPredefinedStrategyId", "String", v, 1024)?; w.string(v)?;
         }
         w.count("nonPredefinedAction", self.non_predefined_action.len(), 1, usize::MAX)?;
         if !self.non_predefined_action.is_empty() {
@@ -4530,7 +4530,7 @@ impl Scenario {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
+        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", "String", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
         match &self.version_time {
             Some(v) => { w.leaf("tmp:versionTime", v)?; }
             None => return Err(w.missing("tmp:versionTime")),
@@ -4538,9 +4538,9 @@ impl Scenario {
         if let Some(v) = &self.description { w.multilingual("tmp:description", v)?; }
         for v in &self.situation_type { w.enumeration("tmp:situationType", v.literal())?; }
         if let Some(v) = &self.emergency_services_accessibility { w.multilingual("tmp:emergencyServicesAccessibility", v)?; }
-        if let Some(v) = &self.name { w.max_len("name", v, 1024)?; w.leaf("tmp:name", v)?; }
+        if let Some(v) = &self.name { w.max_len("name", "String", v, 1024)?; w.leaf("tmp:name", v)?; }
         if let Some(v) = &self.scenario_director { v.write(w, "tmp:scenarioDirector", "", " targetClass=\"fac:Organisation\"")?; }
-        for v in &self.situation_filter { w.max_len("situationFilter", v, 1024)?; w.leaf("tmp:situationFilter", v)?; }
+        for v in &self.situation_filter { w.max_len("situationFilter", "String", v, 1024)?; w.leaf("tmp:situationFilter", v)?; }
         for v in &self.strategy { v.write(w, "tmp:strategy")?; }
         if let Some(v) = &self.impact_kind { v.write(w, "tmp:impactKind", "", "")?; }
         if let Some(v) = &self.problem_location { v.write(w, "tmp:problemLocation")?; }
@@ -4651,7 +4651,7 @@ impl Scenario {
         }
         if let Some(v) = &self.external_identification {
             w.key(738)?;
-            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentification", "String", v, 1024)?; w.string(v)?;
         }
         match &self.version_time {
             Some(v) => {
@@ -4679,7 +4679,7 @@ impl Scenario {
         }
         if let Some(v) = &self.name {
             w.key(1345)?;
-            w.max_len("name", v, 1024)?; w.string(v)?;
+            w.max_len("name", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.scenario_director {
             w.key(2008)?;
@@ -4690,7 +4690,7 @@ impl Scenario {
             w.begin_array()?;
             for v in &self.situation_filter {
                 w.item()?;
-                w.max_len("situationFilter", v, 1024)?; w.string(v)?;
+                w.max_len("situationFilter", "String", v, 1024)?; w.string(v)?;
             }
             w.end_array()?;
         }
@@ -5606,12 +5606,12 @@ impl StrategyDefinition {
             None => return Err(w.missing("tmp:versionTime")),
         }
         if let Some(v) = &self.strategy_extension { w.extension("tmp:_strategyExtension", v)?; }
-        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
+        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", "String", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
         match &self.description {
             Some(v) => { w.multilingual("tmp:description", v)?; }
             None => return Err(w.missing("tmp:description")),
         }
-        if let Some(v) = &self.short_name { w.max_len("shortName", v, 1024)?; w.leaf("tmp:shortName", v)?; }
+        if let Some(v) = &self.short_name { w.max_len("shortName", "String", v, 1024)?; w.leaf("tmp:shortName", v)?; }
         if let Some(v) = &self.priority { w.leaf("tmp:priority", v)?; }
         w.count("tmp:strategyMeasure", self.strategy_measure.len(), 1, usize::MAX)?;
         for v in &self.strategy_measure { v.write(w, "tmp:strategyMeasure", "", "")?; }
@@ -5722,7 +5722,7 @@ impl StrategyDefinition {
         }
         if let Some(v) = &self.external_identification {
             w.key(738)?;
-            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentification", "String", v, 1024)?; w.string(v)?;
         }
         match &self.description {
             Some(v) => {
@@ -5733,7 +5733,7 @@ impl StrategyDefinition {
         }
         if let Some(v) = &self.short_name {
             w.key(2049)?;
-            w.max_len("shortName", v, 1024)?; w.string(v)?;
+            w.max_len("shortName", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.priority {
             w.key(1649)?;
@@ -5972,7 +5972,7 @@ impl TmplanImplementingAction {
         w.begin(tag)?;
         w.constant_attrs(kind)?;
         w.constant_attrs(fixed)?;
-        if let Some(v) = &self.non_predefined_action_id_reference { w.max_len("nonPredefinedActionIdReference", v, 1024)?; w.leaf("tmp:nonPredefinedActionIdReference", v)?; }
+        if let Some(v) = &self.non_predefined_action_id_reference { w.max_len("nonPredefinedActionIdReference", "String", v, 1024)?; w.leaf("tmp:nonPredefinedActionIdReference", v)?; }
         if let Some(v) = &self.predefined_action_reference { v.write(w, "tmp:predefinedActionReference", "", " targetClass=\"tmp:ActionDefinition\"")?; }
         if let Some(v) = &self.predefined_measure_reference { v.write(w, "tmp:predefinedMeasureReference", "", " targetClass=\"tmp:MeasureDefinition\"")?; }
         if let Some(v) = &self.predefined_strategy_reference { v.write(w, "tmp:predefinedStrategyReference", "", " targetClass=\"tmp:StrategyDefinition\"")?; }
@@ -6031,7 +6031,7 @@ impl TmplanImplementingAction {
         }
         if let Some(v) = &self.non_predefined_action_id_reference {
             w.key(1369)?;
-            w.max_len("nonPredefinedActionIdReference", v, 1024)?; w.string(v)?;
+            w.max_len("nonPredefinedActionIdReference", "String", v, 1024)?; w.string(v)?;
         }
         if let Some(v) = &self.predefined_action_reference {
             w.key(1621)?;
@@ -6147,7 +6147,7 @@ impl TmplanOperationPublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -6155,7 +6155,7 @@ impl TmplanOperationPublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -6243,7 +6243,7 @@ impl TmplanOperationPublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -6253,7 +6253,7 @@ impl TmplanOperationPublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -6377,7 +6377,7 @@ impl TmplanTable {
             Some(v) => { w.attr("version", v)?; }
             None => return Err(w.missing_attr("version")),
         }
-        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
+        if let Some(v) = &self.external_identification { w.max_len("externalIdentification", "String", v, 1024)?; w.leaf("tmp:externalIdentification", v)?; }
         match &self.version_time {
             Some(v) => { w.leaf("tmp:versionTime", v)?; }
             None => return Err(w.missing("tmp:versionTime")),
@@ -6470,7 +6470,7 @@ impl TmplanTable {
         }
         if let Some(v) = &self.external_identification {
             w.key(738)?;
-            w.max_len("externalIdentification", v, 1024)?; w.string(v)?;
+            w.max_len("externalIdentification", "String", v, 1024)?; w.string(v)?;
         }
         match &self.version_time {
             Some(v) => {
@@ -6618,7 +6618,7 @@ impl TmplanTablePublication {
         w.constant_attrs(fixed)?;
         w.constant_attrs(" modelBaseVersion=\"3\"")?;
         match &self.lang {
-            Some(v) => { w.pattern("lang", v, Pattern::Language)?; w.attr("lang", v)?; }
+            Some(v) => { w.pattern("lang", "Language", v, Pattern::Language)?; w.attr("lang", v)?; }
             None => return Err(w.missing_attr("lang")),
         }
         if let Some(v) = &self.extension_name { w.attr("extensionName", v)?; }
@@ -6626,7 +6626,7 @@ impl TmplanTablePublication {
         if let Some(v) = &self.profile_name { w.attr("profileName", v)?; }
         if let Some(v) = &self.profile_version { w.attr("profileVersion", v)?; }
         if let Some(v) = &self.feed_description { w.multilingual("com:feedDescription", v)?; }
-        if let Some(v) = &self.feed_type { w.max_len("feedType", v, 1024)?; w.leaf("com:feedType", v)?; }
+        if let Some(v) = &self.feed_type { w.max_len("feedType", "String", v, 1024)?; w.leaf("com:feedType", v)?; }
         match &self.publication_time {
             Some(v) => { w.leaf("com:publicationTime", v)?; }
             None => return Err(w.missing("com:publicationTime")),
@@ -6722,7 +6722,7 @@ impl TmplanTablePublication {
         match &self.lang {
             Some(v) => {
                 w.key(1032)?;
-                w.pattern("lang", v, Pattern::Language)?; w.string(v)?;
+                w.pattern("lang", "Language", v, Pattern::Language)?; w.string(v)?;
             }
             None => w.absent(1032, w.missing_attr("lang"))?,
         }
@@ -6732,7 +6732,7 @@ impl TmplanTablePublication {
         }
         if let Some(v) = &self.feed_type {
             w.key(848)?;
-            w.max_len("feedType", v, 1024)?; w.string(v)?;
+            w.max_len("feedType", "String", v, 1024)?; w.string(v)?;
         }
         match &self.publication_time {
             Some(v) => {
@@ -6881,7 +6881,7 @@ impl TrafficSignalSettingDefinition {
         for v in &self.for_vehicles_with_characteristics_of { v.write(w, "tmp:forVehiclesWithCharacteristicsOf", "", "")?; }
         if let Some(v) = &self.network_management_definition_extension { w.extension("tmp:_networkManagementDefinitionExtension", v)?; }
         match &self.setting {
-            Some(v) => { w.max_len("setting", v, 1024)?; w.leaf("tmp:setting", v)?; }
+            Some(v) => { w.max_len("setting", "String", v, 1024)?; w.leaf("tmp:setting", v)?; }
             None => return Err(w.missing("tmp:setting")),
         }
         if let Some(v) = &self.traffic_signal_setting_definition_extension { w.extension("tmp:_trafficSignalSettingDefinitionExtension", v)?; }
@@ -7024,7 +7024,7 @@ impl TrafficSignalSettingDefinition {
         match &self.setting {
             Some(v) => {
                 w.key(2047)?;
-                w.max_len("setting", v, 1024)?; w.string(v)?;
+                w.max_len("setting", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(2047, w.missing("setting"))?,
         }
@@ -7099,7 +7099,7 @@ impl TriggerCondition {
         if let Some(v) = &self.negate { w.leaf("tmp:negate", v)?; }
         if let Some(v) = &self.condition_extension { w.extension("tmp:_conditionExtension", v)?; }
         match &self.trigger_definition {
-            Some(v) => { w.max_len("triggerDefinition", v, 1024)?; w.leaf("tmp:triggerDefinition", v)?; }
+            Some(v) => { w.max_len("triggerDefinition", "String", v, 1024)?; w.leaf("tmp:triggerDefinition", v)?; }
             None => return Err(w.missing("tmp:triggerDefinition")),
         }
         if let Some(v) = &self.description { w.multilingual("tmp:description", v)?; }
@@ -7168,7 +7168,7 @@ impl TriggerCondition {
         match &self.trigger_definition {
             Some(v) => {
                 w.key(2385)?;
-                w.max_len("triggerDefinition", v, 1024)?; w.string(v)?;
+                w.max_len("triggerDefinition", "String", v, 1024)?; w.string(v)?;
             }
             None => w.absent(2385, w.missing("triggerDefinition"))?,
         }

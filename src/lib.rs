@@ -45,8 +45,8 @@
 //!
 //! # Writing
 //!
-//! [`v3::write`] turns a publication into a document the official schema accepts, or says which
-//! rule of the schema the publication breaks.
+//! [`v3::write`] turns a publication or a message container into a document the official schema
+//! accepts, or says which rule of the schema it breaks.
 //!
 //! # JSON and the Mobilithek
 //!

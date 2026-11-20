@@ -23,6 +23,59 @@ pub use stream::Stream;
 /// A publication of any kind: the payload of a DATEX II v3 document.
 pub use generated::common::PayloadPublication as Publication;
 
+/// What a writer puts at the top of a document: a publication, written as a `payload`, or a
+/// message container, written as a `messageContainer`.
+///
+/// Every writer takes `impl Into<Root>`, so you pass `&publication` or `&container` and never
+/// name this type:
+///
+/// ```
+/// use datex2::v3::{self, json, Publication, message_container::MessageContainer};
+///
+/// fn both(publication: &Publication, container: &MessageContainer) -> Result<(), datex2::Error> {
+///     let xml = v3::to_string(publication)?;
+///     let json = json::to_string(container)?;
+///     # let _ = (xml, json);
+///     Ok(())
+/// }
+/// ```
+///
+/// Nothing else is a root:
+///
+/// ```compile_fail
+/// let site = datex2::v3::energy_infrastructure::EnergyInfrastructureSite::default();
+/// datex2::v3::to_string(&site);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Root<'a> {
+    /// A publication, written as `payload`.
+    Publication(&'a Publication),
+    /// A message container: publications with exchange information.
+    Container(&'a message_container::MessageContainer),
+}
+
+impl<'a> From<&'a Publication> for Root<'a> {
+    fn from(publication: &'a Publication) -> Self {
+        Self::Publication(publication)
+    }
+}
+
+impl<'a> From<&'a message_container::MessageContainer> for Root<'a> {
+    fn from(container: &'a message_container::MessageContainer) -> Self {
+        Self::Container(container)
+    }
+}
+
+/// The namespaces of a message container and its exchange parts. Each payload declares its own.
+const CONTAINER_NAMESPACES: &str = concat!(
+    " xmlns:con=\"http://datex2.eu/schema/3/messageContainer\"",
+    " xmlns:ex=\"http://datex2.eu/schema/3/exchangeInformation\"",
+    " xmlns:cis=\"http://datex2.eu/schema/3/cisInformation\"",
+    " xmlns:inf=\"http://datex2.eu/schema/3/informationManagement\"",
+    " xmlns:com=\"http://datex2.eu/schema/3/common\"",
+    " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"",
+);
+
 /// The outermost DATEX II element of a document.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
@@ -162,12 +215,13 @@ pub fn stream_with<'a, T: Record>(
     Stream::new(input, limits)
 }
 
-/// Writes a publication as a DATEX II v3 XML document.
+/// Writes a publication or a message container as a DATEX II v3 XML document.
 ///
-/// The document is a `d2:payload` element holding the publication, with the namespace
-/// declarations, type attributes and element order the standard requires. When the write succeeds
-/// the official 3.7 schema accepts the output, except for the schema's uniqueness constraints on
-/// identifiers, which are not checked.
+/// A publication becomes a `d2:payload` element, a [`MessageContainer`](message_container::MessageContainer)
+/// a `con:messageContainer` with exchange information and a `con:payload` per publication, each
+/// with the namespace declarations, type attributes and element order the standard requires. When
+/// the write succeeds the official schemas (3.7, and Exchange 2020 for a container) accept the
+/// output, except for their uniqueness constraints on identifiers, which are not checked.
 ///
 /// ```
 /// use datex2::v3::{self, common, situation::SituationPublication, Publication};
@@ -193,20 +247,26 @@ pub fn stream_with<'a, T: Record>(
 /// requires is absent, when a list has too few or too many entries, when a value breaks a length,
 /// range, digit or pattern rule, when a text holds a character XML cannot carry, when extension
 /// content is not well-formed, or when the sink fails. Bytes already written stay in the sink.
-pub fn write(mut sink: impl std::io::Write, publication: &Publication) -> Result<(), Error> {
+pub fn write<'a>(mut sink: impl std::io::Write, root: impl Into<Root<'a>>) -> Result<(), Error> {
     let mut out = crate::out::Out::new(&mut sink);
     out.declaration()?;
-    publication.write(&mut out, "d2:payload")
+    match root.into() {
+        Root::Publication(publication) => publication.write(&mut out, "d2:payload"),
+        Root::Container(container) => {
+            container.write(&mut out, "con:messageContainer", "", CONTAINER_NAMESPACES)
+        }
+    }
 }
 
-/// Writes a publication as a DATEX II v3 XML document in memory. See [`write()`].
+/// Writes a publication or a message container as a DATEX II v3 XML document in memory. See
+/// [`write()`].
 ///
 /// # Errors
 ///
 /// As for [`write()`].
-pub fn to_string(publication: &Publication) -> Result<String, Error> {
+pub fn to_string<'a>(root: impl Into<Root<'a>>) -> Result<String, Error> {
     let mut bytes = Vec::new();
-    write(&mut bytes, publication)?;
+    write(&mut bytes, root)?;
     // The writer emits only `str` data.
     Ok(String::from_utf8(bytes).expect("the writer produces UTF-8"))
 }
